@@ -14,29 +14,29 @@ We follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1
 
 ### Types
 
-| Type | Use for |
-| --- | --- |
-| `feat` | A new feature |
-| `fix` | A bug fix |
-| `docs` | Documentation only |
+| Type       | Use for                                                 |
+| ---------- | ------------------------------------------------------- |
+| `feat`     | A new feature                                           |
+| `fix`      | A bug fix                                               |
+| `docs`     | Documentation only                                      |
 | `refactor` | Code change that neither fixes a bug nor adds a feature |
-| `test` | Adding or updating tests |
-| `chore` | Maintenance: dependencies, config, tooling |
-| `build` | Build system or packaging changes |
-| `perf` | Performance improvement |
-| `style` | Formatting only, no code change |
+| `test`     | Adding or updating tests                                |
+| `chore`    | Maintenance: dependencies, config, tooling              |
+| `build`    | Build system or packaging changes                       |
+| `perf`     | Performance improvement                                 |
+| `style`    | Formatting only, no code change                         |
 
 ### Scopes
 
 The scope is optional but recommended. Use the part of the repo that changed:
 
-| Scope | Path |
-| --- | --- |
-| `api` | `apps/api` |
-| `web` | `apps/web` |
-| `shared` | `packages/shared` |
-| `db` | Prisma schema and migrations |
-| `deps` | Dependency updates |
+| Scope    | Path                         |
+| -------- | ---------------------------- |
+| `api`    | `apps/api`                   |
+| `web`    | `apps/web`                   |
+| `shared` | `packages/shared`            |
+| `db`     | Prisma schema and migrations |
+| `deps`   | Dependency updates           |
 
 If a change spans several scopes, omit the scope or pick the most important one.
 
@@ -44,7 +44,7 @@ If a change spans several scopes, omit the scope or pick the most important one.
 
 - Use the imperative mood, lowercase, no trailing period: `add login endpoint`, not `Added login endpoint.`
 - Keep the first line under 72 characters.
-- Use the body to explain *why*, not *what*.
+- Use the body to explain _why_, not _what_.
 - Mark breaking changes with `!` after the type/scope, or a `BREAKING CHANGE:` footer. Changes to `@launchly/shared` schemas often break both `api` and `web`, so flag them.
 
 ### Examples
@@ -77,5 +77,11 @@ BREAKING CHANGE: `username` is now `email` in loginSchema.
 - Formatting is handled by Prettier (`pn format`); linting by ESLint (`pn lint`).
 - Import files within the same app with the `@/` alias, not relative `../` paths.
 - Define shared request/response shapes as Zod schemas in `packages/shared`. Do not expose Prisma types to the frontend.
+
+## Cross-platform notes (Linux, macOS, Windows)
+
+- Line endings are always **LF**: `.gitattributes`, `.editorconfig` and Prettier (`endOfLine: "lf"`) enforce it. Do not set `core.autocrlf=true` for this repo.
+- Install the **Prettier** and **EditorConfig** extensions in your editor and enable format on save. Otherwise run `pn format` before committing; `pn format:check` only verifies.
+- On Windows, run commands in PowerShell or Git Bash. `cp` in the README becomes `copy` in PowerShell. Docker Desktop is required for the local database.
 
 See the [README](README.md) for setup and project conventions.

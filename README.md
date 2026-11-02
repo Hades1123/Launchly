@@ -35,9 +35,10 @@ See [`docs/Launchly-Tech-Stack-Architecture-v1.md`](docs/Launchly-Tech-Stack-Arc
 
 ## Prerequisites
 
-- Node.js 22 (see `.nvmrc`)
-- pnpm 12 (`corepack enable` will pick the version from `package.json`)
-- Docker (for the local database)
+- Node.js 22 (see `.nvmrc`). Version managers: `nvm` / `fnm` on Linux and macOS, `nvm-windows` or `fnm` on Windows.
+- pnpm 12. Install with `corepack enable` (it picks the version from `package.json`) or `npm install -g pnpm@12`. On Windows, `corepack enable` may need an administrator terminal.
+- Docker for the local database: Docker Desktop on macOS and Windows (on Windows, use the WSL 2 backend), Docker Engine on Linux.
+- Git. On Windows, run all commands in PowerShell or Git Bash.
 
 ## Getting started
 
@@ -45,11 +46,11 @@ See [`docs/Launchly-Tech-Stack-Architecture-v1.md`](docs/Launchly-Tech-Stack-Arc
 # 1. Install dependencies
 pn install
 
-# 2. Create env files
+# 2. Create env files (Linux / macOS / Git Bash)
 cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env.local
 
-# 3. Start PostgreSQL (host port 5433)
+# 3. Start PostgreSQL (host port 5433). Docker must be running.
 pn db:up
 
 # 4. Create the database tables
@@ -57,6 +58,13 @@ pn db:migrate
 
 # 5. Start the API and the web app
 pn dev
+```
+
+On Windows PowerShell, step 2 is:
+
+```powershell
+Copy-Item apps/api/.env.example apps/api/.env
+Copy-Item apps/web/.env.example apps/web/.env.local
 ```
 
 `pn dev` runs both apps in one terminal with interleaved logs. For easier debugging, run them separately in two terminals instead:
