@@ -1,5 +1,8 @@
+name: launchly
+
 services:
   postgres:
+    container_name: launchly-postgres
     image: postgres:17
     restart: unless-stopped
     environment:
