@@ -1,0 +1,135 @@
+# Launchly
+
+A recruitment platform built as a pnpm monorepo: a Next.js frontend, an Express REST API, and a PostgreSQL database. Types and validation schemas are shared between frontend and backend.
+
+See [`docs/Launchly-Tech-Stack-Architecture-v1.md`](docs/Launchly-Tech-Stack-Architecture-v1.md) for the architecture and [`docs/Launchly-Project-Setup-Plan.md`](docs/Launchly-Project-Setup-Plan.md) for the setup decisions.
+
+## Tech stack
+
+| Area     | Technology                                        |
+| -------- | ------------------------------------------------- |
+| Frontend | Next.js 16 (App Router), React 19, Tailwind CSS 4 |
+| Backend  | Express 5, Node.js 22, TypeScript                 |
+| Database | PostgreSQL 17, Prisma 7                           |
+| Shared   | Zod 4 schemas and inferred types                  |
+| Tooling  | pnpm 12 workspaces, Vitest, ESLint, Prettier      |
+
+## Repository layout
+
+```
+.
+├─ apps/
+│  ├─ api/               # Express API + Prisma (port 4000)
+│  │  ├─ prisma/         # schema.prisma and migrations
+│  │  └─ src/
+│  │     ├─ lib/         # env validation, Prisma client
+│  │     ├─ middlewares/ # error handler, (auth, validation to come)
+│  │     ├─ modules/     # feature modules: routes, controller, service
+│  │     └─ providers/   # swappable storage / mail implementations
+│  └─ web/               # Next.js app (port 3000)
+├─ packages/
+│  └─ shared/            # @launchly/shared: Zod schemas and types
+├─ docker-compose.yml    # local PostgreSQL
+└─ docs/
+```
+
+## Prerequisites
+
+- Node.js 22 (see `.nvmrc`)
+- pnpm 12 (`corepack enable` will pick the version from `package.json`)
+- Docker (for the local database)
+
+## Getting started
+
+```bash
+# 1. Install dependencies
+pn install
+
+# 2. Create env files
+cp apps/api/.env.example apps/api/.env
+cp apps/web/.env.example apps/web/.env.local
+
+# 3. Start PostgreSQL (host port 5433)
+pn db:up
+
+# 4. Create the database tables
+pn db:migrate
+
+# 5. Start the API and the web app
+pn dev
+```
+
+`pn dev` runs both apps in one terminal with interleaved logs. For easier debugging, run them separately in two terminals instead:
+
+```bash
+pn dev:api   # terminal 1
+pn dev:web   # terminal 2
+```
+
+Both are needed for the full app: the home page calls the API's `/health` endpoint. Start order does not matter.
+
+- Web: http://localhost:3000
+- API: http://localhost:4000 (health check at `/health`)
+
+The web app proxies `/api/*` to the API through Next.js rewrites, so the browser never makes cross-origin requests in development.
+
+## Scripts
+
+Run from the repository root. `pn` is the short alias for `pnpm` (available since pnpm 11); `pnpm` works the same.
+
+| Command                     | Description                                               |
+| --------------------------- | --------------------------------------------------------- |
+| `pn dev`                    | Run the API and web app together in one terminal          |
+| `pn dev:api` / `pn dev:web` | Run only the API or only the web app (separate terminals) |
+| `pn build`                  | Build all packages                                        |
+| `pn typecheck`              | Type-check all packages                                   |
+| `pn lint`                   | Lint the whole repo                                       |
+| `pn test`                   | Run tests (Vitest) in all packages                        |
+| `pn format`                 | Format with Prettier                                      |
+| `pn db:up` / `pn db:down`   | Start / stop local PostgreSQL                             |
+| `pn db:migrate`             | Create and apply a Prisma migration                       |
+
+Run a script in a single package with `pn --filter @launchly/api <script>`.
+
+## Conventions
+
+### Shared package
+
+`@launchly/shared` is consumed as TypeScript source (no build step). Both apps import it directly:
+
+```ts
+import { loginSchema, type LoginInput } from '@launchly/shared';
+```
+
+Define request/response shapes as Zod schemas in `packages/shared/src/schemas/` and export the inferred types. The API validates requests with the schema and the web app validates forms with the same one. Do not expose Prisma types to the frontend; map them to shared DTOs instead.
+
+### Path alias
+
+Inside `apps/api` and `apps/web`, import files from the same app with `@/` (maps to `src/`), not with relative `../` paths:
+
+```ts
+import { env } from '@/lib/env';
+```
+
+### Authentication
+
+JWT access token plus a refresh token stored in an httpOnly cookie.
+
+### Environment variables
+
+Env vars are validated with Zod on API startup (`apps/api/src/lib/env.ts`); the API fails fast if one is missing. Commit only `.env.example` files, never real secrets.
+
+### Database
+
+- Edit `apps/api/prisma/schema.prisma`, then run `pn db:migrate`.
+- The Prisma client is generated into `apps/api/src/generated/` (git-ignored) and regenerated by `pn --filter @launchly/api db:generate`.
+- If port 5433 is taken, change the host port in `docker-compose.yml` and `DATABASE_URL`.
+
+## Notes
+
+- TypeScript is pinned to 6.0.x because `typescript-eslint` does not yet support 7.x.
+- pnpm 12 blocks dependency build scripts by default; the allowed ones (`prisma`, `@prisma/engines`, `esbuild`) are listed under `allowBuilds` in `pnpm-workspace.yaml`.
+
+## Contributing
+
+Commit messages follow Conventional Commits. See [CONTRIBUTING.md](CONTRIBUTING.md) for the commit format, branch naming and workflow.
