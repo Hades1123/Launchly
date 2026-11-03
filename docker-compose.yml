@@ -4,7 +4,6 @@ services:
   postgres:
     container_name: launchly-postgres
     image: postgres:17
-    restart: unless-stopped
     environment:
       POSTGRES_USER: launchly
       POSTGRES_PASSWORD: launchly
