@@ -1,13 +1,13 @@
 ---
 # Jira fields read by publish-jira-issue. Values must come from the project configured in AGENTS.md.
-jira_key: "{{JIRA_KEY}}"          # existing key (e.g. PROJ-123) or {{JIRA_KEY}} for a new ticket
-project_key: "<!-- PROJECT KEY -->"
-issue_type: "<!-- Story | Task | Bug | Epic | Subtask -->"
-summary: "<!-- concise outcome, without the key -->"
-parent: "<!-- parent epic/task key, or remove -->"
-labels: []                         # e.g. ["api", "web"]; remove if unused
-priority: "<!-- remove if the project does not use priority -->"
-links: []                          # e.g. [{type: "Blocks", key: "PROJ-120"}]; remove if none
+jira_key: '{{JIRA_KEY}}' # existing key (e.g. PROJ-123) or {{JIRA_KEY}} for a new ticket
+project_key: '<!-- PROJECT KEY -->'
+issue_type: '<!-- Story | Task | Bug | Epic | Subtask -->'
+summary: '<!-- concise outcome, without the key -->'
+parent: '<!-- parent epic/task key, or remove -->'
+labels: [] # e.g. ["api", "web"]; remove if unused
+priority: '<!-- remove if the project does not use priority -->'
+links: [] # e.g. [{type: "Blocks", key: "PROJ-120"}]; remove if none
 ---
 
 # <!-- [{{JIRA_KEY}}] concise outcome -->
@@ -63,8 +63,8 @@ requirement text inline whenever adopting something from elsewhere.
 
 ## Requirement-to-delivery traceability
 
-| Requirement | Implementation task and seam | RED evidence | GREEN / final verification | Documentation |
-|---|---|---|---|---|
+| Requirement                      | Implementation task and seam              | RED evidence                                                          | GREEN / final verification                                 | Documentation                                              |
+| -------------------------------- | ----------------------------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------- |
 | <!-- REQ-ID: precise outcome --> | <!-- Exact file/seam and ordered task --> | <!-- Focused test, command, and expected missing-behavior failure --> | <!-- Assertion, broader command, and required evidence --> | <!-- Exact file and content change, or N/A with reason --> |
 
 ## Contracts, validation, persistence, and migrations
