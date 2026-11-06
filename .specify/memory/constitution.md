@@ -1,30 +1,29 @@
 <!--
 Sync Impact Report
 ==================
-Version change: 1.0.0 → 1.1.0
-Bump rationale: MINOR. Principle IV now requires test-first for behaviour changes, and the
-workflow section adds a maintenance exemption from Spec Kit and the checklist step. Both
-materially expand guidance; no principle is removed.
+Version change: 1.1.0 → 1.2.0
+Bump rationale: MINOR. Development Workflow and Quality Gates adds a checkpoint-commit exemption
+and makes the checklist gate binding on autonomous agents. Both materially expand guidance; no
+principle is removed.
 
-Modified principles:
-  - IV. Tested Business Logic: red → green → refactor changed from RECOMMENDED to MUST for
-    changes to observable behaviour, with recorded RED and GREEN evidence.
+Modified principles: none
 Modified sections:
-  - Development Workflow and Quality Gates: Spec Kit flow adds checklist and the human approval
-    gate; new behaviour-preserving maintenance exemption; review verdicts renamed from
-    ACCEPT/REJECT to APPROVED/REJECTED and tied to the review-implementation skill.
-  - Governance → Compliance: REJECT → REJECTED.
+  - Development Workflow and Quality Gates:
+    - Spec-driven features: only a person may tick or override checklist items; an agent asked to
+      proceed with open items MUST answer "no" and stop.
+    - New Checkpoint exemption: one unbuildable, Jira-keyed checkpoint commit is allowed on a
+      Draft PR at fail-fast halt; such PRs are squash-merged.
+    - Review: runs on PRs ready for review; Draft PRs are not reviewed.
 Added sections: none
 Removed sections: none
 
-Templates checked:
-  - .specify/templates/plan-template.md ✅ Constitution Check reads this file; no change needed
-  - .specify/templates/spec-template.md ✅ no change needed
-  - .specify/templates/tasks-template.md ✅ no change needed
-  - .specify/templates/checklist-template.md ✅ no change needed
-  - AGENTS.md ✅ already uses APPROVED/REJECTED and the same flow
-  - CONTRIBUTING.md ✅ updated to the Jira-keyed branch, commit, and PR title format
-  - .claude/skills/create-implementation-issue, review-implementation ✅ consistent
+Templates and docs checked:
+  - .specify/templates/*.md ✅ no change needed
+  - AGENTS.md ✅ checklist gate wording aligned with this amendment
+  - CONTRIBUTING.md ✅ commit format unchanged; checkpoint uses the normal format
+  - .claude/skills/create-implementation-issue (SKILL.md, issue template) ✅ checkpoint message
+    and checklist step aligned
+  - .claude/skills/review-implementation ✅ skips Draft PRs, size rule aligned
 
 Follow-up TODOs:
   - No tests and no CI exist yet; Principle IV and the quality gates are enforced locally and in
@@ -175,7 +174,9 @@ requires a plan that states the reason and is reviewed like an architecture chan
   under `specs/<feature>/` (specify → clarify → checklist → plan → tasks → analyze → human approval
   → implement). The plan's Constitution Check MUST pass, or list justified exceptions in Complexity
   Tracking, before tasks are generated. Every CRITICAL analyze finding and every open checklist item
-  MUST be resolved before implement starts.
+  MUST be resolved before implement starts. Only a person may tick a checklist item or override an
+  open one; an autonomous agent asked whether to proceed with open checklist items MUST answer
+  "no" and stop.
 - **Maintenance exemption**: behaviour-preserving maintenance MAY skip Spec Kit. This covers
   refactors with no observable change, dependency updates within pinned ranges, tooling, lint,
   formatting, and documentation fixes, and bug fixes that restore already specified behaviour. The
@@ -183,9 +184,14 @@ requires a plan that states the reason and is reviewed like an architecture chan
   scope grows to new or changed behaviour, work stops and enters the Spec Kit flow.
 - **Local gates**: before pushing, `pn typecheck`, `pn lint`, and `pn test` MUST pass. Commits stay
   small and each leaves the project buildable.
+- **Checkpoint exemption**: an agent that halts on a terminal failure, size limit, or turn ceiling
+  MAY push one checkpoint commit that leaves the project unbuildable, only to a PR that stays in
+  Draft. The commit still uses the Jira-keyed format, for example
+  `chore(api): SCRUM-123 checkpoint before halt`. A PR that contains a checkpoint commit is
+  squash-merged, so the checkpoint never reaches `main` on its own.
 - **Review**: every change reaches `main` through a pull request with an independent review (the
   `review-implementation` skill, run in a session that did not write the code) on the final head
-  commit. It returns `APPROVED` or `REJECTED` and checks compliance with this constitution. A
+  commit of a PR that is ready for review; Draft PRs are not reviewed. It returns `APPROVED` or `REJECTED` and checks compliance with this constitution. A
   `REJECTED` verdict lists the violated principle, requirement, or failing gate with the minimum fix.
   A new commit needs a new review.
 - **Human ownership**: people approve issue drafts, publish tickets, hand work to agents, merge
@@ -208,4 +214,4 @@ they disagree, this document wins and the other file is corrected.
   touched by the change. Unjustified violations are grounds for `REJECTED`. The team reviews the
   constitution at least once per milestone and amends it when practice has drifted.
 
-**Version**: 1.1.0 | **Ratified**: 2026-11-04 | **Last Amended**: 2026-11-04
+**Version**: 1.2.0 | **Ratified**: 2026-11-04 | **Last Amended**: 2026-11-06
