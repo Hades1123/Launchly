@@ -8,3 +8,7 @@ uploads/
 apps/api/src/generated
 .DS_Store
 *.tsbuildinfo
+
+# Local agent scratch output (issue drafts)
+.tmp/
+.claude/settings.local.json

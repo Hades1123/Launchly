@@ -5,7 +5,7 @@
 We follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/).
 
 ```
-<type>(<scope>): <description>
+<type>(<scope>): <JIRA-KEY> <description>
 
 [optional body]
 
@@ -42,6 +42,7 @@ If a change spans several scopes, omit the scope or pick the most important one.
 
 ### Rules
 
+- Start the description with the Jira key of the ticket (project `SCRUM`), e.g. `SCRUM-123`. Jira uses the key to link commits, branches, and PRs to the ticket.
 - Use the imperative mood, lowercase, no trailing period: `add login endpoint`, not `Added login endpoint.`
 - Keep the first line under 72 characters.
 - Use the body to explain _why_, not _what_.
@@ -50,19 +51,19 @@ If a change spans several scopes, omit the scope or pick the most important one.
 ### Examples
 
 ```
-feat(api): add login endpoint
-fix(web): handle empty job list
-refactor(api): move auth logic into service layer
-chore(deps): bump prisma to 7.10.1
-docs: add contributing guide
-feat(shared)!: rename loginSchema fields
+feat(api): SCRUM-12 add login endpoint
+fix(web): SCRUM-18 handle empty job list
+refactor(api): SCRUM-21 move auth logic into service layer
+chore(deps): SCRUM-25 bump prisma to 7.10.1
+docs: SCRUM-30 add contributing guide
+feat(shared)!: SCRUM-34 rename loginSchema fields
 
 BREAKING CHANGE: `username` is now `email` in loginSchema.
 ```
 
 ## Workflow
 
-1. Create a branch from `main`: `<type>/<short-description>`, e.g. `feat/auth-login` or `fix/job-list-empty`.
+1. Create a branch from `main`: `<type>/<JIRA-KEY>-<short-slug>`, e.g. `feat/SCRUM-12-auth-login` or `fix/SCRUM-18-job-list-empty`.
 2. Keep commits small and focused; each should leave the project buildable.
 3. Before pushing, run:
    ```bash
@@ -70,7 +71,8 @@ BREAKING CHANGE: `username` is now `email` in loginSchema.
    pn lint
    pn test
    ```
-4. Open a pull request into `main`. Use a Conventional Commit style title.
+4. Open a pull request into `main` titled `[<JIRA-KEY>] <outcome>`, e.g. `[SCRUM-12] Add login endpoint`, and link the Jira ticket in the description.
+5. Every PR needs an independent review with an `APPROVED` verdict (see the agent workflow in `AGENTS.md` and `.specify/memory/constitution.md`). A person merges.
 
 ## Code style
 
