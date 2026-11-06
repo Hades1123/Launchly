@@ -43,6 +43,11 @@ model ran without runtime evidence.
 2. Get the diff: `git diff --stat <base>...<head>` and the full diff. When a PR
    exists and `gh` is available, also read `gh pr view <n> --json title,body,headRefName,commits,statusCheckRollup`.
 3. The verdict applies only to this head SHA. Any later commit needs a fresh review.
+4. If the PR is still a Draft, stop and report that it is not ready for review.
+   The constitution reviews only PRs marked ready; a Draft may contain an
+   unbuildable checkpoint commit (`chore(<scope>): <JIRA-KEY> checkpoint before
+halt`). Such a commit on a ready PR is not a finding by itself, because the PR
+   is squash-merged, but the head commit must pass every check.
 
 ## 2. Gather the contract
 
@@ -112,8 +117,8 @@ and evidence.
    always Critical.
 7. **Scope and size.** No unrelated changes, speculative abstractions, or new
    dependencies the issue does not justify. Handwritten changes stay within the
-   issue's limit (default ≤300 lines across 1–3 files, excluding generated files and
-   lockfiles), measured with `git diff --stat`.
+   issue's line limit (default ≤300 lines, excluding generated files and lockfiles),
+   measured with `git diff --stat`. There is no file-count limit.
 8. **Documentation.** Every doc task named in the issue is done and matches the
    delivered behavior.
 9. **Delivery identity.** The branch (unless a recorded platform-managed cloud-agent

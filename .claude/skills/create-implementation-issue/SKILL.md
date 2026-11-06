@@ -63,13 +63,23 @@ Choose and record one of these handoff modes:
 
 - **Existing-artifacts mode:** reuse aligned `spec.md`, `plan.md`, and `tasks.md`.
   They must be committed and pushed to a remote branch so the implementing agent
-  can access them.
-- **Cloud-bootstrap mode:** the issue delegates `specify → clarify → plan → tasks
-→ analyze` to the cloud agent as its first phase. The agent commits the artifacts
-  to its PR branch, runs the configured read-only reviews, and pauses for the
-  required human approval before implementation. After approval, the same cloud
-  session continues with `speckit-implement`; it must reuse rather than regenerate
-  the artifacts it just created.
+  can access them. `.specify/feature.json` is git-ignored, so a fresh clone has no
+  feature pointer: the issue must tell the agent to run Spec Kit commands with
+  `SPECIFY_FEATURE_DIRECTORY=specs/<feature>` set.
+- **Cloud-bootstrap mode:** the issue delegates `specify → clarify → checklist →
+plan → tasks → analyze` to the cloud agent as its first phase. The agent commits
+  the artifacts, including `checklists/`, to its PR branch, runs the configured
+  read-only reviews, and pauses for the required human approval before
+  implementation. A person ticks the checklist items during that pause; the agent
+  never ticks them. After approval, the same cloud session continues with
+  `speckit-implement`; it must reuse rather than regenerate the artifacts it just
+  created. If the session resumes in a fresh clone, it sets
+  `SPECIFY_FEATURE_DIRECTORY=specs/<feature>` first.
+
+In every Spec Kit mode, when `speckit-implement` reports unchecked checklist items
+and asks whether to proceed, the agent answers "no" and stops (constitution,
+Development Workflow and Quality Gates). Only a person may override.
+
 - **No-Spec-Kit maintenance mode:** the issue cites the repository rule that
   permits the behavior-preserving change to proceed without `spec.md`, `plan.md`,
   or `tasks.md`. Its dependency-ordered acceptance criteria are the execution
@@ -158,7 +168,8 @@ evidence.
 7. The issue must record how the implementing agent will persist and access the
    artifacts. In existing-artifacts mode, link the reviewed Spec Kit PR and name its
    remote branch or immutable commit; a local path by itself is not a valid cloud
-   handoff. In cloud-bootstrap mode, require the agent's PR branch to contain the
+   handoff. Name the feature directory and the `SPECIFY_FEATURE_DIRECTORY` value
+   the agent must set. In cloud-bootstrap mode, require the agent's PR branch to contain the
    artifacts before the planning gate and retain them when implementation resumes.
 
 8. The independent implementation review must check the delivered diff and fresh
@@ -326,8 +337,10 @@ material alternatives.
 - **Preservative fail-fast & checkpointing**: Fail-fast must preserve progress and halt token
   burn—never destructively reset (`git reset --hard`) or discard working trees. When encountering
   a terminal failure, diff limit (>300 lines), or turn ceiling, stage and commit working changes
-  (`wip: checkpoint before halt`), push to the remote task branch, mark the PR as Draft with a clear
-  handover diagnosis, and halt autonomous execution.
+  as one Jira-keyed checkpoint commit (`chore(<scope>): <JIRA-KEY> checkpoint before halt`), push
+  to the remote task branch, keep the PR as Draft with a clear handover diagnosis, and halt
+  autonomous execution. The constitution's checkpoint exemption allows this commit to be
+  unbuildable only while the PR stays in Draft; the PR is squash-merged.
 - **Decomposition of multi-domain features**: Never combine multiple architectural
   domains (e.g. Spec Kit planning + database migrations + API + frontend +
   infrastructure + runbooks) into a single monolithic issue. Decompose broad
@@ -343,8 +356,8 @@ material alternatives.
 | Performance and scale  | For a material hot path, state a measurable scale or performance target, bounded resource/concurrency behavior, and a reproducible before/after command. Otherwise record why a benchmark is not applicable.                                                                                                                                                                                                                                                                                                                                                      |
 | Extensibility          | Name an approved variation or extension point only when requirements or repository evidence establish one. Reuse an existing pattern when it fits. Do not require a design pattern merely for pattern's sake; straightforward, testable code is preferred to a speculative abstraction or generic framework.                                                                                                                                                                                                                                                      |
 | Terminal failures      | Classify deterministic failures such as authentication or authorization denial, missing required credentials, invalid required configuration, unsupported capability, and contract contradiction as terminal unless repository evidence explicitly defines a recovery path. Do not retry a terminal failure or disguise it with a fallback; stop dependent work, preserve evidence without secrets, keep affected tasks incomplete, and state the required human or upstream action. Define a bounded retry count and backoff only for failures proven transient. |
-| Preservative fail-fast | In case of terminal failure, threshold breach, or circuit breaker, commit working progress (`wip: checkpoint before halt`), push to the remote branch, keep PR as Draft with a structured handover report, and halt token burn; never run `git reset --hard` or discard working trees.                                                                                                                                                                                                                                                                            |
-| PR guardrails          | Keep handwritten code changes strictly within <= 300 lines across 1-3 files (excluding generated files and lockfiles); enforce via a CI check when the repository has one, otherwise verify with `git diff --stat` and record the result.                                                                                                                                                                                                                                                                                                                         |
+| Preservative fail-fast | In case of terminal failure, threshold breach, or circuit breaker, commit working progress (`chore(<scope>): <JIRA-KEY> checkpoint before halt`), push to the remote branch, keep PR as Draft with a structured handover report, and halt token burn; never run `git reset --hard` or discard working trees.                                                                                                                                                                                                                                                      |
+| PR guardrails          | Keep handwritten code changes within <= 300 lines (excluding generated files and lockfiles); there is no file-count limit, because one feature spans the shared schema, route, controller, service, and tests. Enforce via a CI check when the repository has one, otherwise verify with `git diff --stat` and record the result.                                                                                                                                                                                                                                 |
 | Honest verification    | A test or validation item is complete only after its required command runs successfully against the final revision. Never mark a test complete from an earlier revision, partial suite, expected result, or unexecuted CI plan. Record the exact command and outcome; keep blocked, skipped, remote-only, and unexecuted checks explicitly incomplete.                                                                                                                                                                                                            |
 
 Every confirmed requirement must map to at least one implementation task and
