@@ -8,14 +8,16 @@ const inter = Inter({
   display: 'swap',
 });
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+const plusJakarta = Plus_Jakarta_Sans({
   subsets: ['latin', 'vietnamese'],
-  variable: '--font-plus-jakarta-sans',
+  weight: ['600', '700'],
+  variable: '--font-plus-jakarta',
   display: 'swap',
 });
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin', 'vietnamese'],
+  weight: ['500'],
   variable: '--font-jetbrains-mono',
   display: 'swap',
 });
@@ -26,11 +28,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="vi"
-      className={`${inter.variable} ${plusJakartaSans.variable} ${jetbrainsMono.variable}`}
+      className={`${inter.variable} ${plusJakarta.variable} ${jetbrainsMono.variable}`}
     >
-      <body className="bg-background font-sans text-body-md text-foreground antialiased">
-        {children}
-      </body>
+      <body className="bg-background font-sans text-foreground antialiased">{children}</body>
     </html>
   );
 }
