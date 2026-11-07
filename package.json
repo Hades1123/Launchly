@@ -17,7 +17,8 @@
     "format:check": "prettier --check .",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
-    "db:migrate": "pnpm --filter @launchly/api db:migrate"
+    "db:migrate": "pnpm --filter @launchly/api db:migrate",
+    "db:seed": "pnpm --filter @launchly/api db:seed"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

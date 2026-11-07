@@ -1,7 +1,11 @@
 import type { RequestHandler } from 'express';
-import type { ErrorDetail } from '@launchly/shared';
 import type { ZodType } from 'zod';
+import type { ErrorDetail } from '@launchly/shared';
 import { AppError, zodIssuesToDetails } from '@/lib/app-error';
+
+export function validateBody<T>(schema: ZodType<T>): RequestHandler {
+  return validate({ body: schema });
+}
 
 export function validate(schemas: {
   body?: ZodType;

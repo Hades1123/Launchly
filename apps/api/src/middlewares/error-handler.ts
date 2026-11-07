@@ -16,7 +16,7 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, next) => {
   const type = (err as { type?: string })?.type;
   let status = 500;
   let out = fail('INTERNAL_ERROR', 'Internal server error');
-  if (err instanceof AppError && err.status < 500) {
+  if (err instanceof AppError && (err.status < 500 || err.status === 503)) {
     status = err.status;
     out = fail(err.code, err.message, err.details);
   } else if (err instanceof ZodError) {

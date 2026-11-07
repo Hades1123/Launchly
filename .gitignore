@@ -1,6 +1,11 @@
 node_modules
 dist
+build/
+coverage/
 .next
+.env*
+!.env.example
+!**/.env.example
 .env
 .env.local
 *.log
@@ -12,3 +17,4 @@ apps/api/src/generated
 # Local agent scratch output (issue drafts)
 .tmp/
 .claude/settings.local.json
+.vscode/mcp.json

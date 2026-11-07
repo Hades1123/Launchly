@@ -49,7 +49,7 @@ export class CandidateService {
     return {
       id: profile.id,
       userId: user.id,
-      fullName: user.fullName,
+      fullName: user.fullName ?? '',
       headline: profile.headline ?? null,
       bio: profile.bio ?? null,
       location: profile.location ?? null,
@@ -121,7 +121,7 @@ export class CandidateService {
     return {
       id: profile.id,
       userId: updatedUser.id,
-      fullName: updatedUser.fullName,
+      fullName: updatedUser.fullName ?? '',
       headline: profile.headline ?? null,
       bio: profile.bio ?? null,
       location: profile.location ?? null,

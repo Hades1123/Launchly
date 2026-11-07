@@ -34,16 +34,18 @@ Every error response is the shared `apiErrorSchema` from `@launchly/shared`:
 
 `details` is present only for validation failures. Raise failures by throwing `AppError`; never call `res.status().json()` for errors — let the central `errorHandler` map them.
 
-| Code                | HTTP | When                                              |
-| ------------------- | ---- | ------------------------------------------------- |
-| `VALIDATION_ERROR`  | 400  | `validate()` failure, `ZodError`, malformed JSON  |
-| `UNAUTHORIZED`      | 401  | Reserved for auth (SCRUM-23)                      |
-| `FORBIDDEN`         | 403  | Reserved for role guards (SCRUM-23)               |
-| `NOT_FOUND`         | 404  | Unknown route; missing resource                   |
-| `CONFLICT`          | 409  | Duplicate / constraint conflict                   |
-| `PAYLOAD_TOO_LARGE` | 413  | Body exceeds the parser limit (100kb default)     |
-| `RATE_LIMITED`      | 429  | Reserved for rate limiting (follow-up)            |
-| `INTERNAL_ERROR`    | 500  | Any unexpected fault — generic body, no leak      |
+| Code | HTTP | When |
+| --- | --- | --- |
+| `VALIDATION_ERROR` | 400 | `validate()` failure, `ZodError`, malformed JSON |
+| `UNAUTHORIZED`, `UNAUTHENTICATED`, `INVALID_SESSION`, `INVALID_CREDENTIALS`, `INVALID_GOOGLE_IDENTITY` | 401 | Missing/invalid session or credentials |
+| `FORBIDDEN`, `EMAIL_NOT_VERIFIED`, `ACCOUNT_LOCKED` | 403 | Role restriction or account state |
+| `NOT_FOUND` | 404 | Unknown route; missing resource |
+| `CONFLICT`, `EMAIL_ALREADY_REGISTERED`, `ACCOUNT_ALREADY_REGISTERED` | 409 | Duplicate / constraint conflict |
+| `PAYLOAD_TOO_LARGE` | 413 | Body exceeds the parser limit (100kb default) |
+| `RATE_LIMITED` | 429 | Rate limiting |
+| `INVALID_OR_EXPIRED_TOKEN` | 400 | Invalid or expired one-time auth token |
+| `EMAIL_DELIVERY_FAILED`, `GOOGLE_SIGN_IN_UNAVAILABLE` | 503 | Required auth provider is unavailable |
+| `INTERNAL_ERROR` | 500 | Any unexpected fault — generic body, no leak |
 
 A 500 body is always exactly `{ "error": { "code": "INTERNAL_ERROR", "message": "Internal server error" } }`: no original message, stack, SQL, or secret ever reaches the client. The handler `console.error`s only 5xx faults; 4xx are not logged.
 
