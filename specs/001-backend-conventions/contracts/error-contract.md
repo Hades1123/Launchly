@@ -17,6 +17,17 @@ export const errorCodeSchema = z.enum([
   'CONFLICT',
   'PAYLOAD_TOO_LARGE',
   'RATE_LIMITED',
+  'UNAUTHENTICATED',
+  'INVALID_SESSION',
+  'INVALID_CREDENTIALS',
+  'EMAIL_NOT_VERIFIED',
+  'ACCOUNT_LOCKED',
+  'EMAIL_ALREADY_REGISTERED',
+  'ACCOUNT_ALREADY_REGISTERED',
+  'INVALID_GOOGLE_IDENTITY',
+  'GOOGLE_SIGN_IN_UNAVAILABLE',
+  'INVALID_OR_EXPIRED_TOKEN',
+  'EMAIL_DELIVERY_FAILED',
   'INTERNAL_ERROR',
 ]);
 export type ErrorCode = z.infer<typeof errorCodeSchema>;
@@ -48,6 +59,17 @@ export type ApiError = z.infer<typeof apiErrorSchema>;
 | `CONFLICT`          | 409  | Duplicate / constraint conflict                       |
 | `PAYLOAD_TOO_LARGE` | 413  | Body exceeds parser limit (100kb default)             |
 | `RATE_LIMITED`      | 429  | Reserved (rate limiting)                              |
+| `UNAUTHENTICATED` | 401 | No valid sign-in session |
+| `INVALID_SESSION` | 401 | Refresh or access session is invalid or expired |
+| `INVALID_CREDENTIALS` | 401 | Email or password is incorrect |
+| `EMAIL_NOT_VERIFIED` | 403 | Account email must be verified before sign-in |
+| `ACCOUNT_LOCKED` | 403 | Account is locked |
+| `EMAIL_ALREADY_REGISTERED` | 409 | Registration email is already in use |
+| `ACCOUNT_ALREADY_REGISTERED` | 409 | Google identity is already linked to another account |
+| `INVALID_GOOGLE_IDENTITY` | 401 | Google identity could not be verified |
+| `GOOGLE_SIGN_IN_UNAVAILABLE` | 503 | Google sign-in is not configured |
+| `INVALID_OR_EXPIRED_TOKEN` | 400 | One-time auth token is invalid or expired |
+| `EMAIL_DELIVERY_FAILED` | 503 | Required auth email could not be delivered |
 | `INTERNAL_ERROR`    | 500  | Any unexpected fault — generic body only              |
 
 ## Example bodies

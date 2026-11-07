@@ -1,0 +1,480 @@
+openapi: 3.1.0
+info:
+  title: Launchly Authentication API
+  version: 1.0.0
+  description: |
+    API routes are served by Express at /auth/* and are available to browser clients
+    through the Next.js /api/* rewrite.
+servers:
+  - url: /
+paths:
+  /auth/register:
+    post:
+      operationId: register
+      summary: Register an unverified Candidate or Recruiter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Account created and verification message sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          description: Email is already registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Email delivery is unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /auth/verify-email:
+    post:
+      operationId: verifyEmail
+      summary: Consume a verification link token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+                  minLength: 1
+      responses:
+        '200':
+          description: Email verified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: Invalid, expired, or consumed token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /auth/resend-verification:
+    post:
+      operationId: resendVerification
+      summary: Request another verification message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '202':
+          description: Generic response that does not confirm account existence
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          description: Verification email delivery is unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /auth/login:
+    post:
+      operationId: login
+      summary: Sign in with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+      responses:
+        '200':
+          description: Signed in; refresh cookie is set
+          headers:
+            Set-Cookie:
+              $ref: '#/components/headers/RefreshCookie'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Email unverified or account locked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /auth/logout:
+    post:
+      operationId: logout
+      summary: Revoke the current session
+      security:
+        - AccessToken: []
+      responses:
+        '204':
+          description: Session revoked and refresh cookie cleared
+          headers:
+            Set-Cookie:
+              $ref: '#/components/headers/ClearedRefreshCookie'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /auth/refresh:
+    post:
+      operationId: refreshSession
+      summary: Rotate the refresh token and issue a new access token
+      security:
+        - RefreshCookie: []
+      responses:
+        '200':
+          description: Tokens rotated
+          headers:
+            Set-Cookie:
+              $ref: '#/components/headers/RefreshCookie'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessTokenResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /auth/google:
+    post:
+      operationId: signInWithGoogle
+      summary: Verify a Google identity and sign in or register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [idToken]
+              properties:
+                idToken:
+                  type: string
+                  minLength: 1
+                role:
+                  $ref: '#/components/schemas/RegistrationRole'
+      responses:
+        '200':
+          description: Existing account signed in, role selection required, or email confirmation required
+          headers:
+            Set-Cookie:
+              $ref: '#/components/headers/RefreshCookie'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/SessionResponse'
+                  - $ref: '#/components/schemas/RoleSelectionResponse'
+                  - $ref: '#/components/schemas/GoogleLinkPendingResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          description: Google identity cannot be verified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: The account is locked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '409':
+          description: An account already exists for this Google identity or email
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Google identity provider is not configured or available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /auth/google/complete-link:
+    post:
+      operationId: completeGoogleAccountLink
+      summary: Consume an email confirmation token to link a verified Google identity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+                  minLength: 1
+      responses:
+        '200':
+          description: Google identity linked and signed in; refresh cookie is set
+          headers:
+            Set-Cookie:
+              $ref: '#/components/headers/RefreshCookie'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+        '400':
+          description: Invalid, expired, or consumed confirmation token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Account is locked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Google identity is already linked to another account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /auth/forgot-password:
+    post:
+      operationId: forgotPassword
+      summary: Request a password-reset message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '202':
+          description: Same response for registered and unregistered email addresses
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /auth/reset-password:
+    post:
+      operationId: resetPassword
+      summary: Consume a reset token and set a new password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, password]
+              properties:
+                token:
+                  type: string
+                  minLength: 1
+                password:
+                  type: string
+                  minLength: 8
+      responses:
+        '204':
+          description: Password changed and prior sessions revoked
+        '400':
+          description: Invalid, expired, or consumed token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /auth/me:
+    get:
+      operationId: getCurrentUser
+      summary: Return the current authenticated user
+      security:
+        - AccessToken: []
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+components:
+  securitySchemes:
+    AccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    RefreshCookie:
+      type: apiKey
+      in: cookie
+      name: launchly_refresh
+  headers:
+    RefreshCookie:
+      description: Rotating httpOnly refresh cookie, SameSite=Lax, Secure in production, scoped to the browser-facing /api/auth rewrite path
+      schema:
+        type: string
+    ClearedRefreshCookie:
+      description: Expired httpOnly refresh cookie scoped to the browser-facing /api/auth rewrite path
+      schema:
+        type: string
+  schemas:
+    RegistrationRole:
+      type: string
+      enum: [CANDIDATE, RECRUITER]
+    UserRole:
+      type: string
+      enum: [CANDIDATE, RECRUITER, ADMIN]
+    RegisterRequest:
+      type: object
+      required: [email, password, role]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        role:
+          $ref: '#/components/schemas/RegistrationRole'
+    User:
+      type: object
+      required: [id, email, fullName, role, emailVerified]
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        fullName:
+          type: [string, 'null']
+        role:
+          $ref: '#/components/schemas/UserRole'
+        emailVerified:
+          type: boolean
+    SessionResponse:
+      type: object
+      required: [accessToken, tokenType, expiresIn, user]
+      properties:
+        accessToken:
+          type: string
+        tokenType:
+          type: string
+          const: Bearer
+        expiresIn:
+          type: integer
+          const: 900
+        user:
+          $ref: '#/components/schemas/User'
+    AccessTokenResponse:
+      type: object
+      required: [accessToken, tokenType, expiresIn]
+      properties:
+        accessToken:
+          type: string
+        tokenType:
+          type: string
+          const: Bearer
+        expiresIn:
+          type: integer
+          const: 900
+    RoleSelectionResponse:
+      type: object
+      required: [requiresRoleSelection, roles]
+      properties:
+        requiresRoleSelection:
+          type: boolean
+          const: true
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/RegistrationRole'
+    GoogleLinkPendingResponse:
+      type: object
+      required: [requiresEmailVerification, message]
+      properties:
+        requiresEmailVerification:
+          type: boolean
+          const: true
+        message:
+          type: string
+    MessageResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: array
+              items:
+                type: object
+    responses:
+      ValidationError:
+        description: Request validation failed
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      Unauthorized:
+        description: Missing, invalid, expired, or revoked credentials
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      RateLimited:
+        description: Too many requests
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
