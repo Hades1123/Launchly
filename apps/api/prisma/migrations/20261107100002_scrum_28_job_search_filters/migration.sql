@@ -1,9 +1,4 @@
 -- AlterTable
-ALTER TABLE "CandidateProfile" ADD COLUMN     "projectsActivities" TEXT,
-ADD COLUMN     "schoolMajor" TEXT,
-ADD COLUMN     "skills" TEXT[];
-
--- AlterTable
 ALTER TABLE "Company" ADD COLUMN     "nameNormalized" TEXT;
 
 -- AlterTable
