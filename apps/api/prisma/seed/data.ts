@@ -59,8 +59,8 @@ export const seedData = {
 
   jobs: [
     { id: id.job1, companyId: id.companyApproved, createdById: id.recruiter, title: 'Senior Frontend Engineer', description: 'Own the candidate-facing web app.', level: 'SENIOR', location: 'Remote', requirements: ['React', 'TypeScript'], benefits: ['Remote-first'], salaryMin: 2000, salaryMax: 4000, publicationStatus: 'PUBLISHED' },
-    { id: id.job2, companyId: id.companyApproved, createdById: id.recruiter, title: 'Backend Engineer', description: 'Build the recruitment API. Has no pipeline stages yet.', level: 'MID', location: 'Ho Chi Minh City', requirements: ['Node.js', 'PostgreSQL'], benefits: ['Learning budget'], publicationStatus: 'PUBLISHED' },
-    { id: id.job3, companyId: id.companyPending, createdById: id.recruiter, title: 'Product Designer', description: 'Pending moderation job.', level: 'JUNIOR', location: 'Ha Noi', requirements: ['Figma'], benefits: [], publicationStatus: 'PENDING' },
+    { id: id.job2, companyId: id.companyApproved, createdById: id.recruiter, title: 'Backend Engineer', description: 'Build the recruitment API. Has no pipeline stages yet.', level: 'SENIOR', location: 'Ho Chi Minh City', requirements: ['Node.js', 'PostgreSQL'], benefits: ['Learning budget'], publicationStatus: 'PUBLISHED' },
+    { id: id.job3, companyId: id.companyPending, createdById: id.recruiter, title: 'Product Designer', description: 'Pending moderation job.', level: 'FRESHER', location: 'Ha Noi', requirements: ['Figma'], benefits: [], publicationStatus: 'PENDING' },
   ] satisfies Prisma.JobUncheckedCreateInput[],
 
   jobStages: [

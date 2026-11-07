@@ -10,6 +10,8 @@ import { createGoogleProvider } from '@/providers/google/google.provider';
 import { createMailProvider } from '@/providers/mail/mail-provider';
 import { createCompanyRouter } from '@/modules/company/company.routes';
 import { createCompanyService } from '@/modules/company/company.service';
+import { createJobsService } from '@/modules/jobs/jobs.service';
+import { createJobsRouter } from '@/modules/jobs/jobs.routes';
 import { healthRouter } from '@/modules/health/health.routes';
 import { candidateRouter } from '@/modules/candidate/candidate.routes';
 import { notFound } from '@/middlewares/not-found';
@@ -37,6 +39,10 @@ export function createApp(
 
   app.use('/auth', createAuthRouter(authService));
   app.use('/companies', createCompanyRouter(authService, createCompanyService(prisma)));
+
+  const jobsService = createJobsService(prisma);
+  app.use('/jobs', createJobsRouter(authService, jobsService));
+
   app.use(notFound);
   app.use(errorHandler);
   return app;
