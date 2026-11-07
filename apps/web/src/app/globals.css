@@ -1,1 +1,43 @@
 @import 'tailwindcss';
+
+/*
+ * Launchly design tokens: semantic aliases onto Tailwind's default palette.
+ * `inline` is required because values reference other CSS variables (next/font sets
+ * --font-inter on <html>). Rules and token table: docs/Frontend-Conventions.md.
+ */
+@theme inline {
+  /* Typography; type scale, spacing and breakpoints stay Tailwind defaults */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  /* Surfaces and text */
+  --color-background: var(--color-white);
+  --color-foreground: var(--color-slate-900);
+  --color-surface: var(--color-white);
+  --color-surface-muted: var(--color-slate-50);
+  --color-muted-foreground: var(--color-slate-600);
+  --color-border: var(--color-slate-200);
+  --color-input: var(--color-slate-300);
+  --color-ring: var(--color-indigo-500);
+
+  /* Brand and actions */
+  --color-primary: var(--color-indigo-600);
+  --color-primary-hover: var(--color-indigo-700);
+  --color-primary-foreground: var(--color-white);
+  --color-secondary: var(--color-slate-100);
+  --color-secondary-foreground: var(--color-slate-900);
+
+  /* Status: application/job badges and alerts (text token on its -subtle background) */
+  --color-success: var(--color-emerald-700);
+  --color-success-subtle: var(--color-emerald-50);
+  --color-warning: var(--color-amber-700);
+  --color-warning-subtle: var(--color-amber-50);
+  --color-danger: var(--color-red-700);
+  --color-danger-subtle: var(--color-red-50);
+  --color-info: var(--color-sky-700);
+  --color-info-subtle: var(--color-sky-50);
+
+  /* Shape and elevation */
+  --radius-control: var(--radius-md);
+  --radius-card: var(--radius-xl);
+  --shadow-card: var(--shadow-sm);
+}
