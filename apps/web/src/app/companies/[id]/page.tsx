@@ -6,13 +6,13 @@ import { useParams } from 'next/navigation';
 interface Company {
   id: string;
   name: string;
-  address: string;
-  industry?: string;
-  companySize?: string;
-  website?: string;
-  logoUrl?: string;
-  description?: string;
-  status: string;
+  address: string | null;
+  industry: string | null;
+  companySize: string | null;
+  website: string | null;
+  logoUrl: string | null;
+  description: string | null;
+  moderationStatus: string;
 }
 
 export default function PublicCompanyDetailPage() {
@@ -25,9 +25,7 @@ export default function PublicCompanyDetailPage() {
   useEffect(() => {
     if (!id) return;
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-
-    fetch(`${apiUrl}/api/companies/${id}`)
+    fetch(`/api/companies/${id}`)
       .then((res) => {
         if (!res.ok) throw new Error('Not found or pending');
         return res.json();

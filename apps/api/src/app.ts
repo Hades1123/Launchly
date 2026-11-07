@@ -8,6 +8,8 @@ import { createAuthService } from '@/modules/auth/auth.service';
 import { createAuthRouter } from '@/modules/auth/auth.routes';
 import { createGoogleProvider } from '@/providers/google/google.provider';
 import { createMailProvider } from '@/providers/mail/mail-provider';
+import { createCompanyRouter } from '@/modules/company/company.routes';
+import { createCompanyService } from '@/modules/company/company.service';
 import { healthRouter } from '@/modules/health/health.routes';
 import { notFound } from '@/middlewares/not-found';
 import { errorHandler } from '@/middlewares/error-handler';
@@ -31,6 +33,7 @@ export function createApp(
   app.use('/health', healthRouter);
 
   app.use('/auth', createAuthRouter(authService));
+  app.use('/companies', createCompanyRouter(authService, createCompanyService(prisma)));
   app.use(notFound);
   app.use(errorHandler);
   return app;

@@ -60,11 +60,11 @@ export default function CompanyRegisterPage() {
     setSuccessMessage(null);
 
     try {
-      const res = await fetch('http://localhost:4000/api/companies', {
+      const res = await fetch('/api/companies', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': 'recruiter-mock-id', // ID giả lập cho Recruiter
+          // TODO: send `Authorization: Bearer <accessToken>` once web auth lands.
         },
         body: JSON.stringify({
           ...formData,
@@ -75,7 +75,7 @@ export default function CompanyRegisterPage() {
       const result = await res.json();
 
       if (!res.ok) {
-        setErrors({ general: result.error || 'Đăng ký công ty thất bại.' });
+        setErrors({ general: result.error?.message || 'Đăng ký công ty thất bại.' });
       } else {
         setSuccessMessage('Đăng ký công ty thành công! Hồ sơ đang ở trạng thái chờ duyệt (Pending).');
         setFormData({
@@ -89,7 +89,7 @@ export default function CompanyRegisterPage() {
         setLogoPreview(null);
       }
     } catch {
-      setErrors({ general: 'Không thể kết nối tới máy chủ API (Port 4000).' });
+      setErrors({ general: 'Không thể kết nối tới máy chủ API (/api).' });
     } finally {
       setIsSubmitting(false);
     }
