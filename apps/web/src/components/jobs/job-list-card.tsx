@@ -1,16 +1,46 @@
 import Link from 'next/link';
 import { CompanyAvatar } from '@/components/jobs/company-avatar';
-import { MatchScoreBadge } from '@/components/jobs/match-score-badge';
-import type { Job } from '@/components/jobs/mock-jobs';
 import { Badge } from '@/components/ui/badge';
+import type { BadgeTone } from '@/components/ui/badge';
 import { cn } from '@/lib/cn';
+import type { PublicJobItem } from '@launchly/shared';
 
-type JobListCardProps = { job: Job; selected: boolean };
+type JobListCardProps = {
+  job: PublicJobItem;
+  selected?: boolean;
+  queryString?: string;
+};
 
-export function JobListCard({ job, selected }: JobListCardProps) {
+const levelConfig: Record<PublicJobItem['level'], { label: string; tone: BadgeTone }> = {
+  INTERN: { label: 'Intern', tone: 'neutral' },
+  FRESHER: { label: 'Fresher', tone: 'success' },
+  SENIOR: { label: 'Senior', tone: 'primary' },
+};
+
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return 'CO';
+  const first = parts[0]?.[0] ?? 'C';
+  const last = parts[parts.length - 1]?.[0] ?? first;
+  return (first + last).toUpperCase();
+}
+
+function formatSalary(min: number | null, max: number | null): string {
+  if (min !== null && max !== null) return `$${min} - $${max}`;
+  if (min !== null) return `From $${min}`;
+  if (max !== null) return `Up to $${max}`;
+  return 'Negotiable';
+}
+
+export function JobListCard({ job, selected, queryString }: JobListCardProps) {
+  const initials = getInitials(job.company.name);
+  const salaryText = formatSalary(job.salaryMin, job.salaryMax);
+  const levelInfo = levelConfig[job.level];
+  const href = `/jobs?job=${job.id}${queryString ? `&${queryString}` : ''}`;
+
   return (
     <Link
-      href={`/jobs?job=${job.id}`}
+      href={href}
       scroll={false}
       aria-current={selected ? 'true' : undefined}
       className={cn(
@@ -21,34 +51,46 @@ export function JobListCard({ job, selected }: JobListCardProps) {
           : 'shadow-card hover:bg-surface-muted hover:shadow-card-hover',
       )}
     >
-      <div className="mb-1 flex items-start justify-between gap-1">
-        <div className="flex items-center gap-2">
-          <CompanyAvatar initials={job.companyInitials} />
+      <div className="mb-2 flex items-start justify-between gap-2">
+        <div className="flex items-center gap-3">
+          <CompanyAvatar initials={initials} />
           <div>
-            <h3 className="font-display text-sm leading-snug font-semibold transition-colors group-hover:text-primary">
-              {job.shortTitle}
+            <h3 className="font-display text-sm leading-snug font-semibold text-foreground transition-colors group-hover:text-primary">
+              {job.title}
             </h3>
-            <p className="text-xs text-muted-foreground">{job.company}</p>
+            <p className="text-xs text-muted-foreground">{job.company.name}</p>
           </div>
         </div>
-        <MatchScoreBadge score={job.matchScore} />
+        <Badge tone={levelInfo.tone} shape="pill">
+          {levelInfo.label}
+        </Badge>
       </div>
 
-      <div className="my-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
-        <span className="font-display text-sm font-semibold text-primary">{job.salaryRange}</span>
+      <div className="my-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+        <span className="font-display text-xs font-semibold text-primary">{salaryText}</span>
         <span aria-hidden className="text-subtle-foreground">
           ·
         </span>
-        <span>{job.district}</span>
+        <span>{job.location}</span>
+        {job.industry && (
+          <>
+            <span aria-hidden className="text-subtle-foreground">
+              ·
+            </span>
+            <span className="text-subtle-foreground">{job.industry}</span>
+          </>
+        )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-1 pt-1">
-        {job.tags.map((tag) => (
-          <Badge key={tag.label} tone={tag.tone}>
-            {tag.label}
-          </Badge>
-        ))}
-      </div>
+      {job.requirements.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1 pt-1">
+          {job.requirements.slice(0, 3).map((req) => (
+            <Badge key={req} tone="neutral" shape="tag">
+              {req}
+            </Badge>
+          ))}
+        </div>
+      )}
     </Link>
   );
 }

@@ -12,15 +12,12 @@ import { createCompanyRouter } from '@/modules/company/company.routes';
 import { createCompanyService } from '@/modules/company/company.service';
 import { healthRouter } from '@/modules/health/health.routes';
 import { candidateRouter } from '@/modules/candidate/candidate.routes';
+import { jobRouter } from '@/modules/job/job.routes';
 import { notFound } from '@/middlewares/not-found';
 import { errorHandler } from '@/middlewares/error-handler';
 
 export function createApp(
-  authService = createAuthService(
-    prisma,
-    createMailProvider(),
-    createGoogleProvider(),
-  ),
+  authService = createAuthService(prisma, createMailProvider(), createGoogleProvider()),
 ) {
   const app = express();
   if (env.TRUST_PROXY_HOPS > 0) {
@@ -34,6 +31,8 @@ export function createApp(
   app.use('/health', healthRouter);
   app.use('/api/candidates', candidateRouter);
   app.use('/candidates', candidateRouter);
+  app.use('/api/jobs', jobRouter);
+  app.use('/jobs', jobRouter);
 
   app.use('/auth', createAuthRouter(authService));
   app.use('/companies', createCompanyRouter(authService, createCompanyService(prisma)));
