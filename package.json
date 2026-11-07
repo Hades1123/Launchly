@@ -16,7 +16,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "db:up": "docker compose up -d",
-    "db:down": "docker compose down",
+    "db:down": "docker compose --profile \"*\" down",
     "db:migrate": "pnpm --filter @launchly/api db:migrate",
     "db:seed": "pnpm --filter @launchly/api db:seed"
   },

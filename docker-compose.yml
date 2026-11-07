@@ -1,5 +1,10 @@
 name: launchly
 
+# DATABASE_URL is forced to the in-network host; everything else comes from the
+# git-ignored apps/api/.env.docker (see apps/api/.env.example for the keys).
+x-api-env: &api-env
+  DATABASE_URL: postgresql://launchly:launchly@postgres:5432/launchly
+
 services:
   postgres:
     container_name: launchly-postgres
@@ -17,5 +22,47 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: migrator
+    profiles: [app, seed]
+    env_file: apps/api/.env.docker
+    environment: *api-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: api
+    profiles: [app]
+    env_file: apps/api/.env.docker
+    environment: *api-env
+    ports:
+      - '${API_PORT:-4000}:4000'
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  seed:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: migrator
+    profiles: [seed]
+    env_file: apps/api/.env.docker
+    environment:
+      <<: *api-env
+      NODE_ENV: development
+    command: ['prisma', 'db', 'seed']
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
 volumes:
   pgdata:
