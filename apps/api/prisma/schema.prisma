@@ -211,6 +211,8 @@ model JobStage {
   name         String
   description  String?
   position     Int
+  format       String?
+  estimatedDurationMinutes Int?
   job          Job           @relation(fields: [jobId], references: [id], onDelete: Cascade)
   applications Application[]
 
