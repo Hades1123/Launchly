@@ -1,43 +1,94 @@
 @import 'tailwindcss';
 
 /*
- * Launchly design tokens: semantic aliases onto Tailwind's default palette.
- * `inline` is required because values reference other CSS variables (next/font sets
- * --font-inter on <html>). Rules and token table: docs/Frontend-Conventions.md.
+ * Launchly design tokens, refined from the Google Stitch project "Launchly Frontend Web Platform".
+ * Values live only here; comments name the Stitch role or the intended use. `inline` is required
+ * because values reference other CSS variables (next/font sets the font variables on <html>).
+ * Rules and token tables: docs/Frontend-Conventions.md.
  */
 @theme inline {
-  /* Typography; type scale, spacing and breakpoints stay Tailwind defaults */
+  /* Fonts: pair font-display with display/headline/title sizes, font-mono with code-data */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-plus-jakarta-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, monospace;
+
+  /* Type scale (1rem = 16px); Tailwind default sizes stay defined but are not used in components */
+  --text-display-hero: 3rem; /* landing hero */
+  --text-display-hero--line-height: 3.5rem;
+  --text-display-hero--letter-spacing: -0.025em;
+  --text-display-hero--font-weight: 700;
+  --text-headline-lg: 2rem; /* page title, desktop */
+  --text-headline-lg--line-height: 2.5rem;
+  --text-headline-lg--letter-spacing: -0.02em;
+  --text-headline-lg--font-weight: 600;
+  --text-headline-md: 1.5rem; /* page title, mobile; section title */
+  --text-headline-md--line-height: 2rem;
+  --text-headline-md--letter-spacing: -0.015em;
+  --text-headline-md--font-weight: 600;
+  --text-headline-sm: 1.25rem; /* card group title */
+  --text-headline-sm--line-height: 1.75rem;
+  --text-headline-sm--letter-spacing: -0.01em;
+  --text-headline-sm--font-weight: 600;
+  --text-title-md: 1rem; /* card title */
+  --text-title-md--line-height: 1.5rem;
+  --text-title-md--font-weight: 600;
+  --text-title-sm: 0.875rem; /* small card title, table header */
+  --text-title-sm--line-height: 1.25rem;
+  --text-title-sm--font-weight: 600;
+  --text-body-lg: 1rem; /* lead paragraph */
+  --text-body-lg--line-height: 1.625rem;
+  --text-body-lg--font-weight: 400;
+  --text-body-md: 0.875rem; /* default body text */
+  --text-body-md--line-height: 1.375rem;
+  --text-body-md--font-weight: 400;
+  --text-body-sm: 0.75rem; /* helper text, metadata */
+  --text-body-sm--line-height: 1.125rem;
+  --text-body-sm--font-weight: 400;
+  --text-label-md: 0.8125rem; /* buttons, form labels, badges */
+  --text-label-md--line-height: 1.125rem;
+  --text-label-md--letter-spacing: 0.01em;
+  --text-label-md--font-weight: 500;
+  --text-label-sm: 0.6875rem; /* chips, overlines */
+  --text-label-sm--line-height: 1rem;
+  --text-label-sm--letter-spacing: 0.04em;
+  --text-label-sm--font-weight: 600;
+  --text-code-data: 0.75rem; /* scores, salaries, IDs (with font-mono) */
+  --text-code-data--line-height: 1rem;
+  --text-code-data--font-weight: 500;
 
   /* Surfaces and text */
-  --color-background: var(--color-white);
-  --color-foreground: var(--color-slate-900);
-  --color-surface: var(--color-white);
-  --color-surface-muted: var(--color-slate-50);
-  --color-muted-foreground: var(--color-slate-600);
-  --color-border: var(--color-slate-200);
-  --color-input: var(--color-slate-300);
-  --color-ring: var(--color-indigo-500);
+  --color-background: #faf8ff; /* background */
+  --color-foreground: #131b2e; /* on-surface */
+  --color-surface: #ffffff; /* surface-container-lowest */
+  --color-surface-muted: #f2f3ff; /* surface-container-low */
+  --color-muted-foreground: #464555; /* on-surface-variant */
+  --color-border: #c7c4d8; /* outline-variant; decorative dividers only */
+  --color-input: #777587; /* outline; control boundaries, never text */
+  --color-ring: #4f46e5; /* primary-container */
 
   /* Brand and actions */
-  --color-primary: var(--color-indigo-600);
-  --color-primary-hover: var(--color-indigo-700);
-  --color-primary-foreground: var(--color-white);
-  --color-secondary: var(--color-slate-100);
-  --color-secondary-foreground: var(--color-slate-900);
+  --color-primary: #3525cd; /* primary */
+  --color-primary-hover: #4f46e5; /* primary-container */
+  --color-primary-foreground: #ffffff; /* on-primary */
+  --color-primary-subtle: #e2dfff; /* primary-fixed; brand/AI chips, selected nav */
+  --color-secondary: #e2e7ff; /* surface-container-high; tonal buttons */
+  --color-secondary-hover: #dae2fd; /* surface-container-highest */
+  --color-secondary-foreground: #131b2e; /* on-surface */
 
-  /* Status: application/job badges and alerts (text token on its -subtle background) */
-  --color-success: var(--color-emerald-700);
-  --color-success-subtle: var(--color-emerald-50);
-  --color-warning: var(--color-amber-700);
-  --color-warning-subtle: var(--color-amber-50);
-  --color-danger: var(--color-red-700);
-  --color-danger-subtle: var(--color-red-50);
-  --color-info: var(--color-sky-700);
-  --color-info-subtle: var(--color-sky-50);
+  /* Status: text token on its -subtle background (Stitch calls success "secondary") */
+  --color-success: #006c49; /* secondary */
+  --color-success-subtle: #6cf8bb; /* secondary-container */
+  --color-warning: #684000; /* tertiary */
+  --color-warning-subtle: #ffddb8; /* tertiary-fixed */
+  --color-danger: #ba1a1a; /* error */
+  --color-danger-subtle: #ffdad6; /* error-container */
+  --color-info: var(--color-sky-700); /* no Stitch role */
+  --color-info-subtle: var(--color-sky-50); /* no Stitch role */
 
-  /* Shape and elevation */
-  --radius-control: var(--radius-md);
+  /* Shape, elevation, and layout */
+  --radius-control: var(--radius-lg);
   --radius-card: var(--radius-xl);
   --shadow-card: var(--shadow-sm);
+  --shadow-header: 0 1px 8px rgb(0 0 0 / 0.04);
+  --container-page: 90rem;
 }

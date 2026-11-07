@@ -14,15 +14,15 @@ export default async function Home() {
   }
   return (
     <main className="mx-auto max-w-2xl p-8">
-      <div className="rounded-card border border-border bg-surface p-6 shadow-card">
-        <h1 className="text-2xl font-bold">Launchly</h1>
+      <div className="rounded-card bg-surface p-6 shadow-card">
+        <h1 className="font-display text-headline-md">Launchly</h1>
         <p className="mt-2 text-muted-foreground">
           API status:{' '}
           <span
             className={
               apiUp
-                ? 'rounded-control bg-success-subtle px-2 py-0.5 font-medium text-success'
-                : 'rounded-control bg-danger-subtle px-2 py-0.5 font-medium text-danger'
+                ? 'rounded-full bg-success-subtle px-2 py-0.5 text-label-md text-success'
+                : 'rounded-full bg-danger-subtle px-2 py-0.5 text-label-md text-danger'
             }
           >
             {status}
