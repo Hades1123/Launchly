@@ -76,10 +76,8 @@ enum CompanyModerationStatus {
 
 enum JobLevel {
   INTERN
-  JUNIOR
-  MID
+  FRESHER
   SENIOR
-  LEAD
 }
 
 enum JobPublicationStatus {
