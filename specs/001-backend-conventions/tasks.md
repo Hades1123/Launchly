@@ -30,7 +30,7 @@ description: 'Task list for Backend Conventions and API Foundation (SCRUM-33)'
 
 **Purpose**: Make the API test suite runnable with no `.env` and no database.
 
-- [ ] T001 (issue T1, R7) Add the `test.env` block to `apps/api/vitest.config.ts` (`NODE_ENV=test`, placeholder `DATABASE_URL`, ≥32-char `JWT_SECRET` and `JWT_REFRESH_SECRET`) so `src/lib/env.ts`'s import-time `parse` succeeds without a real env or DB. Config-only (exempt from RED→GREEN per constitution L111). **Verify**: `pn --filter @launchly/api test` exits 0; stop if env parsing still fails.
+- [X] T001 (issue T1, R7) Add the `test.env` block to `apps/api/vitest.config.ts` (`NODE_ENV=test`, placeholder `DATABASE_URL`, ≥32-char `JWT_SECRET` and `JWT_REFRESH_SECRET`) so `src/lib/env.ts`'s import-time `parse` succeeds without a real env or DB. Config-only (exempt from RED→GREEN per constitution L111). **Verify**: `pn --filter @launchly/api test` exits 0; stop if env parsing still fails.
 
 **Checkpoint**: Tests boot with no `.env` / no database.
 
