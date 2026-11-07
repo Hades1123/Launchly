@@ -20,19 +20,20 @@ pn --filter @launchly/api test -- path/to/file.test.ts   # single test file
 pn --filter @launchly/api exec prisma <cmd>              # any Prisma CLI command
 ```
 
-No tests exist yet. There is no CI. Prisma command reference: `docs/Prisma-Cheatsheet.md`.
+Tests are colocated `*.test.ts` (Vitest; API endpoints via supertest on `createApp()`). There is no CI. Prisma command reference: `docs/Prisma-Cheatsheet.md`.
 
 ## Architecture
 
 - **Shared package is source-only.** `@launchly/shared` exports `./src/index.ts` directly (no build step). Next.js consumes it via `transpilePackages`; the API runs it through `tsx` in dev and bundles it with `tsup` (`noExternal`) for production. Define request/response shapes as Zod schemas there and export `z.infer` types; the API validates with them and the web app reuses them. Never expose Prisma types to the frontend; map to shared DTOs.
 - **Web → API goes through a Next.js rewrite.** `apps/web/next.config.ts` proxies `/api/:path*` to `${API_URL}/:path*` (default `http://localhost:4000`), so the API route `/health` is `/api/health` from the browser. Server components can call `API_URL` directly.
-- **API layering** (route → controller → service → Prisma), organised in `apps/api/src/modules/<feature>/`. Cross-cutting code is in `middlewares/` (error handler) and `lib/` (`env.ts` Zod-validated env that fails fast, `prisma.ts`). `providers/` is reserved for swappable implementations (storage: local/S3, mail: SMTP/SES) selected by `STORAGE_DRIVER` / `MAIL_DRIVER`; business code must depend on the abstraction, not the vendor.
+- **API layering** (route → controller → service → Prisma), organised in `apps/api/src/modules/<feature>/`. Cross-cutting code is in `middlewares/` (error handler, validate, not-found) and `lib/` (`env.ts` Zod-validated env that fails fast, `prisma.ts`). `providers/` is reserved for swappable implementations (storage: local/S3, mail: SMTP/SES) selected by `STORAGE_DRIVER` / `MAIL_DRIVER`; business code must depend on the abstraction, not the vendor.
 - **Prisma 7 specifics.** Datasource URL lives in `apps/api/prisma.config.ts`, not in `schema.prisma`. The client is generated into `apps/api/src/generated/prisma` (git-ignored; run `db:generate` after cloning) and needs a driver adapter: `PrismaPg` in `lib/prisma.ts`. Import it from `@/generated/prisma/client`.
 - **Auth design (not yet implemented):** short-lived JWT access token plus refresh token in an httpOnly cookie; Google OAuth verified on the backend. Roles: `CANDIDATE`, `RECRUITER`, `ADMIN`.
 
 ## Conventions and gotchas
 
 - Inside `apps/api` and `apps/web`, import same-app files with the `@/` alias (maps to `src/`), not `../` paths.
+- Backend code follows `docs/Backend-Conventions.md`: signal failures by throwing `AppError` and validate input with `validate({ body, params, query })` before the controller; never build error responses with `res.status().json()` — the central `errorHandler` maps `AppError`/`ZodError` to the shared `apiErrorSchema`.
 - Frontend UI follows `docs/Frontend-Conventions.md`: style with the semantic tokens from `apps/web/src/app/globals.css` (`bg-primary`, `text-muted-foreground`, `rounded-card`); never raw palette classes (`bg-indigo-600`) or arbitrary values (`bg-[#4f46e5]`).
 - Commits follow Conventional Commits with scopes `api`, `web`, `shared`, `db`, `deps` (see `CONTRIBUTING.md`).
 - TypeScript is pinned to `~6.0.3` because `typescript-eslint` does not support 7.x. Prisma is pinned to 7.10.1 (npm `latest` is an 8 RC).

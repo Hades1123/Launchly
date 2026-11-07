@@ -23,7 +23,7 @@ See [`docs/Launchly-Tech-Stack-Architecture-v1.md`](docs/Launchly-Tech-Stack-Arc
 │  │  ├─ prisma/         # schema.prisma and migrations
 │  │  └─ src/
 │  │     ├─ lib/         # env validation, Prisma client
-│  │     ├─ middlewares/ # error handler, (auth, validation to come)
+│  │     ├─ middlewares/ # error handler, validate, not-found (auth to come)
 │  │     ├─ modules/     # feature modules: routes, controller, service
 │  │     └─ providers/   # swappable storage / mail implementations
 │  └─ web/               # Next.js app (port 3000)

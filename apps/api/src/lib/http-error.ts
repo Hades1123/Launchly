@@ -1,10 +1,16 @@
-export class HttpError extends Error {
+import type { ErrorCode } from '@launchly/shared';
+import { AppError } from '@/lib/app-error';
+
+export class HttpError extends AppError {
   constructor(
-    public readonly status: number,
-    public readonly code: string,
+    status: number,
+    code: ErrorCode,
     message: string,
   ) {
-    super(message);
+    super(code, message);
+    if (status !== this.status) {
+      throw new RangeError(`HTTP status ${status} does not match error code ${code}`);
+    }
     this.name = 'HttpError';
   }
 }
