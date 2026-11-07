@@ -13,16 +13,16 @@ export const errorStatus: Record<ErrorCode, number> = {
 };
 
 export class AppError extends Error {
-  readonly code: ErrorCode;
   readonly status: number;
-  readonly details?: ErrorDetail[];
 
-  constructor(code: ErrorCode, message: string, details?: ErrorDetail[]) {
+  constructor(
+    readonly code: ErrorCode,
+    message: string,
+    readonly details?: ErrorDetail[],
+  ) {
     super(message);
     this.name = 'AppError';
-    this.code = code;
     this.status = errorStatus[code];
-    this.details = details;
   }
 }
 
