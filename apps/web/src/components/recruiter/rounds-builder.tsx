@@ -8,6 +8,7 @@ import {
   MAX_ROUNDS,
   MIN_ROUND_DURATION_MINUTES,
   roundsResponseSchema,
+  validateRoundDrafts,
   type RoundFormat,
 } from '@launchly/shared';
 import { Button } from '@/components/ui/button';
@@ -28,22 +29,14 @@ type RowErrors = { name?: string; format?: string; duration?: string };
 const newKey = () => crypto.randomUUID();
 const emptyRow = (): Row => ({ key: newKey(), name: '', format: '', duration: '' });
 
-export function validateRows(rows: Row[]): RowErrors[] {
-  return rows.map((row) => {
-    const errors: RowErrors = {};
-    if (!row.name.trim()) errors.name = 'Tên vòng là bắt buộc.';
-    if (!row.format) errors.format = 'Hãy chọn hình thức.';
-    const minutes = Number(row.duration);
-    if (
-      !row.duration.trim() ||
-      !Number.isInteger(minutes) ||
-      minutes < MIN_ROUND_DURATION_MINUTES ||
-      minutes > MAX_ROUND_DURATION_MINUTES
-    ) {
-      errors.duration = `Nhập số phút từ ${MIN_ROUND_DURATION_MINUTES} đến ${MAX_ROUND_DURATION_MINUTES}.`;
-    }
-    return errors;
-  });
+function validateRows(rows: Row[]): RowErrors[] {
+  return validateRoundDrafts(rows).map((errors) => ({
+    ...(errors.name && { name: 'Tên vòng là bắt buộc.' }),
+    ...(errors.format && { format: 'Hãy chọn hình thức.' }),
+    ...(errors.duration && {
+      duration: `Nhập số phút từ ${MIN_ROUND_DURATION_MINUTES} đến ${MAX_ROUND_DURATION_MINUTES}.`,
+    }),
+  }));
 }
 
 const fieldClass = (error?: string) =>

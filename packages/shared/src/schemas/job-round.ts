@@ -39,3 +39,34 @@ export type RoundDto = z.infer<typeof roundDtoSchema>;
 
 export const roundsResponseSchema = z.object({ rounds: z.array(roundDtoSchema) });
 export type RoundsResponse = z.infer<typeof roundsResponseSchema>;
+
+/** A round as typed into a form: every field is still a string. */
+export type RoundDraft = { name: string; format: string; duration: string };
+export type RoundDraftField = 'name' | 'format' | 'duration';
+export type RoundDraftErrors = Partial<Record<RoundDraftField, true>>;
+
+const draftFieldByIssuePath: Record<string, RoundDraftField> = {
+  name: 'name',
+  format: 'format',
+  estimatedDurationMinutes: 'duration',
+};
+
+/** Validates form drafts with `roundInputSchema` so client and server share one rule set. */
+export function validateRoundDrafts(drafts: RoundDraft[]): RoundDraftErrors[] {
+  return drafts.map((draft) => {
+    const duration = draft.duration.trim();
+    const result = roundInputSchema.safeParse({
+      name: draft.name,
+      format: draft.format,
+      estimatedDurationMinutes: duration === '' ? undefined : Number(duration),
+    });
+    const errors: RoundDraftErrors = {};
+    if (!result.success) {
+      for (const issue of result.error.issues) {
+        const field = draftFieldByIssuePath[String(issue.path[0])];
+        if (field) errors[field] = true;
+      }
+    }
+    return errors;
+  });
+}
