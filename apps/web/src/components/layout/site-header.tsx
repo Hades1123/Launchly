@@ -1,10 +1,8 @@
 import { Bell, Bookmark, Search } from 'lucide-react';
 import { BrandLogo } from '@/components/layout/brand-logo';
 import { MainNav } from '@/components/layout/main-nav';
+import { AuthHeaderActions } from '@/components/layout/auth-header-actions';
 import { Button } from '@/components/ui/button';
-
-// Placeholder until auth is implemented and provides the signed-in candidate.
-const demoUser = { name: 'Nguyễn Minh Anh', headline: 'Fresher Frontend', initials: 'MA' };
 
 export function SiteHeader() {
   return (
@@ -48,20 +46,7 @@ export function SiteHeader() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 pl-2">
-            <div className="hidden text-right 2xl:block">
-              <div className="font-display text-sm leading-tight font-semibold">
-                {demoUser.name}
-              </div>
-              <div className="text-xs text-subtle-foreground">{demoUser.headline}</div>
-            </div>
-            <span
-              aria-label={demoUser.name}
-              className="flex size-8 items-center justify-center rounded-full bg-primary-subtle text-xs font-semibold text-primary-subtle-foreground ring-2 ring-primary-subtle"
-            >
-              {demoUser.initials}
-            </span>
-          </div>
+          <AuthHeaderActions />
         </div>
       </div>
     </header>

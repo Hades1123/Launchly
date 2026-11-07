@@ -18,6 +18,7 @@ import type { MailProvider } from '@/providers/mail/mail-provider';
 import type {
   GoogleIdentityProvider,
 } from '@/providers/google/google.provider';
+import { createAuthEmail } from '@/providers/mail/auth-email-templates';
 import type { UserDto } from '@launchly/shared';
 
 const ACCESS_TOKEN_SECONDS = 15 * 60;
@@ -135,9 +136,7 @@ export function createAuthService(
     try {
       await mail.send({
         to: user.email,
-        subject: 'Verify your Launchly email',
-        text: `Verify your email within 24 hours: ${link}`,
-        html: `<p>Verify your email within 24 hours.</p><p><a href="${link}">Verify email</a></p>`,
+        ...createAuthEmail('verification', link),
       });
     } catch {
       await prisma.authToken.deleteMany({ where: { tokenHash: hashToken(token) } });
@@ -370,9 +369,7 @@ export function createAuthService(
         try {
           await mail.send({
             to: matchingEmail.email,
-            subject: 'Confirm Google sign-in for Launchly',
-            text: `Confirm this Google account link within 30 minutes: ${link}`,
-            html: `<p>Confirm this Google account link within 30 minutes.</p><p><a href="${link}">Confirm account link</a></p>`,
+            ...createAuthEmail('google-link', link),
           });
         } catch {
           await prisma.authToken.deleteMany({
@@ -477,9 +474,7 @@ export function createAuthService(
         try {
           await mail.send({
             to: user.email,
-            subject: 'Reset your Launchly password',
-            text: `Reset your password within 30 minutes: ${link}`,
-            html: `<p>Reset your password within 30 minutes.</p><p><a href="${link}">Reset password</a></p>`,
+            ...createAuthEmail('password-reset', link),
           });
         } catch {
           await prisma.authToken.deleteMany({ where: { tokenHash: hashToken(token) } });
