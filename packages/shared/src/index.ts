@@ -7,3 +7,4 @@ export * from './schemas/job-salary';
 export * from './schemas/job';
 export * from './constants/job';
 export * from './utils/vietnamese';
+export * from './schemas/job-round';
