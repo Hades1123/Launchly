@@ -8,6 +8,7 @@ Target structure. Create folders only when a ticket needs them.
 
 - `app/`: routes, layouts, and `globals.css`.
 - `components/ui/`: generic primitives (button, input, badge).
+- `components/layout/`: app shell (header, nav, footer).
 - `components/<feature>/`: feature-specific components.
 - `lib/`: helpers and API client code.
 
@@ -42,33 +43,45 @@ grep -rnE '\b(bg|text|border|ring|from|to|via|fill|stroke|outline|divide)-(slate
 
 ## 6. Token table
 
-| CSS variable                    | Example utility                     | Palette value | Intended use                              |
-| ------------------------------- | ----------------------------------- | ------------- | ----------------------------------------- |
-| `--font-sans`                   | `font-sans`                         | Inter         | Default font (latin and Vietnamese)       |
-| `--color-background`            | `bg-background`                     | `white`       | Page background                           |
-| `--color-foreground`            | `text-foreground`                   | `slate-900`   | Default text                              |
-| `--color-surface`               | `bg-surface`                        | `white`       | Cards and panels                          |
-| `--color-surface-muted`         | `bg-surface-muted`                  | `slate-50`    | Subtle sections, table stripes            |
-| `--color-muted-foreground`      | `text-muted-foreground`             | `slate-600`   | Secondary text                            |
-| `--color-border`                | `border-border`                     | `slate-200`   | Dividers and card borders                 |
-| `--color-input`                 | `border-input`                      | `slate-300`   | Form control borders                      |
-| `--color-ring`                  | `ring-ring`                         | `indigo-500`  | Focus ring                                |
-| `--color-primary`               | `bg-primary`                        | `indigo-600`  | Primary buttons and links                 |
-| `--color-primary-hover`         | `hover:bg-primary-hover`            | `indigo-700`  | Primary hover state                       |
-| `--color-primary-foreground`    | `text-primary-foreground`           | `white`       | Text on `primary`                         |
-| `--color-secondary`             | `bg-secondary`                      | `slate-100`   | Secondary buttons                         |
-| `--color-secondary-foreground`  | `text-secondary-foreground`         | `slate-900`   | Text on `secondary`                       |
-| `--color-success`               | `text-success`                      | `emerald-700` | Success text and icons                    |
-| `--color-success-subtle`        | `bg-success-subtle`                 | `emerald-50`  | Success badge or alert background         |
-| `--color-warning`               | `text-warning`                      | `amber-700`   | Warning text and icons                    |
-| `--color-warning-subtle`        | `bg-warning-subtle`                 | `amber-50`    | Warning badge or alert background         |
-| `--color-danger`                | `text-danger`                       | `red-700`     | Error text and icons                      |
-| `--color-danger-subtle`         | `bg-danger-subtle`                  | `red-50`      | Error badge or alert background           |
-| `--color-info`                  | `text-info`                         | `sky-700`     | Informational text and icons              |
-| `--color-info-subtle`           | `bg-info-subtle`                    | `sky-50`      | Informational badge or alert background   |
-| `--radius-control`              | `rounded-control`                   | `radius-md`   | Buttons and inputs                        |
-| `--radius-card`                 | `rounded-card`                      | `radius-xl`   | Cards and panels                          |
-| `--shadow-card`                 | `shadow-card`                       | `shadow-sm`   | Card elevation                            |
+Values come from the "Career Launch Engine" design system in the Stitch project "Launchly Frontend Web Platform". Hex values are Stitch's Material-style roles; `subtle-foreground` is darkened from Stitch `outline` (`#777587`) to pass 4.5:1 on tinted surfaces.
+
+| CSS variable                         | Example utility                        | Value (Stitch role)                    | Intended use                               |
+| ------------------------------------ | -------------------------------------- | -------------------------------------- | ------------------------------------------ |
+| `--font-sans`                        | `font-sans`                            | Inter                                  | Body text, controls, data (default)        |
+| `--font-display`                     | `font-display`                         | Plus Jakarta Sans                      | Headings, titles, salary figures           |
+| `--font-mono`                        | `font-mono`                            | JetBrains Mono                         | Durations, counters, tabular data          |
+| `--color-background`                 | `bg-background`                        | `#faf8ff` (surface)                    | Page background                            |
+| `--color-foreground`                 | `text-foreground`                      | `#131b2e` (on-surface)                 | Default text                               |
+| `--color-surface`                    | `bg-surface`                           | `white` (surface-container-lowest)     | Cards and panels                           |
+| `--color-surface-muted`              | `bg-surface-muted`                     | `#f2f3ff` (surface-container-low)      | Tiles inside cards, inputs, subtle areas   |
+| `--color-surface-strong`             | `bg-surface-strong`                    | `#eaedff` (surface-container)          | Neutral tags, hover on muted tiles         |
+| `--color-muted-foreground`           | `text-muted-foreground`                | `#464555` (on-surface-variant)         | Secondary text                             |
+| `--color-subtle-foreground`          | `text-subtle-foreground`               | `#64627a` (outline, darkened)          | Labels, metadata, placeholders, icons      |
+| `--color-border`                     | `border-border`                        | `#dae2fd` (surface-container-highest)  | Dividers, when a surface shift is not enough |
+| `--color-input`                      | `border-input`                         | `#c7c4d8` (outline-variant)            | Form control borders                       |
+| `--color-ring`                       | `ring-ring`                            | `#4f46e5`                              | Focus ring                                 |
+| `--color-primary`                    | `bg-primary`                           | `#4f46e5` (primary-container)          | Primary buttons, active nav, links         |
+| `--color-primary-hover`              | `hover:bg-primary-hover`               | `#3525cd` (primary)                    | Primary hover state                        |
+| `--color-primary-foreground`         | `text-primary-foreground`              | `white`                                | Text on `primary`, `success`, `danger`     |
+| `--color-primary-subtle`             | `bg-primary-subtle`                    | `#e2dfff` (primary-fixed)              | Soft buttons, AI badges, highlight panels  |
+| `--color-primary-subtle-foreground`  | `text-primary-subtle-foreground`       | `#3323cc` (on-primary-fixed-variant)   | Text on `primary-subtle`                   |
+| `--color-secondary`                  | `bg-secondary`                         | `#e2e7ff` (surface-container-high)     | Secondary/icon buttons, ghost hover        |
+| `--color-secondary-foreground`       | `text-secondary-foreground`            | `#131b2e`                              | Text on `secondary`                        |
+| `--color-success`                    | `text-success`                         | `#006c49` (secondary)                  | Match scores, verified states, final step  |
+| `--color-success-subtle`             | `bg-success-subtle`                    | `#6cf8bb` (secondary-container)        | Success badge or alert background          |
+| `--color-warning`                    | `text-warning`                         | `#885500` (tertiary-container)         | Skill gaps, pending, time-sensitive        |
+| `--color-warning-subtle`             | `bg-warning-subtle`                    | `#ffddb8` (tertiary-fixed)             | Warning badge or alert background          |
+| `--color-danger`                     | `text-danger`                          | `#ba1a1a` (error)                      | Error text and icons                       |
+| `--color-danger-subtle`              | `bg-danger-subtle`                     | `#ffdad6` (error-container)            | Error badge or alert background            |
+| `--color-info`                       | `text-info`                            | `sky-700`                              | Informational text and icons               |
+| `--color-info-subtle`                | `bg-info-subtle`                       | `sky-50`                               | Informational badge or alert background    |
+| `--radius-control`                   | `rounded-control`                      | `radius-lg` (0.5rem)                   | Buttons, inputs, chips                     |
+| `--radius-card`                      | `rounded-card`                         | `radius-xl` (0.75rem)                  | Cards, panels, tiles                       |
+| `--shadow-card`                      | `shadow-card`                          | `shadow-sm`                            | Card elevation                             |
+| `--shadow-card-hover`                | `shadow-card-hover`                    | `shadow-md`                            | Hovered/selected cards, primary buttons    |
+| `--shadow-glow`                      | `shadow-glow`                          | indigo glow, 16px                      | AI accents (use sparingly)                 |
+
+Stitch layouts follow a "no-line" rule: separate sections with surface shifts (`bg-background` → `bg-surface` → `bg-surface-muted`) rather than borders. Map Stitch's custom type styles to Tailwind defaults: `body-sm`/`label-*` → `text-xs`, `body-md`/`title-sm` → `text-sm`, `title-md` → `text-base`, `headline-sm` → `text-xl`, `headline-md` → `text-2xl`, `display-hero` → `text-5xl`. Icons use `lucide-react` with `strokeWidth={1.5}`–`1.75`.
 
 ## 7. Accessibility
 
