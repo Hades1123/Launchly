@@ -2,7 +2,7 @@
 
 This file provides guidance to AI coding agents (Claude Code, Codex, etc.) when working with code in this repository.
 
-Launchly is a recruitment platform: a pnpm monorepo with a Next.js frontend (`apps/web`), an Express 5 REST API (`apps/api`) and shared Zod schemas (`packages/shared`), on PostgreSQL via Prisma 7. Architecture rationale is in `docs/Launchly-Tech-Stack-Architecture-v1.md`; setup decisions in `docs/Launchly-Project-Setup-Plan.md`. Write all docs in English.
+Launchly is a recruitment platform: a pnpm monorepo with a Next.js frontend (`apps/web`), an Express 5 REST API (`apps/api`) and shared Zod schemas (`packages/shared`), on PostgreSQL via Prisma 7. Architecture rationale is in `docs/Launchly-Tech-Stack-Architecture-v1.md`; setup decisions in `docs/Launchly-Project-Setup-Plan.md`; frontend conventions and design tokens in `docs/Frontend-Conventions.md`. Write all docs in English.
 
 ## Commands
 
@@ -33,6 +33,7 @@ No tests exist yet. There is no CI. Prisma command reference: `docs/Prisma-Cheat
 ## Conventions and gotchas
 
 - Inside `apps/api` and `apps/web`, import same-app files with the `@/` alias (maps to `src/`), not `../` paths.
+- Frontend UI follows `docs/Frontend-Conventions.md`: style with the semantic tokens from `apps/web/src/app/globals.css` (`bg-primary`, `text-muted-foreground`, `rounded-card`); never raw palette classes (`bg-indigo-600`) or arbitrary values (`bg-[#4f46e5]`).
 - Commits follow Conventional Commits with scopes `api`, `web`, `shared`, `db`, `deps` (see `CONTRIBUTING.md`).
 - TypeScript is pinned to `~6.0.3` because `typescript-eslint` does not support 7.x. Prisma is pinned to 7.10.1 (npm `latest` is an 8 RC).
 - pnpm 12 blocks dependency build scripts; allowed packages are listed under `allowBuilds` in `pnpm-workspace.yaml` (`prisma`, `@prisma/engines`, `esbuild`). Add new ones there if an install reports `ERR_PNPM_IGNORED_BUILDS`.
