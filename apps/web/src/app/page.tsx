@@ -1,4 +1,6 @@
+import Link from 'next/link';
 import { healthResponseSchema } from '@launchly/shared';
+import { buttonClasses } from '@/components/ui/button';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,20 +16,23 @@ export default async function Home() {
   }
   return (
     <main className="mx-auto max-w-2xl p-8">
-      <div className="rounded-card bg-surface p-6 shadow-card">
-        <h1 className="font-display text-headline-md">Launchly</h1>
+      <div className="rounded-card border border-border bg-surface p-6 shadow-card">
+        <h1 className="font-display text-2xl font-bold">Launchly</h1>
         <p className="mt-2 text-muted-foreground">
           API status:{' '}
           <span
             className={
               apiUp
-                ? 'rounded-full bg-success-subtle px-2 py-0.5 text-label-md text-success'
-                : 'rounded-full bg-danger-subtle px-2 py-0.5 text-label-md text-danger'
+                ? 'rounded-control bg-success-subtle px-2 py-0.5 font-medium text-success'
+                : 'rounded-control bg-danger-subtle px-2 py-0.5 font-medium text-danger'
             }
           >
             {status}
           </span>
         </p>
+        <Link href="/jobs" className={buttonClasses('primary', 'mt-6')}>
+          Khám phá việc làm
+        </Link>
       </div>
     </main>
   );
