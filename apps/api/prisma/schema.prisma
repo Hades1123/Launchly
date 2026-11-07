@@ -28,6 +28,11 @@ model User {
   role            UserRole     @default(CANDIDATE)
   emailVerifiedAt DateTime?
   lockedAt        DateTime?
+  candidateProfile   CandidateProfile?
+  ownedCompanies     Company[]           @relation("CompanyOwner")
+  createdJobs        Job[]               @relation("JobCreator")
+  interviewQuestions InterviewQuestion[] @relation("QuestionAuthor")
+  notifications      Notification[]
   authTokens      AuthToken[]
   authSessions    AuthSession[]
   createdAt       DateTime     @default(now())
@@ -61,4 +66,257 @@ model AuthSession {
 
   @@index([userId, revokedAt])
   @@index([expiresAt])
+}
+
+enum CompanyModerationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum JobLevel {
+  INTERN
+  JUNIOR
+  MID
+  SENIOR
+  LEAD
+}
+
+enum JobPublicationStatus {
+  DRAFT
+  PENDING
+  PUBLISHED
+  CLOSED
+  REJECTED
+}
+
+enum ApplicationStatus {
+  SUBMITTED
+  SCREENING
+  INTERVIEW
+  OFFER
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum AssessmentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum InterviewSessionStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum NotificationType {
+  APPLICATION_STATUS
+  MODERATION
+}
+
+model CandidateProfile {
+  id           String        @id @default(uuid())
+  userId       String        @unique
+  headline     String?
+  bio          String?
+  location     String?
+  user         User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  resumes      Resume[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  applications Application[]
+}
+
+model Resume {
+  id           String           @id @default(uuid())
+  candidateId  String
+  fileName     String
+  storageKey   String           @unique
+  contentType  String
+  sizeBytes    Int
+  candidate    CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Restrict)
+  applications Application[]
+  assessments  AiAssessment[]
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@index([candidateId])
+}
+
+model Company {
+  id               String                  @id @default(uuid())
+  ownerId          String
+  name             String
+  description      String?
+  website          String?
+  moderationStatus CompanyModerationStatus @default(PENDING)
+  moderationReason String?
+  owner            User                    @relation("CompanyOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  jobs             Job[]
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+
+  @@index([ownerId])
+  @@index([moderationStatus])
+}
+
+model Job {
+  id                 String               @id @default(uuid())
+  companyId          String
+  createdById        String
+  title              String
+  description        String
+  level              JobLevel
+  location           String
+  requirements       String[]
+  benefits           String[]
+  salaryMin          Decimal?
+  salaryMax          Decimal?
+  publicationStatus  JobPublicationStatus @default(DRAFT)
+  moderationReason   String?
+  company            Company              @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  createdBy          User                 @relation("JobCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  stages             JobStage[]
+  applications       Application[]
+  assessments        AiAssessment[]
+  interviewQuestions InterviewQuestion[]
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  @@index([companyId])
+  @@index([createdById])
+  @@index([publicationStatus])
+}
+
+model JobStage {
+  id           String        @id @default(uuid())
+  jobId        String
+  name         String
+  description  String?
+  position     Int
+  job          Job           @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  applications Application[]
+
+  @@unique([jobId, position])
+  @@index([jobId])
+}
+
+model Application {
+  id                String                     @id @default(uuid())
+  candidateId       String
+  jobId             String
+  resumeId          String
+  currentStageId    String?
+  status            ApplicationStatus          @default(SUBMITTED)
+  candidate         CandidateProfile           @relation(fields: [candidateId], references: [id], onDelete: Restrict)
+  job               Job                        @relation(fields: [jobId], references: [id], onDelete: Restrict)
+  resume            Resume                     @relation(fields: [resumeId], references: [id], onDelete: Restrict)
+  currentStage      JobStage?                  @relation(fields: [currentStageId], references: [id], onDelete: SetNull)
+  statusHistory     ApplicationStatusHistory[]
+  interviewSessions InterviewSession[]
+  notifications     Notification[]
+  createdAt         DateTime                   @default(now())
+  updatedAt         DateTime                   @updatedAt
+
+  @@unique([candidateId, jobId])
+  @@index([candidateId])
+  @@index([jobId])
+  @@index([status])
+}
+
+model ApplicationStatusHistory {
+  id            String             @id @default(uuid())
+  applicationId String
+  fromStatus    ApplicationStatus?
+  toStatus      ApplicationStatus
+  note          String?
+  changedAt     DateTime           @default(now())
+  application   Application        @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId, changedAt])
+}
+
+model AiAssessment {
+  id                     String           @id @default(uuid())
+  resumeId               String
+  jobId                  String?
+  suppliedJobDescription String?
+  status                 AssessmentStatus @default(PENDING)
+  score                  Decimal?
+  matchedSkills          String[]
+  missingSkills          String[]
+  suggestions            String[]
+  evidence               String?
+  advisoryLabel          String?
+  failureReason          String?
+  resume                 Resume           @relation(fields: [resumeId], references: [id], onDelete: Restrict)
+  job                    Job?             @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+
+  @@index([resumeId])
+  @@index([jobId])
+  @@index([status])
+}
+
+model InterviewQuestion {
+  id        String            @id @default(uuid())
+  jobId     String?
+  authorId  String
+  prompt    String
+  job       Job?              @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  author    User              @relation("QuestionAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  answers   InterviewAnswer[]
+  createdAt DateTime          @default(now())
+
+  @@index([jobId])
+  @@index([authorId])
+}
+
+model InterviewSession {
+  id            String                 @id @default(uuid())
+  applicationId String
+  status        InterviewSessionStatus @default(NOT_STARTED)
+  startedAt     DateTime?
+  completedAt   DateTime?
+  application   Application            @relation(fields: [applicationId], references: [id], onDelete: Restrict)
+  answers       InterviewAnswer[]
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+
+  @@index([applicationId])
+}
+
+model InterviewAnswer {
+  id         String            @id @default(uuid())
+  sessionId  String
+  questionId String
+  answer     String
+  feedback   String?
+  score      Decimal?
+  session    InterviewSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  question   InterviewQuestion @relation(fields: [questionId], references: [id], onDelete: Restrict)
+  createdAt  DateTime          @default(now())
+
+  @@unique([sessionId, questionId])
+  @@index([questionId])
+}
+
+model Notification {
+  id            String           @id @default(uuid())
+  userId        String
+  applicationId String?
+  type          NotificationType
+  title         String
+  message       String
+  readAt        DateTime?
+  user          User             @relation(fields: [userId], references: [id], onDelete: Restrict)
+  application   Application?     @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  createdAt     DateTime         @default(now())
+
+  @@index([userId, readAt])
+  @@index([applicationId])
 }
