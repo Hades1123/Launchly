@@ -42,7 +42,7 @@ description: 'Task list for Backend Conventions and API Foundation (SCRUM-33)'
 
 **⚠️ CRITICAL**: No error-mapping, 404, or validation work can be verified until this is complete.
 
-- [ ] T002 [P] (issue T2, R1) Shared error contract in `packages/shared/src/schemas/error.ts` (exported via `packages/shared/src/index.ts` with `export * from './schemas/error';`).
+- [X] T002 [P] (issue T2, R1) Shared error contract in `packages/shared/src/schemas/error.ts` (exported via `packages/shared/src/index.ts` with `export * from './schemas/error';`).
   - RED: write `packages/shared/src/schemas/error.test.ts` against a stub `error.ts` (`errorCodeSchema = z.string()`, `errorDetailSchema = z.any()`, `apiErrorSchema = z.any()`); assert a valid error parses, an **unknown code is rejected** (this assertion fails RED), and `details` is optional. Record RED output.
   - GREEN: replace the stub with the D1 definition verbatim (`errorCodeSchema` 8-value enum, `errorDetailSchema`, `apiErrorSchema`, plus `z.infer` types) and add the `index.ts` export.
   - **Verify**: `pn --filter @launchly/shared test` and `pn typecheck`. Commit as `feat(shared): SCRUM-33 add shared API error contract`.
