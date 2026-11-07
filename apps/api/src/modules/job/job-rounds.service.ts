@@ -56,6 +56,8 @@ export function createJobRoundsService(prisma: PrismaClient) {
     async replace(jobId: string, userId: string, input: ReplaceRoundsInput): Promise<RoundDto[]> {
       await assertOwner(jobId, userId);
       return prisma.$transaction(async (tx) => {
+        // Serialise concurrent saves for this job; the loser re-reads the winner's committed rounds.
+        await tx.$queryRaw`SELECT id FROM "Job" WHERE id = ${jobId} FOR UPDATE`;
         const existing = await tx.jobStage.findMany({ where: { jobId }, select: { id: true } });
         const existingIds = new Set(existing.map((s) => s.id));
         const keptIds = new Set<string>();

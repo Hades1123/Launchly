@@ -112,6 +112,24 @@ describe.runIf(process.env.RUN_DB_TESTS === '1')('job rounds (integration)', () 
     }
   });
 
+  it('serialises concurrent saves so positions stay unique and gapless', async () => {
+    const service = createJobRoundsService(prisma);
+    await service.replace(jobId, userId, { rounds: [] });
+
+    const attempts = Array.from({ length: 8 }, (_, i) =>
+      service.replace(jobId, userId, {
+        rounds: [round(`X${i}`), round(`Y${i}`), round(`Z${i}`)],
+      }),
+    );
+    const results = await Promise.allSettled(attempts);
+    expect(results.every((r) => r.status === 'fulfilled')).toBe(true);
+
+    const final = await service.list(jobId, userId);
+    expect(final.map((r) => r.position)).toEqual([1, 2, 3]);
+    const winner = final[0]!.name.slice(1);
+    expect(final.map((r) => r.name)).toEqual([`X${winner}`, `Y${winner}`, `Z${winner}`]);
+  });
+
   it('refuses a recruiter who does not manage the job', async () => {
     const service = createJobRoundsService(prisma);
     await expect(

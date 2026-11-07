@@ -15,6 +15,7 @@ const round = { name: 'Screening', format: 'ONLINE', estimatedDurationMinutes: 3
 
 function makeApp(role: 'RECRUITER' | 'CANDIDATE' = 'RECRUITER') {
   const tx = {
+    $queryRaw: vi.fn(),
     jobStage: {
       findMany: vi.fn(async () => [{ id: S1 }, { id: S2 }]),
       update: vi.fn(async ({ where, data }) => ({ id: where.id, ...data })),
