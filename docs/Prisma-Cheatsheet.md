@@ -18,9 +18,12 @@ Daily Prisma commands for Launchly (Prisma 7). Run `pn` commands from the repo r
 pn install
 pn db:up        # start PostgreSQL (Docker)
 pn db:migrate   # apply migrations + generate the client
+pn db:seed      # load idempotent demo data (local-only)
 ```
 
 The API does **not** migrate automatically. If you see `table does not exist`, you probably forgot `pn db:migrate`.
+
+Prisma 7 does **not** seed automatically after `migrate dev`, so run `pn db:seed` yourself; the seed is idempotent (upserts by fixed id) and refuses production and non-local databases.
 
 ## Everyday workflow
 
@@ -63,6 +66,7 @@ Shortcuts defined in the root `package.json`:
 | --- | --- |
 | `pn db:up` / `pn db:down` | Start / stop local PostgreSQL |
 | `pn db:migrate` | `prisma migrate dev` |
+| `pn db:seed` | `prisma db seed` (idempotent, local-only demo data) |
 
 ## Rules
 

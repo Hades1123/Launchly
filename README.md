@@ -56,7 +56,10 @@ pn db:up
 # 4. Create the database tables
 pn db:migrate
 
-# 5. Start the API and the web app
+# 5. Load demo data (idempotent, local-only; rerun anytime)
+pn db:seed
+
+# 6. Start the API and the web app
 pn dev
 ```
 
@@ -66,6 +69,8 @@ On Windows PowerShell, step 2 is:
 Copy-Item apps/api/.env.example apps/api/.env
 Copy-Item apps/web/.env.example apps/web/.env.local
 ```
+
+Seeded accounts have no password until authentication ships, so they cannot log in yet; `pn db:seed` is idempotent and refuses non-local databases.
 
 `pn dev` runs both apps in one terminal with interleaved logs. For easier debugging, run them separately in two terminals instead:
 
@@ -96,6 +101,7 @@ Run from the repository root. `pn` is the short alias for `pnpm` (available sinc
 | `pn format`                 | Format with Prettier                                      |
 | `pn db:up` / `pn db:down`   | Start / stop local PostgreSQL                             |
 | `pn db:migrate`             | Create and apply a Prisma migration                       |
+| `pn db:seed`                | Load idempotent demo data into a local database           |
 
 Run a script in a single package with `pn --filter @launchly/api <script>`.
 

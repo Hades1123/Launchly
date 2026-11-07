@@ -20,7 +20,7 @@ pn --filter @launchly/api test -- path/to/file.test.ts   # single test file
 pn --filter @launchly/api exec prisma <cmd>              # any Prisma CLI command
 ```
 
-No tests exist yet. There is no CI. Prisma command reference: `docs/Prisma-Cheatsheet.md`.
+The seed has tests in `apps/api/prisma/seed/run.test.ts`: guard unit tests run by default, plus an idempotency integration test gated behind `RUN_DB_TESTS=1` (it needs a migrated local database). There is no CI. Prisma command reference: `docs/Prisma-Cheatsheet.md`.
 
 ## Architecture
 
