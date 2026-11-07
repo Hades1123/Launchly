@@ -1,4 +1,4 @@
-import type { PrismaClient } from '@/generated/prisma/client';
+import { Prisma, type PrismaClient } from '@/generated/prisma/client';
 import { roundFormatSchema, type ReplaceRoundsInput, type RoundDto } from '@launchly/shared';
 import { AppError } from '@/lib/app-error';
 
@@ -71,6 +71,8 @@ export function createJobRoundsService(prisma: PrismaClient) {
 
         const removedIds = [...existingIds].filter((id) => !keptIds.has(id));
         if (removedIds.length > 0) {
+          // Row locks make a concurrent application move (FK key-share lock) finish before we count.
+          await tx.$queryRaw`SELECT id FROM "JobStage" WHERE id IN (${Prisma.join(removedIds)}) FOR UPDATE`;
           const inUse = await tx.application.count({
             where: { currentStageId: { in: removedIds } },
           });
