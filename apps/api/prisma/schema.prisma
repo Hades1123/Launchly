@@ -151,6 +151,7 @@ model Company {
   id               String                  @id @default(uuid())
   ownerId          String
   name             String
+  nameNormalized   String?
   description      String?
   website          String?
   moderationStatus CompanyModerationStatus @default(PENDING)
@@ -162,6 +163,7 @@ model Company {
 
   @@index([ownerId])
   @@index([moderationStatus])
+  @@index([nameNormalized])
 }
 
 model Job {
@@ -169,9 +171,11 @@ model Job {
   companyId          String
   createdById        String
   title              String
+  titleNormalized    String?
   description        String
   level              JobLevel
   location           String
+  industry           String?
   requirements       String[]
   benefits           String[]
   salaryMin          Decimal?
@@ -190,6 +194,10 @@ model Job {
   @@index([companyId])
   @@index([createdById])
   @@index([publicationStatus])
+  @@index([industry])
+  @@index([level])
+  @@index([location])
+  @@index([titleNormalized])
 }
 
 model JobStage {
