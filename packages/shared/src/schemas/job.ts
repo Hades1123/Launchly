@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { JOB_LEVELS } from '../constants/job';
+import { publicSalarySchema } from './job-salary';
 
 export const jobLevelSchema = z.enum(JOB_LEVELS);
 
@@ -28,8 +29,7 @@ export const publicJobItemSchema = z.object({
   industry: z.string().nullable(),
   requirements: z.array(z.string()),
   benefits: z.array(z.string()),
-  salaryMin: z.number().nullable(),
-  salaryMax: z.number().nullable(),
+  salary: publicSalarySchema,
   createdAt: z.string(),
   company: publicCompanySummarySchema,
 });
@@ -45,3 +45,17 @@ export const publicJobListResponseSchema = z.object({
   }),
 });
 export type PublicJobListResponse = z.infer<typeof publicJobListResponseSchema>;
+
+export const jobIdParamsSchema = z.object({ id: z.string().uuid() });
+export type JobIdParams = z.infer<typeof jobIdParamsSchema>;
+
+export const publicJobDetailSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string(),
+  level: jobLevelSchema,
+  location: z.string(),
+  company: z.object({ id: z.string(), name: z.string() }),
+  salary: publicSalarySchema,
+});
+export type PublicJobDetail = z.infer<typeof publicJobDetailSchema>;

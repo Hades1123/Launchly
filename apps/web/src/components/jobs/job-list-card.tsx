@@ -25,7 +25,8 @@ function getInitials(name: string): string {
   return (first + last).toUpperCase();
 }
 
-function formatSalary(min: number | null, max: number | null): string {
+function formatSalary({ negotiable, min, max }: PublicJobItem['salary']): string {
+  if (negotiable) return 'Negotiable';
   if (min !== null && max !== null) return `$${min} - $${max}`;
   if (min !== null) return `From $${min}`;
   if (max !== null) return `Up to $${max}`;
@@ -34,7 +35,7 @@ function formatSalary(min: number | null, max: number | null): string {
 
 export function JobListCard({ job, selected, queryString }: JobListCardProps) {
   const initials = getInitials(job.company.name);
-  const salaryText = formatSalary(job.salaryMin, job.salaryMax);
+  const salaryText = formatSalary(job.salary);
   const levelInfo = levelConfig[job.level];
   const href = `/jobs?job=${job.id}${queryString ? `&${queryString}` : ''}`;
 

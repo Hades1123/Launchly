@@ -94,3 +94,9 @@ pn --filter @launchly/api test -- src/app.test.ts
 
 - Auth (`UNAUTHORIZED` / `FORBIDDEN`) arrives with SCRUM-23.
 - Structured logging (pino) and rate limiting (`RATE_LIMITED`) are reserved codes with no implementation yet.
+
+## Public job visibility
+
+A job is public only when `publicationStatus = PUBLISHED` and its company is `APPROVED`. Always compose `publicJobWhere` from `modules/job/job.service.ts` (used by search and detail). Hidden or non-public jobs return `NOT_FOUND`, so existence never leaks.
+
+Salary reaches candidates only through `toPublicSalary` (`modules/job/job-salary.ts`). When `Job.salaryHidden` is true it returns `{ negotiable: true, min: null, max: null }`; never map `salaryMin`/`salaryMax` by hand in a public response.

@@ -71,8 +71,8 @@ function buildPageHref(baseParams: Record<string, string | undefined>, page: num
 function adaptToDetailJob(item: PublicJobItem): Job {
   const fallback = findJob(item.id);
   const salaryText =
-    item.salaryMin && item.salaryMax
-      ? `${item.salaryMin.toLocaleString()} - ${item.salaryMax.toLocaleString()} USD`
+    !item.salary.negotiable && item.salary.min !== null && item.salary.max !== null
+      ? `${item.salary.min.toLocaleString()} - ${item.salary.max.toLocaleString()} USD`
       : 'Negotiable';
 
   return {

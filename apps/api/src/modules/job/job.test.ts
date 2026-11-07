@@ -42,6 +42,7 @@ describe('Job Search and Filter Module', () => {
       benefits: ['Mentorship'],
       salaryMin: 1000,
       salaryMax: 1500,
+      salaryHidden: false,
       createdAt: new Date('2026-11-01T10:00:00Z'),
       company: {
         id: 'comp-1',
@@ -61,6 +62,7 @@ describe('Job Search and Filter Module', () => {
       benefits: ['Intern allowance'],
       salaryMin: 300,
       salaryMax: 500,
+      salaryHidden: false,
       createdAt: new Date('2026-11-02T10:00:00Z'),
       company: {
         id: 'comp-2',
