@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
 import { resetPasswordSchema } from '@launchly/shared';
-import { AuthFeedback, AuthField, AuthHeading, SubmitButton } from '@/components/auth/auth-ui';
+import { AuthFeedback, AuthHeading, PasswordField, SubmitButton } from '@/components/auth/auth-ui';
 import { authErrorMessage, authRequestNoContent, AuthRequestError } from '@/lib/auth-api';
 
 export function ResetPasswordForm({ token }: { token?: string }) {
@@ -85,20 +85,18 @@ export function ResetPasswordForm({ token }: { token?: string }) {
       {error && <div className="mb-4"><AuthFeedback tone="error">{error}</AuthFeedback></div>}
       {!invalidToken && token ? (
         <form className="space-y-4" onSubmit={handleSubmit} noValidate>
-          <AuthField
+          <PasswordField
             label="Mật khẩu mới"
             name="password"
-            type="password"
             autoComplete="new-password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             error={fieldErrors.password}
             required
           />
-          <AuthField
+          <PasswordField
             label="Nhập lại mật khẩu"
             name="confirmPassword"
-            type="password"
             autoComplete="new-password"
             value={confirmPassword}
             onChange={(event) => setConfirmPassword(event.target.value)}

@@ -1,5 +1,5 @@
-import type { InputHTMLAttributes, ReactNode } from 'react';
-import { AlertCircle, CheckCircle2, LoaderCircle } from 'lucide-react';
+import { useState, type InputHTMLAttributes, type ReactNode } from 'react';
+import { AlertCircle, CheckCircle2, Eye, EyeOff, LoaderCircle } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
 export function AuthHeading({
@@ -51,6 +51,67 @@ export function AuthField({
         aria-describedby={error ? errorId : undefined}
         {...props}
       />
+      {error && (
+        <p id={errorId} className="flex items-start gap-1.5 text-xs leading-5 text-danger">
+          <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+export function PasswordField({
+  label,
+  trailingLabel,
+  error,
+  className,
+  id,
+  ...props
+}: InputHTMLAttributes<HTMLInputElement> & {
+  label: string;
+  trailingLabel?: ReactNode;
+  error?: string;
+}) {
+  const [visible, setVisible] = useState(false);
+  const inputId = id ?? props.name;
+  const errorId = `${inputId}-error`;
+  const VisibilityIcon = visible ? EyeOff : Eye;
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between gap-3">
+        <label htmlFor={inputId} className="block text-sm font-semibold text-foreground">
+          {label}
+        </label>
+        {trailingLabel}
+      </div>
+      <div className="relative">
+        <input
+          id={inputId}
+          type={visible ? 'text' : 'password'}
+          className={cn(
+            'min-h-12 w-full rounded-control border bg-surface px-3.5 pr-12 text-sm text-foreground outline-none transition',
+            'placeholder:text-subtle-foreground focus:border-primary focus:ring-2 focus:ring-ring/20',
+            'disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-subtle-foreground',
+            error ? 'border-danger focus:border-danger focus:ring-danger/20' : 'border-input',
+            className,
+          )}
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? errorId : undefined}
+          {...props}
+        />
+        <button
+          type="button"
+          onClick={() => setVisible((current) => !current)}
+          aria-label={visible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+          aria-pressed={visible}
+          title={visible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+          className="absolute inset-y-0 right-0 inline-flex w-12 items-center justify-center rounded-r-control text-muted-foreground transition hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        >
+          <VisibilityIcon className="size-4" aria-hidden />
+        </button>
+      </div>
       {error && (
         <p id={errorId} className="flex items-start gap-1.5 text-xs leading-5 text-danger">
           <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
