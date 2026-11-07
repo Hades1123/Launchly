@@ -93,7 +93,7 @@ description: 'Task list for Backend Conventions and API Foundation (SCRUM-33)'
 
 **Independent Test**: Review every symbol/path/status in the doc against the code; confirm guidance files match.
 
-- [ ] T006 (issue T6, R8) Conventions documentation and guidance-file updates.
+- [X] T006 (issue T6, R8) Conventions documentation and guidance-file updates.
   - Files: `docs/Backend-Conventions.md` (new), `AGENTS.md` (edit), `README.md` (edit).
   - Write `docs/Backend-Conventions.md` (English, ~100–150 lines): module layout & naming; layering rules; REST/JSON (plural kebab-case nouns, no `/v1`, camelCase JSON, ISO-8601, UUID ids, success-body conventions); error-contract table (code → status → when); a `validate()` example with `loginSchema` and a controller reading `req.body as LoginInput`; pagination (documented only: `?page` 1-based, `?pageSize` default 20/max 100, `{items,page,pageSize,total}`); testing (colocated `*.test.ts`, supertest on `createApp()`); logging (`console.error` for 500 only until a pino ticket); security reminders; follow-ups.
   - `AGENTS.md`: replace "No tests exist yet." with "Tests are colocated `*.test.ts` (Vitest; API endpoints via supertest on `createApp()`)."; change the `middlewares/` bullet to "(error handler, validate, not-found)"; add a "Conventions and gotchas" bullet pointing to `docs/Backend-Conventions.md` and the throw-`AppError`/`validate()`/never-`res.status().json()` rule.
