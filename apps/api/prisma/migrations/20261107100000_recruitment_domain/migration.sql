@@ -2,7 +2,7 @@
 CREATE TYPE "CompanyModerationStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
 
 -- CreateEnum
-CREATE TYPE "JobLevel" AS ENUM ('INTERN', 'JUNIOR', 'MID', 'SENIOR', 'LEAD');
+CREATE TYPE "JobLevel" AS ENUM ('INTERN', 'FRESHER', 'SENIOR');
 
 -- CreateEnum
 CREATE TYPE "JobPublicationStatus" AS ENUM ('DRAFT', 'PENDING', 'PUBLISHED', 'CLOSED', 'REJECTED');
