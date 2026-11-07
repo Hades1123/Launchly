@@ -78,7 +78,7 @@ description: 'Task list for Backend Conventions and API Foundation (SCRUM-33)'
 
 **Independent Test**: Attach `validate()` to test routes and assert invalid input → 400 with part-prefixed paths, valid input reaches the controller typed and stripped of unknown keys.
 
-- [ ] T005 (issue T5, R6) `validate()` middleware in `apps/api/src/middlewares/validate.ts` with `apps/api/src/middlewares/validate.test.ts`.
+- [X] T005 (issue T5, R6) `validate()` middleware in `apps/api/src/middlewares/validate.ts` with `apps/api/src/middlewares/validate.test.ts`.
   - RED: write `validate.test.ts` against a stub `validate = () => (_req,_res,next) => next()`, with its own app (`express.json()`, test routes, `errorHandler`): `body: loginSchema` with `{email:'x'}` → 400, details path `['body','email']`; valid body + extra key → handler echoes body, extra key absent; `query: z.object({ page: z.coerce.number().int().min(1) })` with `?page=abc` → 400 and with `?page=2` → handler sees `typeof page === 'number'`, value `2`; `params: z.object({ id: z.uuid() })` on `/items/:id` with `/items/not-a-uuid` → 400 path `['params','id']`. Record RED output.
   - GREEN: implement D5 — `validate({ body?, params?, query? })` runs `safeParse` on each supplied part, aggregates all failing parts' issues with part-name-prefixed paths, `next(new AppError('VALIDATION_ERROR','Invalid request', details))` on failure; on success assign `req.body`/`req.params` and set query via `Object.defineProperty(req,'query',{ value, writable:true, configurable:true, enumerable:true })`. No `asyncHandler`.
   - **Verify**: `pn --filter @launchly/api test -- src/middlewares/validate.test.ts` + `pn typecheck`. Commit as `feat(api): SCRUM-33 add validate() request-validation middleware`.
