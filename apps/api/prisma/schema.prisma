@@ -76,10 +76,8 @@ enum CompanyModerationStatus {
 
 enum JobLevel {
   INTERN
-  JUNIOR
-  MID
+  FRESHER
   SENIOR
-  LEAD
 }
 
 enum JobPublicationStatus {
@@ -118,16 +116,19 @@ enum NotificationType {
 }
 
 model CandidateProfile {
-  id           String        @id @default(uuid())
-  userId       String        @unique
-  headline     String?
-  bio          String?
-  location     String?
-  user         User          @relation(fields: [userId], references: [id], onDelete: Restrict)
-  resumes      Resume[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  applications Application[]
+  id                 String        @id @default(uuid())
+  userId             String        @unique
+  headline           String?
+  bio                String?
+  location           String?
+  schoolMajor        String?
+  skills             String[]
+  projectsActivities String?
+  user               User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  resumes            Resume[]
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  applications       Application[]
 }
 
 model Resume {
