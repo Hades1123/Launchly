@@ -30,7 +30,7 @@ description: 'Task list for Backend Conventions and API Foundation (SCRUM-33)'
 
 **Purpose**: Make the API test suite runnable with no `.env` and no database.
 
-- [X] T001 (issue T1, R7) Add the `test.env` block to `apps/api/vitest.config.ts` (`NODE_ENV=test`, placeholder `DATABASE_URL`, ≥32-char `JWT_SECRET` and `JWT_REFRESH_SECRET`) so `src/lib/env.ts`'s import-time `parse` succeeds without a real env or DB. Config-only (exempt from RED→GREEN per constitution L111). **Verify**: `pn --filter @launchly/api test` exits 0; stop if env parsing still fails.
+- [x] T001 (issue T1, R7) Add the `test.env` block to `apps/api/vitest.config.ts` (`NODE_ENV=test`, placeholder `DATABASE_URL`, ≥32-char `JWT_SECRET` and `JWT_REFRESH_SECRET`) so `src/lib/env.ts`'s import-time `parse` succeeds without a real env or DB. Config-only (exempt from RED→GREEN per constitution L111). **Verify**: `pn --filter @launchly/api test` exits 0; stop if env parsing still fails.
 
 **Checkpoint**: Tests boot with no `.env` / no database.
 
@@ -42,7 +42,7 @@ description: 'Task list for Backend Conventions and API Foundation (SCRUM-33)'
 
 **⚠️ CRITICAL**: No error-mapping, 404, or validation work can be verified until this is complete.
 
-- [X] T002 [P] (issue T2, R1) Shared error contract in `packages/shared/src/schemas/error.ts` (exported via `packages/shared/src/index.ts` with `export * from './schemas/error';`).
+- [x] T002 [P] (issue T2, R1) Shared error contract in `packages/shared/src/schemas/error.ts` (exported via `packages/shared/src/index.ts` with `export * from './schemas/error';`).
   - RED: write `packages/shared/src/schemas/error.test.ts` against a stub `error.ts` (`errorCodeSchema = z.string()`, `errorDetailSchema = z.any()`, `apiErrorSchema = z.any()`); assert a valid error parses, an **unknown code is rejected** (this assertion fails RED), and `details` is optional. Record RED output.
   - GREEN: replace the stub with the D1 definition verbatim (`errorCodeSchema` 8-value enum, `errorDetailSchema`, `apiErrorSchema`, plus `z.infer` types) and add the `index.ts` export.
   - **Verify**: `pn --filter @launchly/shared test` and `pn typecheck`. Commit as `feat(shared): SCRUM-33 add shared API error contract`.
@@ -57,12 +57,12 @@ description: 'Task list for Backend Conventions and API Foundation (SCRUM-33)'
 
 **Independent Test**: Drive each failure category against an app built with the new handler/404 and assert correct code+status and `apiErrorSchema.parse(res.body)`; assert a 500 body leaks no message/stack/secret.
 
-- [X] T003 (issue T3, R2+R3) `AppError` + status map + mapping helper, and the error-handler rewrite.
+- [x] T003 (issue T3, R2+R3) `AppError` + status map + mapping helper, and the error-handler rewrite.
   - Files: `apps/api/src/lib/app-error.ts` (new), `apps/api/src/middlewares/error-handler.ts` (rewrite), `apps/api/src/middlewares/error-handler.test.ts` (new), and additions to `apps/api/src/app.test.ts`.
   - RED: write `error-handler.test.ts` building its own `express()` app (`express.json()`, test routes, `errorHandler`) with a stub `AppError` that has no status mapping, asserting: async route throwing `new AppError('CONFLICT','Email already registered')` → 409 body `{error:{code:'CONFLICT',message:'Email already registered'}}`; route doing `loginSchema.parse({})` → 400 `VALIDATION_ERROR` with a detail path `['email']`; route throwing `new Error('db password=secret')` → 500 body exactly `{error:{code:'INTERNAL_ERROR',message:'Internal server error'}}`, `res.text` excludes `secret`, no `stack` key. Add to `app.test.ts`: POST `/health` with `Content-Type: application/json` body `{bad` → confirm RED returns 500 (not 404), target 400 `VALIDATION_ERROR`; a >100kb JSON string field → target 413 `PAYLOAD_TOO_LARGE`. Record RED output.
   - GREEN: implement D3 (`errorStatus` map; `AppError` with readonly `code`/`status`/`details?`, `name='AppError'`; `zodIssuesToDetails` stringifying symbol keys) and D4 (handler order: `headersSent`→`next`; 4xx `AppError`; `ZodError`→400 `Invalid request`; `entity.parse.failed`→400 `Malformed JSON body`; `entity.too.large`→413 `Request body too large`; else `console.error`+generic 500; 4xx not logged; bodies built only from the contract).
   - **Verify**: targeted + `pn typecheck`. Commit as `feat(api): SCRUM-33 add AppError and contract-mapping error handler`.
-- [X] T004 (issue T4, R4+R5) JSON 404 and the health reference module, wired into `app.ts`.
+- [x] T004 (issue T4, R4+R5) JSON 404 and the health reference module, wired into `app.ts`.
   - Files: `apps/api/src/middlewares/not-found.ts` (new), `apps/api/src/modules/health/health.routes.ts` (new), `apps/api/src/modules/health/health.controller.ts` (new), `apps/api/src/app.ts` (edit), additions to `apps/api/src/app.test.ts`.
   - RED: in `app.test.ts`, GET `/does-not-exist` → currently Express HTML, so `apiErrorSchema.parse` fails (RED). (The GET `/health` 200 + `healthResponseSchema.parse` regression test passes immediately — it is a guard, not RED.) Record RED output.
   - GREEN: add `notFound` (→ `AppError('NOT_FOUND','Route not found')`), `healthRouter` (`Router().get('/', getHealth)`) and `getHealth` (current `app.ts` L17–18 body; no service), and rewire `app.ts` order: helmet, cors, `express.json()`, cookieParser, `app.use('/health', healthRouter)`, `notFound`, `errorHandler`. Path and response unchanged.
@@ -78,7 +78,7 @@ description: 'Task list for Backend Conventions and API Foundation (SCRUM-33)'
 
 **Independent Test**: Attach `validate()` to test routes and assert invalid input → 400 with part-prefixed paths, valid input reaches the controller typed and stripped of unknown keys.
 
-- [X] T005 (issue T5, R6) `validate()` middleware in `apps/api/src/middlewares/validate.ts` with `apps/api/src/middlewares/validate.test.ts`.
+- [x] T005 (issue T5, R6) `validate()` middleware in `apps/api/src/middlewares/validate.ts` with `apps/api/src/middlewares/validate.test.ts`.
   - RED: write `validate.test.ts` against a stub `validate = () => (_req,_res,next) => next()`, with its own app (`express.json()`, test routes, `errorHandler`): `body: loginSchema` with `{email:'x'}` → 400, details path `['body','email']`; valid body + extra key → handler echoes body, extra key absent; `query: z.object({ page: z.coerce.number().int().min(1) })` with `?page=abc` → 400 and with `?page=2` → handler sees `typeof page === 'number'`, value `2`; `params: z.object({ id: z.uuid() })` on `/items/:id` with `/items/not-a-uuid` → 400 path `['params','id']`. Record RED output.
   - GREEN: implement D5 — `validate({ body?, params?, query? })` runs `safeParse` on each supplied part, aggregates all failing parts' issues with part-name-prefixed paths, `next(new AppError('VALIDATION_ERROR','Invalid request', details))` on failure; on success assign `req.body`/`req.params` and set query via `Object.defineProperty(req,'query',{ value, writable:true, configurable:true, enumerable:true })`. No `asyncHandler`.
   - **Verify**: `pn --filter @launchly/api test -- src/middlewares/validate.test.ts` + `pn typecheck`. Commit as `feat(api): SCRUM-33 add validate() request-validation middleware`.
@@ -93,7 +93,7 @@ description: 'Task list for Backend Conventions and API Foundation (SCRUM-33)'
 
 **Independent Test**: Review every symbol/path/status in the doc against the code; confirm guidance files match.
 
-- [X] T006 (issue T6, R8) Conventions documentation and guidance-file updates.
+- [x] T006 (issue T6, R8) Conventions documentation and guidance-file updates.
   - Files: `docs/Backend-Conventions.md` (new), `AGENTS.md` (edit), `README.md` (edit).
   - Write `docs/Backend-Conventions.md` (English, ~100–150 lines): module layout & naming; layering rules; REST/JSON (plural kebab-case nouns, no `/v1`, camelCase JSON, ISO-8601, UUID ids, success-body conventions); error-contract table (code → status → when); a `validate()` example with `loginSchema` and a controller reading `req.body as LoginInput`; pagination (documented only: `?page` 1-based, `?pageSize` default 20/max 100, `{items,page,pageSize,total}`); testing (colocated `*.test.ts`, supertest on `createApp()`); logging (`console.error` for 500 only until a pino ticket); security reminders; follow-ups.
   - `AGENTS.md`: replace "No tests exist yet." with "Tests are colocated `*.test.ts` (Vitest; API endpoints via supertest on `createApp()`)."; change the `middlewares/` bullet to "(error handler, validate, not-found)"; add a "Conventions and gotchas" bullet pointing to `docs/Backend-Conventions.md` and the throw-`AppError`/`validate()`/never-`res.status().json()` rule.
@@ -109,7 +109,7 @@ description: 'Task list for Backend Conventions and API Foundation (SCRUM-33)'
 
 **Purpose**: Final refactor (tests stay green), full verification, and the size/dependency gates.
 
-- [ ] T007 (issue T7, R9) Final verification and gates.
+- [x] T007 (issue T7, R9) Final verification and gates.
   - Refactor only while tests stay green (e.g. `it.each`) across the files above.
   - Run the full local suite: `pn typecheck && pn lint && pn test && pn format:check` and `pn --filter @launchly/api build`.
   - Run the quickstart smoke test (`grep -rn "lib/prisma" apps/api/src` matches nothing; `pn dev:api`; `curl` `/health`→200, `/nope`→404 `NOT_FOUND`, malformed POST→400; stop server).
