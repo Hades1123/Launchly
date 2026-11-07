@@ -8,7 +8,7 @@ import {
   messageResponseSchema,
   sessionResponseSchema,
 } from '@launchly/shared';
-import { AuthDivider, AuthFeedback, AuthField, AuthHeading, SubmitButton } from '@/components/auth/auth-ui';
+import { AuthDivider, AuthFeedback, AuthField, AuthHeading, PasswordField, SubmitButton } from '@/components/auth/auth-ui';
 import { GoogleAuthAction } from '@/components/auth/google-auth-action';
 import { useAuth } from '@/lib/auth-context';
 import { authErrorMessage, authRequest, AuthRequestError, safeReturnPath } from '@/lib/auth-api';
@@ -28,7 +28,6 @@ export function LoginForm({ returnTo }: { returnTo?: string }) {
   const { acceptSession } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -102,44 +101,24 @@ export function LoginForm({ returnTo }: { returnTo?: string }) {
           error={fieldErrors.email}
           required
         />
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-3">
-            <label htmlFor="password" className="text-sm font-semibold text-foreground">
-              Mật khẩu
-            </label>
+        <PasswordField
+          id="password"
+          name="password"
+          label="Mật khẩu"
+          trailingLabel={
             <Link
               href="/forgot-password"
               className="rounded-control text-xs font-semibold text-primary hover:text-primary-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             >
               Quên mật khẩu?
             </Link>
-          </div>
-          <div className="relative">
-            <input
-              id="password"
-              name="password"
-              type={showPassword ? 'text' : 'password'}
-              autoComplete="current-password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              aria-invalid={Boolean(fieldErrors.password)}
-              aria-describedby={fieldErrors.password ? 'password-error' : undefined}
-              className={`min-h-12 w-full rounded-control border bg-surface px-3.5 pr-16 text-sm text-foreground outline-none transition placeholder:text-subtle-foreground focus:border-primary focus:ring-2 focus:ring-ring/20 ${fieldErrors.password ? 'border-danger' : 'border-input'}`}
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword((value) => !value)}
-              aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-              className="absolute inset-y-0 right-0 rounded-r-control px-3 text-xs font-semibold text-muted-foreground hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-            >
-              {showPassword ? 'Ẩn' : 'Hiện'}
-            </button>
-          </div>
-          {fieldErrors.password && (
-            <p id="password-error" className="text-xs text-danger">{fieldErrors.password}</p>
-          )}
-        </div>
+          }
+          autoComplete="current-password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          error={fieldErrors.password}
+          required
+        />
 
         {error && <AuthFeedback tone="error">{error}</AuthFeedback>}
         {notice && <AuthFeedback tone="success">{notice}</AuthFeedback>}
