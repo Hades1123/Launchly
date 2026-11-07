@@ -6,7 +6,7 @@
 
 ## Summary
 
-Implement the API authentication foundation for SCRUM-23: validated registration and account verification, password and Google sign-in, session and refresh-token handling, password recovery, account-lock enforcement, and server-side role authorization. Keep user-facing contracts in `@launchly/shared`, business logic in the API auth service, and external mail and Google integrations behind providers. Persist verification/reset credentials and refresh sessions as hashes so tokens can be single-use, expired, and revoked.
+Implement the authentication foundation for SCRUM-23 across the Express API and Next.js web app: validated registration and account verification, password and Google sign-in, session and refresh-token handling, password recovery, account-lock enforcement, and server-side role authorization. Keep user-facing contracts in `@launchly/shared`, business logic in the API auth service, and external mail and Google integrations behind providers. Persist verification/reset credentials and refresh sessions as hashes so tokens can be single-use, expired, and revoked. The web app consumes the API through the existing same-origin Next.js rewrite.
 
 ## Technical Context
 
@@ -14,11 +14,11 @@ Implement the API authentication foundation for SCRUM-23: validated registration
 **Primary Dependencies**: Existing Express 5, Prisma 7, Zod 4, Vitest, Supertest; add `jsonwebtoken`, `google-auth-library`, `nodemailer`, `@aws-sdk/client-sesv2`, and `express-rate-limit` for their specific auth and provider responsibilities. Add `@types/jsonwebtoken` and `@types/nodemailer` for TypeScript. Use Node.js `crypto.scrypt` for password hashing.  
 **Storage**: PostgreSQL via Prisma 7.  
 **Testing**: Vitest and Supertest; inject auth-service and provider dependencies so API and business rules can be tested without live SMTP, Google, or database credentials.  
-**Target Platform**: Node.js 22 API service.  
-**Project Type**: pnpm monorepo; Express REST API and source-only shared contracts.  
+**Target Platform**: Node.js 22 API service and Next.js browser application.
+**Project Type**: pnpm monorepo; Next.js web app, Express REST API, and source-only shared contracts.
 **Performance Goals**: No workload or latency SLO is specified. Keep password derivation asynchronous and bound rate-limited auth operations.  
-**Constraints**: Preserve route → controller → service → Prisma layering; validate contracts with shared Zod schemas; do not expose Prisma records; issue short-lived JWT access tokens and opaque refresh tokens in httpOnly cookies; require email confirmation before linking non-Gmail/non-Workspace Google identities to existing accounts; do not migrate on startup or edit committed migrations; keep secrets in the API environment; protect logout and password reset by revoking persisted sessions.  
-**Scale/Scope**: One authentication module serving the existing User model and all current roles; no frontend pages, admin lock-management UI, other social login, or two-factor authentication.
+**Constraints**: Preserve route → controller → service → Prisma layering; validate contracts with shared Zod schemas; do not expose Prisma records; issue short-lived JWT access tokens and opaque refresh tokens in httpOnly cookies; keep access tokens in web-app memory and restore/rotate them through the refresh endpoint; require email confirmation before linking non-Gmail/non-Workspace Google identities to existing accounts; do not migrate on startup or edit committed migrations; keep secrets in the API environment; protect logout and password reset by revoking persisted sessions.
+**Scale/Scope**: One authentication module serving the existing User model and all current roles, with web screens for login, registration, verification, Google role selection/link confirmation, and password recovery; no admin lock-management UI, other social login, or two-factor authentication.
 
 ## Constitution Check
 
@@ -82,9 +82,22 @@ apps/api/src/
 │   └── mail/
 └── tests/
     └── auth.routes.test.ts
+
+apps/web/src/
+├── app/(auth)/
+│   ├── login/
+│   ├── register/
+│   ├── verify-email/
+│   ├── forgot-password/
+│   ├── reset-password/
+│   └── google-link/
+├── components/auth/
+└── lib/
+    ├── auth-api.ts
+    └── auth-context.tsx
 ```
 
-**Structure Decision**: Use the existing monorepo and module conventions. The auth feature owns its API contracts, service logic, routes, and guards; shared Zod schemas remain in the source-only shared package. Provider implementations are isolated from the auth service.
+**Structure Decision**: Use the existing monorepo and module conventions. The auth feature owns its API contracts, service logic, routes, and guards; shared Zod schemas remain in the source-only shared package. Provider implementations are isolated from the auth service. Web auth pages use a separate route-group layout and call `/api/auth/*`, which the existing Next.js rewrite forwards to Express.
 
 ## Phase 0: Research
 

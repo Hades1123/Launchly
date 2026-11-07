@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Inter, JetBrains_Mono, Plus_Jakarta_Sans } from 'next/font/google';
+import { AuthProvider } from '@/lib/auth-context';
 import './globals.css';
 
 const inter = Inter({
@@ -30,7 +31,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       lang="vi"
       className={`${inter.variable} ${plusJakarta.variable} ${jetbrainsMono.variable}`}
     >
-      <body className="bg-background font-sans text-foreground antialiased">{children}</body>
+      <body className="bg-background font-sans text-foreground antialiased">
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }
