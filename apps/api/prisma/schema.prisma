@@ -152,8 +152,12 @@ model Company {
   ownerId          String
   name             String
   nameNormalized   String?
+  address          String?
+  industry         String?
+  companySize      String?
   description      String?
   website          String?
+  logoUrl          String?
   moderationStatus CompanyModerationStatus @default(PENDING)
   moderationReason String?
   owner            User                    @relation("CompanyOwner", fields: [ownerId], references: [id], onDelete: Restrict)

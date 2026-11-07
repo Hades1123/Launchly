@@ -7,7 +7,7 @@ import {
   registerSchema,
   registrationRoleSchema,
 } from '@launchly/shared';
-import { AuthDivider, AuthFeedback, AuthField, AuthHeading, SubmitButton } from '@/components/auth/auth-ui';
+import { AuthDivider, AuthFeedback, AuthField, AuthHeading, PasswordField, SubmitButton } from '@/components/auth/auth-ui';
 import { GoogleAuthAction } from '@/components/auth/google-auth-action';
 import { authErrorMessage, authRequest } from '@/lib/auth-api';
 
@@ -166,10 +166,9 @@ export function RegisterForm() {
           error={fieldErrors.email}
           required
         />
-        <AuthField
+        <PasswordField
           label="Mật khẩu"
           name="password"
-          type="password"
           autoComplete="new-password"
           placeholder="Tối thiểu 8 ký tự"
           value={password}
@@ -177,10 +176,9 @@ export function RegisterForm() {
           error={fieldErrors.password}
           required
         />
-        <AuthField
+        <PasswordField
           label="Nhập lại mật khẩu"
           name="confirmPassword"
-          type="password"
           autoComplete="new-password"
           placeholder="Nhập lại mật khẩu"
           value={confirmPassword}
