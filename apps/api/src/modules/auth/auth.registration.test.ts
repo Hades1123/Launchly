@@ -85,7 +85,7 @@ describe('POST /auth/register', () => {
     expect(res.status).toBe(201);
     expect(res.body.message).toMatch(/check your email/i);
     expect(mail.sent[0]?.to).toBe('alice@example.com');
-    expect(mail.sent[0]?.subject).toMatch(/verify/i);
+    expect(mail.sent[0]?.subject).toMatch(/xác nhận/i);
   });
 
   it('normalizes email to lowercase before duplicate check', async () => {

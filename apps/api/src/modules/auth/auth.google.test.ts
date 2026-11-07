@@ -222,7 +222,7 @@ describe('POST /auth/google – matching email, external domain (email challenge
     expect(res.body.requiresEmailVerification).toBe(true);
     expect(res.body.accessToken).toBeUndefined();
     expect(mail.sent[0]?.to).toBe('carol@external.io');
-    expect(mail.sent[0]?.subject).toMatch(/confirm/i);
+    expect(mail.sent[0]?.subject).toMatch(/xác nhận/i);
   });
 
   it('does NOT create an account or session when email challenge is triggered', async () => {

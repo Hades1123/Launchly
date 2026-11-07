@@ -132,6 +132,15 @@
 - [X] T030 Run migration validation, `pn typecheck`, `pn lint`, `pn test`, and `pn --filter @launchly/api build`; fix auth-feature regressions without editing the existing migration in `apps/api/prisma/migrations/20261102150334_init/migration.sql`.
 - [X] T031 Validate endpoint paths and security boundaries against `specs/001-user-auth/contracts/auth.openapi.yaml` and `specs/001-user-auth/spec.md`; record remaining environment-dependent provider checks in the task evidence.
 
+## Phase 9: Web Authentication UI
+
+**Purpose**: Provide production-facing auth screens backed by the existing API, using the shared contracts and Next.js same-origin rewrite.
+
+- [X] T032 Create a typed browser auth client and session provider in `apps/web/src/lib/auth-api.ts` and `apps/web/src/lib/auth-context.tsx`; keep access tokens in memory, restore/rotate through the httpOnly refresh cookie, and expose logout.
+- [X] T033 Build the focused auth shell and login/register forms in `apps/web/src/components/auth/` and `apps/web/src/app/(auth)/`; validate with shared schemas, show API errors, and avoid demo/mock controls.
+- [X] T034 Implement verify-email, forgot-password, reset-password, Google role selection, and Google-link completion screens in `apps/web/src/components/auth/` and `apps/web/src/app/(auth)/`; call the corresponding `/api/auth/*` endpoints.
+- [X] T035 Replace the demo identity in the app header with live login/register or user/logout actions, add `NEXT_PUBLIC_GOOGLE_CLIENT_ID` to `apps/web/.env.example`, document setup in `quickstart.md`, and validate web typecheck/build plus workspace lint and tests.
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
@@ -140,6 +149,7 @@
 - **Foundational (Phase 2)**: T005 and T006 follow shared contracts and provider setup; blocks all user stories.
 - **User stories (Phases 3–7)**: Execute in sequence because registration, sessions, Google identity, recovery, and authorization share the auth service and persisted session model. Tests within each story precede that story's implementation.
 - **Polish (Phase 8)**: Depends on all five user stories.
+- **Web UI (Phase 9)**: Depends on the API, shared contracts, and the Next.js same-origin API rewrite.
 
 ### User Story Dependencies
 

@@ -77,7 +77,7 @@ describe('POST /auth/forgot-password', () => {
     expect(res.status).toBe(202);
     expect(res.body.message).toMatch(/eligible/i);
     expect(mail.sent[0]?.to).toBe('alice@example.com');
-    expect(mail.sent[0]?.subject).toMatch(/reset/i);
+    expect(mail.sent[0]?.subject).toMatch(/mật khẩu/i);
     // Email subject must not expose the raw token
     expect(mail.sent[0]?.subject).not.toMatch(/token/i);
   });
