@@ -1,0 +1,106 @@
+import type { Prisma } from '@/generated/prisma/client';
+
+// Fixed v4-format UUIDs so every row is upserted by a stable id.
+const id = {
+  admin: '00000000-0000-4000-8000-000000000001',
+  recruiter: '00000000-0000-4000-8000-000000000002',
+  candidate1: '00000000-0000-4000-8000-000000000003',
+  candidate2: '00000000-0000-4000-8000-000000000004',
+  profile1: '00000000-0000-4000-8000-000000000101',
+  profile2: '00000000-0000-4000-8000-000000000102',
+  resume1: '00000000-0000-4000-8000-000000000201',
+  resume2: '00000000-0000-4000-8000-000000000202',
+  companyApproved: '00000000-0000-4000-8000-000000000301',
+  companyPending: '00000000-0000-4000-8000-000000000302',
+  job1: '00000000-0000-4000-8000-000000000401',
+  job2: '00000000-0000-4000-8000-000000000402',
+  job3: '00000000-0000-4000-8000-000000000403',
+  stage1: '00000000-0000-4000-8000-000000000501',
+  stage2: '00000000-0000-4000-8000-000000000502',
+  stage3: '00000000-0000-4000-8000-000000000503',
+  app1: '00000000-0000-4000-8000-000000000601',
+  app2: '00000000-0000-4000-8000-000000000602',
+  history1: '00000000-0000-4000-8000-000000000701',
+  history2: '00000000-0000-4000-8000-000000000702',
+  history3: '00000000-0000-4000-8000-000000000703',
+  history4: '00000000-0000-4000-8000-000000000704',
+  assessment1: '00000000-0000-4000-8000-000000000801',
+  assessment2: '00000000-0000-4000-8000-000000000802',
+  question1: '00000000-0000-4000-8000-000000000901',
+  question2: '00000000-0000-4000-8000-000000000902',
+  session1: '00000000-0000-4000-8000-000000000a01',
+  answer1: '00000000-0000-4000-8000-000000000b01',
+  notification1: '00000000-0000-4000-8000-000000000c01',
+  notification2: '00000000-0000-4000-8000-000000000c02',
+} as const;
+
+export const seedData = {
+  users: [
+    { id: id.admin, email: 'admin@launchly.test', fullName: 'Demo Admin', role: 'ADMIN', passwordHash: null },
+    { id: id.recruiter, email: 'recruiter@launchly.test', fullName: 'Demo Recruiter', role: 'RECRUITER', passwordHash: null },
+    { id: id.candidate1, email: 'candidate1@launchly.test', fullName: 'Demo Candidate One', role: 'CANDIDATE', passwordHash: null },
+    { id: id.candidate2, email: 'candidate2@launchly.test', fullName: 'Demo Candidate Two', role: 'CANDIDATE', passwordHash: null },
+  ] satisfies Prisma.UserUncheckedCreateInput[],
+
+  candidateProfiles: [
+    { id: id.profile1, userId: id.candidate1, headline: 'Frontend Engineer', bio: 'Builds accessible UIs.', location: 'Ho Chi Minh City' },
+    { id: id.profile2, userId: id.candidate2, headline: 'Backend Engineer', bio: 'Enjoys data modelling.', location: 'Ha Noi' },
+  ] satisfies Prisma.CandidateProfileUncheckedCreateInput[],
+
+  resumes: [
+    { id: id.resume1, candidateId: id.profile1, fileName: 'candidate-one.pdf', storageKey: `seed/resumes/${id.resume1}.pdf`, contentType: 'application/pdf', sizeBytes: 102400 },
+    { id: id.resume2, candidateId: id.profile2, fileName: 'candidate-two.pdf', storageKey: `seed/resumes/${id.resume2}.pdf`, contentType: 'application/pdf', sizeBytes: 98304 },
+  ] satisfies Prisma.ResumeUncheckedCreateInput[],
+
+  companies: [
+    { id: id.companyApproved, ownerId: id.recruiter, name: 'Nimbus Labs', description: 'Approved demo company.', website: 'https://nimbus.launchly.test', moderationStatus: 'APPROVED' },
+    { id: id.companyPending, ownerId: id.recruiter, name: 'Draft Ventures', description: 'Awaiting moderation.', moderationStatus: 'PENDING' },
+  ] satisfies Prisma.CompanyUncheckedCreateInput[],
+
+  jobs: [
+    { id: id.job1, companyId: id.companyApproved, createdById: id.recruiter, title: 'Senior Frontend Engineer', description: 'Own the candidate-facing web app.', level: 'SENIOR', location: 'Remote', requirements: ['React', 'TypeScript'], benefits: ['Remote-first'], salaryMin: 2000, salaryMax: 4000, publicationStatus: 'PUBLISHED' },
+    { id: id.job2, companyId: id.companyApproved, createdById: id.recruiter, title: 'Backend Engineer', description: 'Build the recruitment API. Has no pipeline stages yet.', level: 'MID', location: 'Ho Chi Minh City', requirements: ['Node.js', 'PostgreSQL'], benefits: ['Learning budget'], publicationStatus: 'PUBLISHED' },
+    { id: id.job3, companyId: id.companyPending, createdById: id.recruiter, title: 'Product Designer', description: 'Pending moderation job.', level: 'JUNIOR', location: 'Ha Noi', requirements: ['Figma'], benefits: [], publicationStatus: 'PENDING' },
+  ] satisfies Prisma.JobUncheckedCreateInput[],
+
+  jobStages: [
+    { id: id.stage1, jobId: id.job1, name: 'Screening', position: 1 },
+    { id: id.stage2, jobId: id.job1, name: 'Interview', position: 2 },
+    { id: id.stage3, jobId: id.job1, name: 'Offer', position: 3 },
+  ] satisfies Prisma.JobStageUncheckedCreateInput[],
+
+  applications: [
+    { id: id.app1, candidateId: id.profile1, jobId: id.job1, resumeId: id.resume1, currentStageId: id.stage2, status: 'INTERVIEW' },
+    { id: id.app2, candidateId: id.profile2, jobId: id.job1, resumeId: id.resume2, status: 'SUBMITTED' },
+  ] satisfies Prisma.ApplicationUncheckedCreateInput[],
+
+  applicationStatusHistory: [
+    { id: id.history1, applicationId: id.app1, fromStatus: null, toStatus: 'SUBMITTED' },
+    { id: id.history2, applicationId: id.app1, fromStatus: 'SUBMITTED', toStatus: 'SCREENING' },
+    { id: id.history3, applicationId: id.app1, fromStatus: 'SCREENING', toStatus: 'INTERVIEW' },
+    { id: id.history4, applicationId: id.app2, fromStatus: null, toStatus: 'SUBMITTED' },
+  ] satisfies Prisma.ApplicationStatusHistoryUncheckedCreateInput[],
+
+  aiAssessments: [
+    { id: id.assessment1, resumeId: id.resume1, jobId: id.job1, status: 'COMPLETED', score: 82, matchedSkills: ['React', 'TypeScript'], missingSkills: ['GraphQL'], suggestions: ['Add GraphQL examples.'], evidence: 'Strong frontend portfolio.' },
+    { id: id.assessment2, resumeId: id.resume2, jobId: id.job1, status: 'FAILED', matchedSkills: [], missingSkills: [], suggestions: [], failureReason: 'Resume text could not be parsed.' },
+  ] satisfies Prisma.AiAssessmentUncheckedCreateInput[],
+
+  interviewQuestions: [
+    { id: id.question1, jobId: id.job1, authorId: id.recruiter, prompt: 'Describe a complex React component you built.' },
+    { id: id.question2, jobId: id.job1, authorId: id.recruiter, prompt: 'How do you approach accessibility?' },
+  ] satisfies Prisma.InterviewQuestionUncheckedCreateInput[],
+
+  interviewSessions: [
+    { id: id.session1, applicationId: id.app1, status: 'COMPLETED', startedAt: '2026-11-01T09:00:00.000Z', completedAt: '2026-11-01T09:45:00.000Z' },
+  ] satisfies Prisma.InterviewSessionUncheckedCreateInput[],
+
+  interviewAnswers: [
+    { id: id.answer1, sessionId: id.session1, questionId: id.question1, answer: 'Built a virtualised data grid.', feedback: 'Clear and specific.', score: 90 },
+  ] satisfies Prisma.InterviewAnswerUncheckedCreateInput[],
+
+  notifications: [
+    { id: id.notification1, userId: id.candidate1, applicationId: id.app1, type: 'APPLICATION_STATUS', title: 'You advanced to Interview', message: 'Your application moved to the Interview stage.' },
+    { id: id.notification2, userId: id.recruiter, type: 'MODERATION', title: 'Company awaiting approval', message: 'Draft Ventures is pending moderation.' },
+  ] satisfies Prisma.NotificationUncheckedCreateInput[],
+} as const;
