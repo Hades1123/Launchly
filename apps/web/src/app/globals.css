@@ -1,43 +1,52 @@
 @import 'tailwindcss';
 
 /*
- * Launchly design tokens: semantic aliases onto Tailwind's default palette.
- * `inline` is required because values reference other CSS variables (next/font sets
- * --font-inter on <html>). Rules and token table: docs/Frontend-Conventions.md.
+ * Launchly design tokens, taken from the "Career Launch Engine" design system of the Stitch
+ * project "Launchly Frontend Web Platform". `inline` is required because values reference
+ * other CSS variables (next/font sets --font-* on <html>).
+ * Rules and token table: docs/Frontend-Conventions.md.
  */
 @theme inline {
   /* Typography; type scale, spacing and breakpoints stay Tailwind defaults */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-plus-jakarta), var(--font-inter), ui-sans-serif, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 
-  /* Surfaces and text */
-  --color-background: var(--color-white);
-  --color-foreground: var(--color-slate-900);
+  /* Surfaces and text (lavender-tinted layers, no hard section borders) */
+  --color-background: #faf8ff;
+  --color-foreground: #131b2e;
   --color-surface: var(--color-white);
-  --color-surface-muted: var(--color-slate-50);
-  --color-muted-foreground: var(--color-slate-600);
-  --color-border: var(--color-slate-200);
-  --color-input: var(--color-slate-300);
-  --color-ring: var(--color-indigo-500);
+  --color-surface-muted: #f2f3ff;
+  --color-surface-strong: #eaedff;
+  --color-muted-foreground: #464555;
+  --color-subtle-foreground: #64627a;
+  --color-border: #dae2fd;
+  --color-input: #c7c4d8;
+  --color-ring: #4f46e5;
 
   /* Brand and actions */
-  --color-primary: var(--color-indigo-600);
-  --color-primary-hover: var(--color-indigo-700);
+  --color-primary: #4f46e5;
+  --color-primary-hover: #3525cd;
   --color-primary-foreground: var(--color-white);
-  --color-secondary: var(--color-slate-100);
-  --color-secondary-foreground: var(--color-slate-900);
+  --color-primary-subtle: #e2dfff;
+  --color-primary-subtle-foreground: #3323cc;
+  --color-secondary: #e2e7ff;
+  --color-secondary-foreground: #131b2e;
 
-  /* Status: application/job badges and alerts (text token on its -subtle background) */
-  --color-success: var(--color-emerald-700);
-  --color-success-subtle: var(--color-emerald-50);
-  --color-warning: var(--color-amber-700);
-  --color-warning-subtle: var(--color-amber-50);
-  --color-danger: var(--color-red-700);
-  --color-danger-subtle: var(--color-red-50);
+  /* Status: match scores, badges and alerts (text token on its -subtle background) */
+  --color-success: #006c49;
+  --color-success-subtle: #6cf8bb;
+  --color-warning: #885500;
+  --color-warning-subtle: #ffddb8;
+  --color-danger: #ba1a1a;
+  --color-danger-subtle: #ffdad6;
   --color-info: var(--color-sky-700);
   --color-info-subtle: var(--color-sky-50);
 
   /* Shape and elevation */
-  --radius-control: var(--radius-md);
+  --radius-control: var(--radius-lg);
   --radius-card: var(--radius-xl);
   --shadow-card: var(--shadow-sm);
+  --shadow-card-hover: var(--shadow-md);
+  --shadow-glow: 0 0 16px rgb(79 70 229 / 0.25);
 }

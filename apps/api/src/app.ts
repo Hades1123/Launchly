@@ -2,8 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
-import type { HealthResponse } from '@launchly/shared';
 import { env } from '@/lib/env';
+import { healthRouter } from '@/modules/health/health.routes';
+import { notFound } from '@/middlewares/not-found';
 import { errorHandler } from '@/middlewares/error-handler';
 
 export function createApp() {
@@ -13,11 +14,9 @@ export function createApp() {
   app.use(express.json());
   app.use(cookieParser());
 
-  app.get('/health', (_req, res) => {
-    const body: HealthResponse = { status: 'ok', time: new Date().toISOString() };
-    res.json(body);
-  });
+  app.use('/health', healthRouter);
 
+  app.use(notFound);
   app.use(errorHandler);
   return app;
 }

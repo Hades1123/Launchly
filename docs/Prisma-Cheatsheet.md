@@ -70,6 +70,7 @@ Shortcuts defined in the root `package.json`:
 - Always commit `schema.prisma` and its migration in the same commit.
 - Never run `migrate reset` or `db push` against shared or production databases.
 - Never import Prisma types into the frontend. Use Zod schemas and types from `@launchly/shared`.
+- Recruitment persistence uses explicit ownership and moderation relations. Applications are unique per candidate/job pair, status changes are stored in `ApplicationStatusHistory`, and AI assessments are advisory reference data; they never change application status automatically.
 
 ## Common problems
 
