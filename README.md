@@ -86,6 +86,22 @@ Both are needed for the full app: the home page calls the API's `/health` endpoi
 
 The web app proxies `/api/*` to the API through Next.js rewrites, so the browser never makes cross-origin requests in development.
 
+## Run the API in Docker
+
+Instead of the host toolchain, you can build and run the API in a container. This needs only Docker; no local Node or pnpm. Run from the repository root.
+
+```bash
+# Start Postgres, apply migrations (one-off container), then start the API
+docker compose --profile app up -d --build
+
+# Load the demo seed into the containerized database (idempotent, rerun anytime)
+docker compose --profile seed run --rm seed
+```
+
+- The `migrate` service runs `prisma migrate deploy` and exits; the `api` service starts only after it succeeds, so the API never migrates itself.
+- The `api` container publishes port **4000**, the same port as `pn dev:api`. Stop the host API first, or they conflict.
+- The `JWT_SECRET` / `JWT_REFRESH_SECRET` values in `docker-compose.yml` are local placeholders for development only. They are never real secrets.
+
 ## Scripts
 
 Run from the repository root. `pn` is the short alias for `pnpm` (available since pnpm 11); `pnpm` works the same.
@@ -99,9 +115,16 @@ Run from the repository root. `pn` is the short alias for `pnpm` (available sinc
 | `pn lint`                   | Lint the whole repo                                       |
 | `pn test`                   | Run tests (Vitest) in all packages                        |
 | `pn format`                 | Format with Prettier                                      |
-| `pn db:up` / `pn db:down`   | Start / stop local PostgreSQL                             |
+| `pn db:up` / `pn db:down`   | Start / stop local PostgreSQL (`db:down` removes all project containers) |
 | `pn db:migrate`             | Create and apply a Prisma migration                       |
 | `pn db:seed`                | Load idempotent demo data into a local database           |
+
+Containerized API (run from the repo root, Docker only):
+
+| Command                                          | Description                                                         |
+| ------------------------------------------------ | ------------------------------------------------------------------- |
+| `docker compose --profile app up -d --build`     | Apply migrations, then start the API in a container on port 4000    |
+| `docker compose --profile seed run --rm seed`    | Load the demo seed into the containerized database (idempotent)     |
 
 Run a script in a single package with `pn --filter @launchly/api <script>`.
 

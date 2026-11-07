@@ -64,9 +64,16 @@ Shortcuts defined in the root `package.json`:
 
 | Script | Runs |
 | --- | --- |
-| `pn db:up` / `pn db:down` | Start / stop local PostgreSQL |
+| `pn db:up` / `pn db:down` | Start local PostgreSQL / stop and remove all project containers |
 | `pn db:migrate` | `prisma migrate dev` |
 | `pn db:seed` | `prisma db seed` (idempotent, local-only demo data) |
+
+Containerized equivalents (Docker only, run from the repo root):
+
+| Command | Runs |
+| --- | --- |
+| `docker compose --profile app up -d --build` | `prisma migrate deploy` in the one-off `migrate` service, then starts the `api` container |
+| `docker compose --profile seed run --rm seed` | `prisma db seed` in a one-off container against the containerized database |
 
 ## Rules
 
