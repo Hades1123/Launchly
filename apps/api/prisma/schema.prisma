@@ -180,6 +180,7 @@ model Job {
   benefits           String[]
   salaryMin          Decimal?
   salaryMax          Decimal?
+  salaryHidden       Boolean              @default(false)
   publicationStatus  JobPublicationStatus @default(DRAFT)
   moderationReason   String?
   company            Company              @relation(fields: [companyId], references: [id], onDelete: Restrict)
