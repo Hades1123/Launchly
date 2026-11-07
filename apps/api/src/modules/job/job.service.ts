@@ -2,6 +2,15 @@ import type { PrismaClient, Prisma } from '@/generated/prisma/client';
 import { prisma as defaultPrisma } from '@/lib/prisma';
 import type { JobFilterQuery, PublicJobListResponse, PublicJobItem } from '@launchly/shared';
 import { normalizeVietnamese } from '@launchly/shared';
+import type { PublicJobDetail } from '@launchly/shared';
+import { AppError } from '@/lib/app-error';
+import { salarySelect, toPublicSalary } from './job-salary';
+
+/** The single public listing rule, shared by search and detail. */
+export const publicJobWhere = {
+  publicationStatus: 'PUBLISHED',
+  company: { moderationStatus: 'APPROVED' },
+} as const satisfies Prisma.JobWhereInput;
 
 export class JobService {
   constructor(private readonly prismaClient: PrismaClient = defaultPrisma) {}
@@ -14,8 +23,8 @@ export class JobService {
     // Build Prisma where clause enforcing the public listing rule:
     // Only jobs that are PUBLISHED and belong to an APPROVED company are returned.
     const andConditions: Prisma.JobWhereInput[] = [
-      { publicationStatus: 'PUBLISHED' },
-      { company: { moderationStatus: 'APPROVED' } },
+      { publicationStatus: publicJobWhere.publicationStatus },
+      { company: publicJobWhere.company },
     ];
 
     if (query.level) {
@@ -82,8 +91,7 @@ export class JobService {
       industry: job.industry,
       requirements: job.requirements,
       benefits: job.benefits,
-      salaryMin: job.salaryMin !== null ? Number(job.salaryMin) : null,
-      salaryMax: job.salaryMax !== null ? Number(job.salaryMax) : null,
+      salary: toPublicSalary(job),
       createdAt: job.createdAt.toISOString(),
       company: {
         id: job.company.id,
@@ -102,6 +110,31 @@ export class JobService {
         total,
         totalPages,
       },
+    };
+  }
+
+  async getPublicJobById(id: string): Promise<PublicJobDetail> {
+    const job = await this.prismaClient.job.findFirst({
+      where: { id, ...publicJobWhere },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        level: true,
+        location: true,
+        company: { select: { id: true, name: true } },
+        ...salarySelect,
+      },
+    });
+    if (!job) throw new AppError('NOT_FOUND', 'Job not found');
+    return {
+      id: job.id,
+      title: job.title,
+      description: job.description,
+      level: job.level,
+      location: job.location,
+      company: { id: job.company.id, name: job.company.name },
+      salary: toPublicSalary(job),
     };
   }
 }

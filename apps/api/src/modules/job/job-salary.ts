@@ -8,8 +8,8 @@ export const salarySelect = {
 } as const;
 
 type SalaryRow = {
-  salaryMin: { toNumber(): number } | null;
-  salaryMax: { toNumber(): number } | null;
+  salaryMin: number | { toString(): string } | null;
+  salaryMax: number | { toString(): string } | null;
   salaryHidden: boolean;
 };
 
@@ -22,7 +22,7 @@ export function toPublicSalary(job: SalaryRow): PublicSalary {
   if (job.salaryHidden) return { negotiable: true, min: null, max: null };
   return {
     negotiable: false,
-    min: job.salaryMin?.toNumber() ?? null,
-    max: job.salaryMax?.toNumber() ?? null,
+    min: job.salaryMin === null ? null : Number(job.salaryMin),
+    max: job.salaryMax === null ? null : Number(job.salaryMax),
   };
 }
