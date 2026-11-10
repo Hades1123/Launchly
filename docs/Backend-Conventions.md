@@ -18,6 +18,8 @@ Import same-app files with the `@/` alias (`@/lib/app-error`), never `../` paths
 
 `route → controller → service → Prisma`. A controller never touches Prisma directly once a service exists; a service never reads `req`/`res`. Routes contain no logic beyond wiring middleware and controllers. Never expose Prisma types across the HTTP boundary — map to a shared DTO from `@launchly/shared`.
 
+Write asynchronous code with `async/await`; use `.then()` only when you need the Promise object itself (caching or sharing an in-flight call). Run independent queries together with `Promise.all`, or in one `prisma.$transaction` when they must be atomic.
+
 ## 3. REST and JSON conventions
 
 - Resource paths are plural, kebab-case nouns (`/job-posts`, `/applications`). No `/v1` prefix yet.

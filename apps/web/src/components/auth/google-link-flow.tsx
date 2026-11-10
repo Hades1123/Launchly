@@ -3,17 +3,20 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { sessionResponseSchema } from '@launchly/shared';
 import { AuthFeedback, AuthHeading } from '@/components/auth/auth-ui';
 import { useAuth } from '@/lib/auth-context';
-import { authErrorMessage, authRequest, AuthRequestError } from '@/lib/auth-api';
+import { authErrorMessage } from '@/lib/auth-helpers';
+import { completeGoogleLink } from '@/lib/api/auth';
+import { ApiError } from '@/lib/api/http';
 
 export function GoogleLinkFlow({ token }: { token?: string }) {
   const router = useRouter();
   const { acceptSession } = useAuth();
   const started = useRef(false);
   const [attempt, setAttempt] = useState(0);
-  const [phase, setPhase] = useState<'pending' | 'error' | 'expired'>(token ? 'pending' : 'expired');
+  const [phase, setPhase] = useState<'pending' | 'error' | 'expired'>(
+    token ? 'pending' : 'expired',
+  );
   const [error, setError] = useState<string | null>(
     token ? null : 'Liên kết xác nhận bị thiếu. Hãy bắt đầu lại quá trình đăng nhập Google.',
   );
@@ -23,15 +26,12 @@ export function GoogleLinkFlow({ token }: { token?: string }) {
     started.current = true;
     void (async () => {
       try {
-        const session = await authRequest('/google/complete-link', sessionResponseSchema, {
-          method: 'POST',
-          body: JSON.stringify({ token }),
-        });
+        const session = await completeGoogleLink({ token });
         window.history.replaceState(null, '', '/google-link');
-        acceptSession(session.accessToken, session.user, session.expiresIn);
+        acceptSession(session.accessToken, session.user);
         router.replace('/jobs');
       } catch (cause) {
-        if (cause instanceof AuthRequestError && cause.status === 400) {
+        if (cause instanceof ApiError && cause.status === 400) {
           window.history.replaceState(null, '', '/google-link');
           setPhase('expired');
         } else {

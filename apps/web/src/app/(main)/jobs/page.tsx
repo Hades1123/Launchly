@@ -5,6 +5,7 @@ import { JobFilters } from '@/components/jobs/job-filters';
 import { JobListCard } from '@/components/jobs/job-list-card';
 import { findJob, type Job } from '@/components/jobs/mock-jobs';
 import { Badge } from '@/components/ui/badge';
+import { searchJobs, type JobSearchFilters } from '@/lib/api/jobs';
 import { cn } from '@/lib/cn';
 import type { PublicJobItem, PublicJobListResponse, JobLevel } from '@launchly/shared';
 
@@ -23,37 +24,13 @@ type JobsPageProps = {
   searchParams: SearchParams;
 };
 
-async function fetchJobs(
-  params: Record<string, string | undefined>,
-): Promise<PublicJobListResponse> {
-  const apiUrl = process.env.API_URL ?? 'http://localhost:4000';
-  const query = new URLSearchParams();
-
-  if (params.keyword?.trim()) query.set('keyword', params.keyword.trim());
-  if (params.industry?.trim()) query.set('industry', params.industry.trim());
-  if (params.level?.trim()) query.set('level', params.level.trim());
-  if (params.location?.trim()) query.set('location', params.location.trim());
-  if (params.page?.trim()) query.set('page', params.page.trim());
-
+/** Loads one page of public jobs; an unreachable API renders as an empty list. */
+async function loadJobs(filters: JobSearchFilters): Promise<PublicJobListResponse> {
   try {
-    const res = await fetch(`${apiUrl}/jobs?${query.toString()}`, {
-      cache: 'no-store',
-    });
-    if (!res.ok) {
-      throw new Error(`API returned ${res.status}`);
-    }
-    return (await res.json()) as PublicJobListResponse;
+    return await searchJobs(filters, { cache: 'no-store' });
   } catch (err) {
     console.warn('Jobs API call failed, returning empty result:', err);
-    return {
-      data: [],
-      pagination: {
-        page: 1,
-        limit: 10,
-        total: 0,
-        totalPages: 0,
-      },
-    };
+    return { data: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } };
   }
 }
 
@@ -111,7 +88,13 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
     page,
   };
 
-  const response = await fetchJobs(filterParams);
+  const response = await loadJobs({
+    keyword: keyword?.trim() || undefined,
+    industry: industry?.trim() || undefined,
+    level: validLevel,
+    location: location?.trim() || undefined,
+    page: Number(page) > 0 ? Number(page) : undefined,
+  });
   const { data: jobList, pagination } = response;
 
   // Determine active selected job for detail preview

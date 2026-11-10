@@ -2,14 +2,18 @@
 
 import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
+import { registerSchema, registrationRoleSchema } from '@launchly/shared';
 import {
-  messageResponseSchema,
-  registerSchema,
-  registrationRoleSchema,
-} from '@launchly/shared';
-import { AuthDivider, AuthFeedback, AuthField, AuthHeading, PasswordField, SubmitButton } from '@/components/auth/auth-ui';
+  AuthDivider,
+  AuthFeedback,
+  AuthField,
+  AuthHeading,
+  PasswordField,
+  SubmitButton,
+} from '@/components/auth/auth-ui';
 import { GoogleAuthAction } from '@/components/auth/google-auth-action';
-import { authErrorMessage, authRequest } from '@/lib/auth-api';
+import { authErrorMessage } from '@/lib/auth-helpers';
+import { register, resendVerification } from '@/lib/api/auth';
 
 type RegistrationRole = 'CANDIDATE' | 'RECRUITER';
 
@@ -53,10 +57,7 @@ export function RegisterForm() {
     setFieldErrors({});
     setPending(true);
     try {
-      await authRequest('/register', messageResponseSchema, {
-        method: 'POST',
-        body: JSON.stringify(parsed.data),
-      });
+      await register(parsed.data);
       setSubmitted(true);
     } catch (cause) {
       setError(authErrorMessage(cause));
@@ -65,15 +66,12 @@ export function RegisterForm() {
     }
   }
 
-  async function resendVerification() {
+  async function handleResendVerification() {
     setPending(true);
     setError(null);
     setNotice(null);
     try {
-      const result = await authRequest('/resend-verification', messageResponseSchema, {
-        method: 'POST',
-        body: JSON.stringify({ email: email.trim().toLowerCase() }),
-      });
+      const result = await resendVerification({ email: email.trim().toLowerCase() });
       setNotice(result.message);
     } catch (cause) {
       setError(authErrorMessage(cause));
@@ -92,14 +90,15 @@ export function RegisterForm() {
         />
         <div className="space-y-4">
           <AuthFeedback tone="success">
-            Kiểm tra hộp thư của <strong>{email.trim().toLowerCase()}</strong> để kích hoạt tài khoản.
+            Kiểm tra hộp thư của <strong>{email.trim().toLowerCase()}</strong> để kích hoạt tài
+            khoản.
           </AuthFeedback>
           {notice && <AuthFeedback tone="info">{notice}</AuthFeedback>}
           {error && <AuthFeedback tone="error">{error}</AuthFeedback>}
           <button
             type="button"
             disabled={pending}
-            onClick={() => void resendVerification()}
+            onClick={() => void handleResendVerification()}
             className="w-full rounded-control bg-primary-subtle px-4 py-3 text-sm font-semibold text-primary-subtle-foreground hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-60"
           >
             {pending ? 'Đang gửi…' : 'Gửi lại email xác minh'}

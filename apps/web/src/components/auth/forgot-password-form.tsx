@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
-import { forgotPasswordSchema, messageResponseSchema } from '@launchly/shared';
+import { forgotPasswordSchema } from '@launchly/shared';
 import { AuthFeedback, AuthField, AuthHeading, SubmitButton } from '@/components/auth/auth-ui';
-import { authErrorMessage, authRequest } from '@/lib/auth-api';
+import { authErrorMessage } from '@/lib/auth-helpers';
+import { forgotPassword } from '@/lib/api/auth';
 
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState('');
@@ -24,10 +25,7 @@ export function ForgotPasswordForm() {
     setFieldError(undefined);
     setPending(true);
     try {
-      await authRequest('/forgot-password', messageResponseSchema, {
-        method: 'POST',
-        body: JSON.stringify(parsed.data),
-      });
+      await forgotPassword(parsed.data);
       setSubmitted(true);
     } catch (cause) {
       setError(authErrorMessage(cause));

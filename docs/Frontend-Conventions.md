@@ -10,7 +10,8 @@ Target structure. Create folders only when a ticket needs them.
 - `components/ui/`: generic primitives (button, input, badge).
 - `components/layout/`: app shell (header, nav, footer).
 - `components/<feature>/`: feature-specific components.
-- `lib/`: helpers and API client code.
+- `lib/`: helpers.
+- `lib/api/`: the API layer: `http.ts` plus one service file per backend module (`auth.ts`, `candidate.ts`, `company.ts`, `jobs.ts`).
 
 ## 2. Naming
 
@@ -26,6 +27,20 @@ Target structure. Create folders only when a ticket needs them.
 ## 4. Contracts
 
 Forms and API responses reuse the Zod schemas from `@launchly/shared` (constitution Principle I). Do not hand-write duplicate types, and never import Prisma types in the frontend.
+
+### Calling the API
+
+- Pages and components call service functions from `lib/api/<module>.ts` (`getCandidateProfile()`, `searchJobs(filters)`). They never call `fetch` or write an endpoint URL themselves; each endpoint is defined once, in its service file.
+- Service functions are built on `request()`, `requestVoid()` and `requestBlob()` from `lib/api/http.ts`, and pass the shared Zod schema so every response is validated.
+- `http.ts` wraps the native `fetch`, so the same services work in Server Components (they call `API_URL` directly and accept Next.js caching options such as `{ cache: 'no-store' }` or `{ next: { revalidate } }`) and in the browser (through the `/api` rewrite).
+- In the browser, `http.ts` attaches the in-memory access token and, on a 401, refreshes it once and retries. Public auth endpoints (login, register...) pass `auth: false`.
+- Failures reject with `ApiError` (`code`, `status`, `details`) built from the shared `apiErrorSchema`; map codes to user-facing text in the UI.
+
+### Async code
+
+- Write asynchronous code with `async/await` and `try/catch/finally`. Use `.then()` only when you need the Promise object itself, for example to cache or share an in-flight request (`refreshAccessToken()` in `http.ts`). Do not mix the two in one function.
+- Run independent requests together with `await Promise.all([...])` instead of awaiting them one after another.
+- A `useEffect` callback cannot be `async`: declare an inner `async function load()`, call it with `void load()`, and guard state updates with an `active` flag that the cleanup sets to `false`.
 
 ## 5. Token rules
 

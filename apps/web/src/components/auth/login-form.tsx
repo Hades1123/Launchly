@@ -3,15 +3,20 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
+import { loginSchema } from '@launchly/shared';
 import {
-  loginSchema,
-  messageResponseSchema,
-  sessionResponseSchema,
-} from '@launchly/shared';
-import { AuthDivider, AuthFeedback, AuthField, AuthHeading, PasswordField, SubmitButton } from '@/components/auth/auth-ui';
+  AuthDivider,
+  AuthFeedback,
+  AuthField,
+  AuthHeading,
+  PasswordField,
+  SubmitButton,
+} from '@/components/auth/auth-ui';
 import { GoogleAuthAction } from '@/components/auth/google-auth-action';
 import { useAuth } from '@/lib/auth-context';
-import { authErrorMessage, authRequest, AuthRequestError, safeReturnPath } from '@/lib/auth-api';
+import { authErrorMessage, safeReturnPath } from '@/lib/auth-helpers';
+import { login, resendVerification } from '@/lib/api/auth';
+import { ApiError } from '@/lib/api/http';
 
 function fieldErrorsFromSchema(issues: Array<{ path: PropertyKey[] }>) {
   const errors: Record<string, string> = {};
@@ -47,31 +52,23 @@ export function LoginForm({ returnTo }: { returnTo?: string }) {
     setFieldErrors({});
     setPending(true);
     try {
-      const session = await authRequest('/login', sessionResponseSchema, {
-        method: 'POST',
-        body: JSON.stringify(parsed.data),
-      });
-      acceptSession(session.accessToken, session.user, session.expiresIn);
+      const session = await login(parsed.data);
+      acceptSession(session.accessToken, session.user);
       router.replace(safeReturnPath(returnTo));
     } catch (cause) {
       setError(authErrorMessage(cause));
-      setUnverified(
-        cause instanceof AuthRequestError && cause.code === 'EMAIL_NOT_VERIFIED',
-      );
+      setUnverified(cause instanceof ApiError && cause.code === 'EMAIL_NOT_VERIFIED');
     } finally {
       setPending(false);
     }
   }
 
-  async function resendVerification() {
+  async function handleResendVerification() {
     setPending(true);
     setError(null);
     setNotice(null);
     try {
-      const result = await authRequest('/resend-verification', messageResponseSchema, {
-        method: 'POST',
-        body: JSON.stringify({ email }),
-      });
+      const result = await resendVerification({ email });
       setNotice(result.message);
     } catch (cause) {
       setError(authErrorMessage(cause));
@@ -126,7 +123,7 @@ export function LoginForm({ returnTo }: { returnTo?: string }) {
           <button
             type="button"
             disabled={pending || !email}
-            onClick={() => void resendVerification()}
+            onClick={() => void handleResendVerification()}
             className="w-full rounded-control bg-primary-subtle px-3 py-2.5 text-sm font-semibold text-primary-subtle-foreground hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60"
           >
             Gửi lại email xác minh

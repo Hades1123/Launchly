@@ -16,7 +16,8 @@ const items: NavItem[] = [
   { label: 'Khám phá việc làm', href: '/jobs', badge: { text: 'Fresher', tone: 'success' } },
   { label: 'AI Đánh giá CV', href: '/cv-review', badge: { text: 'AI', tone: 'primary' } },
   { label: 'Luyện phỏng vấn AI', href: '/interview-practice' },
-  { label: 'Hồ sơ của tôi', href: '/applications' },
+  { label: 'Việc đã ứng tuyển', href: '/applications' },
+  { label: 'Hồ sơ của tôi', href: '/profile' },
 ];
 
 const base =

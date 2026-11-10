@@ -5,6 +5,7 @@ import type { CandidateProfile, UpdateCandidateProfileInput } from '@launchly/sh
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
+import { updateCandidateProfile } from '@/lib/api/candidate';
 
 interface ProfileFormProps {
   initialProfile: CandidateProfile;
@@ -62,18 +63,7 @@ export function ProfileForm({ initialProfile, onProfileUpdated }: ProfileFormPro
         projectsActivities: projectsActivities.trim() || null,
       };
 
-      const res = await fetch('/api/candidates/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error?.message || data.message || 'Failed to update profile.');
-      }
-
-      const updated: CandidateProfile = await res.json();
+      const updated = await updateCandidateProfile(payload);
       onProfileUpdated(updated);
       setSuccessMessage('Profile saved successfully.');
     } catch (err: unknown) {

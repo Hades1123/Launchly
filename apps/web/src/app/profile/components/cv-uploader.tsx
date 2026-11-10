@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import type { CvMetadata } from '@launchly/shared';
 import { Button } from '@/components/ui/button';
 import { UploadCloud } from 'lucide-react';
+import { uploadCv } from '@/lib/api/candidate';
 
 interface CvUploaderProps {
   onCvUploaded: (metadata: CvMetadata) => void;
@@ -46,20 +47,7 @@ export function CvUploader({ onCvUploaded, isReplacing, onCancelReplace }: CvUpl
     setError(null);
 
     try {
-      const formData = new FormData();
-      formData.append('cv', selectedFile);
-
-      const res = await fetch('/api/candidates/cv', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error?.message || data.message || 'CV upload failed.');
-      }
-
-      const metadata: CvMetadata = await res.json();
+      const metadata = await uploadCv(selectedFile);
       setSelectedFile(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -106,11 +94,7 @@ export function CvUploader({ onCvUploaded, isReplacing, onCancelReplace }: CvUpl
           disabled={!selectedFile || isUploading}
           className="flex-1"
         >
-          {isUploading
-            ? 'Uploading document...'
-            : isReplacing
-              ? 'Replace current CV'
-              : 'Upload CV'}
+          {isUploading ? 'Uploading document...' : isReplacing ? 'Replace current CV' : 'Upload CV'}
         </Button>
 
         {isReplacing && onCancelReplace && (

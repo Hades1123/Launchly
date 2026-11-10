@@ -25,16 +25,21 @@ export const loginSchema = z.object({
 export type LoginInput = z.infer<typeof loginSchema>;
 
 export const tokenRequestSchema = z.object({ token: tokenSchema });
+export type TokenRequestInput = z.infer<typeof tokenRequestSchema>;
 export const resendVerificationSchema = z.object({ email: emailSchema });
+export type ResendVerificationInput = z.infer<typeof resendVerificationSchema>;
 export const forgotPasswordSchema = z.object({ email: emailSchema });
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export const resetPasswordSchema = z.object({
   token: tokenSchema,
   password: passwordSchema,
 });
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export const googleSignInSchema = z.object({
   idToken: z.string().min(1).max(8192),
   role: registrationRoleSchema.optional(),
 });
+export type GoogleSignInInput = z.infer<typeof googleSignInSchema>;
 
 export const userDtoSchema = z.object({
   id: z.string().min(1),

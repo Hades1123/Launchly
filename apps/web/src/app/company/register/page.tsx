@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { createCompany } from '@/lib/api/company';
 
 export default function CompanyRegisterPage() {
   const [formData, setFormData] = useState({
@@ -60,36 +61,22 @@ export default function CompanyRegisterPage() {
     setSuccessMessage(null);
 
     try {
-      const res = await fetch('/api/companies', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // TODO: send `Authorization: Bearer <accessToken>` once web auth lands.
-        },
-        body: JSON.stringify({
-          ...formData,
-          logoUrl: logoPreview || undefined,
-        }),
+      await createCompany({
+        ...formData,
+        logoUrl: logoPreview || undefined,
       });
-
-      const result = await res.json();
-
-      if (!res.ok) {
-        setErrors({ general: result.error?.message || 'Đăng ký công ty thất bại.' });
-      } else {
-        setSuccessMessage('Đăng ký công ty thành công! Hồ sơ đang ở trạng thái chờ duyệt (Pending).');
-        setFormData({
-          name: '',
-          address: '',
-          industry: 'IT / Software',
-          companySize: '1-50',
-          website: '',
-          description: '',
-        });
-        setLogoPreview(null);
-      }
-    } catch {
-      setErrors({ general: 'Không thể kết nối tới máy chủ API (/api).' });
+      setSuccessMessage('Đăng ký công ty thành công! Hồ sơ đang ở trạng thái chờ duyệt (Pending).');
+      setFormData({
+        name: '',
+        address: '',
+        industry: 'IT / Software',
+        companySize: '1-50',
+        website: '',
+        description: '',
+      });
+      setLogoPreview(null);
+    } catch (err: unknown) {
+      setErrors({ general: err instanceof Error ? err.message : 'Đăng ký công ty thất bại.' });
     } finally {
       setIsSubmitting(false);
     }

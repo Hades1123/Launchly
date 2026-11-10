@@ -4,7 +4,9 @@ import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
 import { resetPasswordSchema } from '@launchly/shared';
 import { AuthFeedback, AuthHeading, PasswordField, SubmitButton } from '@/components/auth/auth-ui';
-import { authErrorMessage, authRequestNoContent, AuthRequestError } from '@/lib/auth-api';
+import { authErrorMessage } from '@/lib/auth-helpers';
+import { resetPassword } from '@/lib/api/auth';
+import { ApiError } from '@/lib/api/http';
 
 export function ResetPasswordForm({ token }: { token?: string }) {
   const [password, setPassword] = useState('');
@@ -35,15 +37,12 @@ export function ResetPasswordForm({ token }: { token?: string }) {
     setFieldErrors({});
     setPending(true);
     try {
-      await authRequestNoContent('/reset-password', {
-        method: 'POST',
-        body: JSON.stringify(parsed.data),
-      });
+      await resetPassword(parsed.data);
       window.history.replaceState(null, '', '/reset-password');
       setSuccess(true);
     } catch (cause) {
       setError(authErrorMessage(cause));
-      if (cause instanceof AuthRequestError && cause.code === 'INVALID_OR_EXPIRED_TOKEN') {
+      if (cause instanceof ApiError && cause.code === 'INVALID_OR_EXPIRED_TOKEN') {
         window.history.replaceState(null, '', '/reset-password');
         setInvalidToken(true);
       }
@@ -82,7 +81,11 @@ export function ResetPasswordForm({ token }: { token?: string }) {
             : 'Yêu cầu một liên kết đặt lại mật khẩu mới để tiếp tục.'
         }
       />
-      {error && <div className="mb-4"><AuthFeedback tone="error">{error}</AuthFeedback></div>}
+      {error && (
+        <div className="mb-4">
+          <AuthFeedback tone="error">{error}</AuthFeedback>
+        </div>
+      )}
       {!invalidToken && token ? (
         <form className="space-y-4" onSubmit={handleSubmit} noValidate>
           <PasswordField

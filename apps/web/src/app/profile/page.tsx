@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import type { CandidateProfile, CvMetadata } from '@launchly/shared';
 import { SiteHeader } from '@/components/layout/site-header';
 import { SiteFooter } from '@/components/layout/site-footer';
@@ -8,31 +9,40 @@ import { Card } from '@/components/ui/card';
 import { ProfileForm } from './components/profile-form';
 import { CvUploader } from './components/cv-uploader';
 import { CvViewer } from './components/cv-viewer';
+import { getCandidateProfile } from '@/lib/api/candidate';
+import { useAuth } from '@/lib/auth-context';
 
 export default function CandidateProfilePage() {
+  const { status, user } = useAuth();
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isReplacingCv, setIsReplacingCv] = useState(false);
 
+  const isCandidate = status === 'authenticated' && user?.role === 'CANDIDATE';
+
   useEffect(() => {
-    async function loadProfile() {
+    if (!isCandidate) return;
+    let active = true;
+
+    async function load() {
       try {
-        const res = await fetch('/api/candidates/profile');
-        if (!res.ok) {
-          throw new Error('Failed to load candidate profile.');
+        const data = await getCandidateProfile();
+        if (active) setProfile(data);
+      } catch (cause) {
+        if (active) {
+          setError(cause instanceof Error ? cause.message : 'An unexpected error occurred.');
         }
-        const data: CandidateProfile = await res.json();
-        setProfile(data);
-      } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
       } finally {
-        setIsLoading(false);
+        if (active) setIsLoading(false);
       }
     }
 
-    loadProfile();
-  }, []);
+    void load();
+    return () => {
+      active = false;
+    };
+  }, [isCandidate]);
 
   const handleProfileUpdated = (updated: CandidateProfile) => {
     setProfile(updated);
@@ -69,16 +79,40 @@ export default function CandidateProfilePage() {
               Candidate profile & CV
             </h1>
             <p className="mt-2 text-xs text-muted-foreground sm:text-sm">
-              Manage your academic background, skills, and resume document so recruiters can evaluate your application.
+              Manage your academic background, skills, and resume document so recruiters can
+              evaluate your application.
             </p>
           </header>
 
-          {isLoading ? (
-            <Card className="text-center py-12">
+          {status === 'loading' ? (
+            <Card className="py-12 text-center">
+              <p className="text-sm text-muted-foreground">Loading your session...</p>
+            </Card>
+          ) : status !== 'authenticated' ? (
+            <Card className="py-12 text-center">
+              <p className="text-sm text-muted-foreground">
+                Please{' '}
+                <Link
+                  href="/login?next=/profile"
+                  className="font-semibold text-primary hover:underline"
+                >
+                  sign in
+                </Link>{' '}
+                to manage your profile and CV.
+              </p>
+            </Card>
+          ) : !isCandidate ? (
+            <Card className="py-12 text-center">
+              <p className="text-sm text-muted-foreground">
+                The profile and CV page is only available to candidate accounts.
+              </p>
+            </Card>
+          ) : isLoading ? (
+            <Card className="py-12 text-center">
               <p className="text-sm text-muted-foreground">Loading candidate profile...</p>
             </Card>
           ) : error || !profile ? (
-            <Card className="text-center py-12">
+            <Card className="py-12 text-center">
               <div className="rounded-control border border-danger/20 bg-danger-subtle p-6 text-sm text-danger">
                 {error || 'Candidate profile not found.'}
               </div>
