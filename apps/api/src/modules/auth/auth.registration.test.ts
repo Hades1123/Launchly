@@ -86,6 +86,9 @@ describe('POST /auth/register', () => {
     expect(res.body.message).toMatch(/check your email/i);
     expect(mail.sent[0]?.to).toBe('alice@example.com');
     expect(mail.sent[0]?.subject).toMatch(/xác nhận/i);
+    expect(prisma.user.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ fullName: 'alice' }) }),
+    );
   });
 
   it('normalizes email to lowercase before duplicate check', async () => {

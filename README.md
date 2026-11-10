@@ -70,7 +70,22 @@ Copy-Item apps/api/.env.example apps/api/.env
 Copy-Item apps/web/.env.example apps/web/.env.local
 ```
 
-Seeded accounts have no password until authentication ships, so they cannot log in yet; `pn db:seed` is idempotent and refuses non-local databases.
+`pn db:seed` is idempotent (rerunning it restores the demo rows) and refuses non-local databases. It also writes the demo CV PDFs to `apps/api/uploads/`. Every seeded account uses the password `Launchly@123`:
+
+| Email                                | Role      | Demo state                                          |
+| ------------------------------------ | --------- | --------------------------------------------------- |
+| `admin@launchly.test`                | Admin     | Owns the interview question bank                    |
+| `recruiter@launchly.test`            | Recruiter | Nimbus Labs (approved); has draft and rejected jobs |
+| `recruiter.fpt@launchly.test`        | Recruiter | FPT Digital (approved); has pending and closed jobs |
+| `recruiter.lotus@launchly.test`      | Recruiter | Lotus Finance (approved)                            |
+| `recruiter.pending@launchly.test`    | Recruiter | Draft Ventures (pending approval)                   |
+| `recruiter.rejected@launchly.test`   | Recruiter | QuickCash Jobs (rejected, with a reason)            |
+| `candidate1@launchly.test`           | Candidate | Frontend profile, CV, 2 applications                |
+| `candidate2@launchly.test`           | Candidate | Backend profile, CV, 3 applications                 |
+| `candidate.locked@launchly.test`     | Candidate | Locked: login returns `ACCOUNT_LOCKED`              |
+| `candidate.unverified@launchly.test` | Candidate | Unverified: login returns `EMAIL_NOT_VERIFIED`      |
+
+Public search shows 11 published jobs (two pages); "Thực tập sinh Frontend React" has a hidden salary.
 
 `pn dev` runs both apps in one terminal with interleaved logs. For easier debugging, run them separately in two terminals instead:
 
@@ -101,6 +116,10 @@ Run from the repository root. `pn` is the short alias for `pnpm` (available sinc
 | `pn format`                 | Format with Prettier                                      |
 | `pn db:up` / `pn db:down`   | Start / stop local PostgreSQL                             |
 | `pn db:migrate`             | Create and apply a Prisma migration                       |
+| `pn db:sync`                | Apply committed migrations and regenerate the client      |
+| `pn db:deploy`              | Apply committed migrations only (no new migration)        |
+| `pn db:generate`            | Regenerate the Prisma client                              |
+| `pn db:reset`               | Wipe the local database, migrate and seed (local only)    |
 | `pn db:seed`                | Load idempotent demo data into a local database           |
 
 Run a script in a single package with `pn --filter @launchly/api <script>`.

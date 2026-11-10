@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import { healthResponseSchema } from '@launchly/shared';
 import { buttonClasses } from '@/components/ui/button';
 import { AuthHeaderActions } from '@/components/layout/auth-header-actions';
+import { getHealth } from '@/lib/api/health';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,8 +9,7 @@ export default async function Home() {
   let status = 'API không phản hồi';
   let apiUp = false;
   try {
-    const res = await fetch(`${process.env.API_URL ?? 'http://localhost:4000'}/health`);
-    status = healthResponseSchema.parse(await res.json()).status;
+    status = (await getHealth({ cache: 'no-store' })).status;
     apiUp = true;
   } catch {
     // API is not running

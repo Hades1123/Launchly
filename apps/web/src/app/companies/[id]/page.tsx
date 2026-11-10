@@ -2,43 +2,61 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-
-interface Company {
-  id: string;
-  name: string;
-  address: string | null;
-  industry: string | null;
-  companySize: string | null;
-  website: string | null;
-  logoUrl: string | null;
-  description: string | null;
-  moderationStatus: string;
-}
+import type { CompanyDto } from '@launchly/shared';
+import { getCompany } from '@/lib/api/company';
+import { ApiError } from '@/lib/api/http';
 
 export default function PublicCompanyDetailPage() {
   const params = useParams();
   const id = params?.id as string;
-  const [company, setCompany] = useState<Company | null>(null);
+  const [company, setCompany] = useState<CompanyDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
+    let active = true;
 
-    fetch(`/api/companies/${id}`)
-      .then((res) => {
-        if (!res.ok) throw new Error('Not found or pending');
-        return res.json();
-      })
-      .then((data) => setCompany(data))
-      .catch(() => setNotFound(true))
-      .finally(() => setLoading(false));
+    async function load() {
+      setLoading(true);
+      setNotFound(false);
+      setError(null);
+      try {
+        const data = await getCompany(id);
+        if (active) setCompany(data);
+      } catch (cause) {
+        if (!active) return;
+        if (cause instanceof ApiError && cause.code === 'NOT_FOUND') {
+          setNotFound(true);
+        } else {
+          setError(
+            cause instanceof ApiError ? cause.message : 'Không thể tải thông tin doanh nghiệp.',
+          );
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    void load();
+    return () => {
+      active = false;
+    };
   }, [id]);
 
   if (loading) {
     return (
       <div className="py-20 text-center text-gray-500 font-medium">
         Đang tải thông tin doanh nghiệp...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-24 text-center">
+        <p className="text-sm text-danger">{error}</p>
       </div>
     );
   }

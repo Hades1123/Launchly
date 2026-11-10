@@ -4,13 +4,11 @@ import Script from 'next/script';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  googleSignInResponseSchema,
-  registrationRoleSchema,
-} from '@launchly/shared';
+import { registrationRoleSchema } from '@launchly/shared';
 import { AuthFeedback } from '@/components/auth/auth-ui';
 import { useAuth } from '@/lib/auth-context';
-import { authErrorMessage, authRequest } from '@/lib/auth-api';
+import { authErrorMessage } from '@/lib/auth-helpers';
+import { signInWithGoogle } from '@/lib/api/auth';
 
 type GoogleCredentialResponse = { credential: string };
 type GoogleButtonOptions = {
@@ -122,12 +120,9 @@ export function GoogleAuthAction({ returnTo }: { returnTo?: string }) {
       setPending(true);
       setError(null);
       try {
-        const result = await authRequest('/google', googleSignInResponseSchema, {
-          method: 'POST',
-          body: JSON.stringify({ idToken, ...(role ? { role } : {}) }),
-        });
+        const result = await signInWithGoogle({ idToken, ...(role ? { role } : {}) });
         if ('accessToken' in result) {
-          acceptSession(result.accessToken, result.user, result.expiresIn);
+          acceptSession(result.accessToken, result.user);
           router.replace(returnTo || '/jobs');
           return;
         }
@@ -192,13 +187,19 @@ export function GoogleAuthAction({ returnTo }: { returnTo?: string }) {
                   {candidate ? 'Ứng viên' : 'Nhà tuyển dụng'}
                 </span>
                 <span className="mt-1 block text-xs leading-5 text-muted-foreground">
-                  {candidate ? 'Tìm kiếm và theo dõi cơ hội việc làm.' : 'Khám phá ứng viên phù hợp.'}
+                  {candidate
+                    ? 'Tìm kiếm và theo dõi cơ hội việc làm.'
+                    : 'Khám phá ứng viên phù hợp.'}
                 </span>
               </button>
             );
           })}
         </div>
-        {pending && <p role="status" className="text-center text-sm text-muted-foreground">Đang tạo tài khoản…</p>}
+        {pending && (
+          <p role="status" className="text-center text-sm text-muted-foreground">
+            Đang tạo tài khoản…
+          </p>
+        )}
         {error && <AuthFeedback tone="error">{error}</AuthFeedback>}
         <button
           type="button"

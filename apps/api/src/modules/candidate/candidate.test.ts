@@ -9,6 +9,18 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import { createApp } from '@/app';
 import { prisma } from '@/lib/prisma';
+import type { createAuthService } from '@/modules/auth/auth.service';
+
+const testUserId = '11111111-1111-1111-1111-111111111111';
+const otherUserId = '22222222-2222-2222-2222-222222222222';
+const auth = { Authorization: 'Bearer token' };
+
+function fakeAuthService(role: 'CANDIDATE' | 'RECRUITER' = 'CANDIDATE') {
+  return {
+    verifyAccessToken: vi.fn(() => ({ userId: testUserId, sessionId: 'session-1' })),
+    getSessionUser: vi.fn(async () => ({ id: testUserId, role })),
+  } as unknown as ReturnType<typeof createAuthService>;
+}
 
 // Mock Prisma for unit and integration testing
 vi.mock('@/lib/prisma', () => {
@@ -48,31 +60,26 @@ vi.mock('@/lib/prisma', () => {
 
 describe('Candidate Profile and CV Module', () => {
   let app: ReturnType<typeof createApp>;
-  const testUserId = '11111111-1111-1111-1111-111111111111';
-  const otherUserId = '22222222-2222-2222-2222-222222222222';
 
   beforeEach(() => {
     vi.clearAllMocks();
-    app = createApp();
+    app = createApp(fakeAuthService());
   });
 
   describe('Authentication & Authorization Guards', () => {
     it('returns 401 Unauthorized when request lacks authentication', async () => {
       const res = await request(app).get('/candidates/profile');
       expect(res.status).toBe(401);
-      expect(res.body.error.code).toBe('UNAUTHORIZED');
-      expect(res.body.error.message).toContain('Authentication required');
+      expect(res.body.error.code).toBe('UNAUTHENTICATED');
     });
 
     it('returns 403 Forbidden when user role is not CANDIDATE', async () => {
-      const res = await request(app)
+      const res = await request(createApp(fakeAuthService('RECRUITER')))
         .get('/candidates/profile')
-        .set('x-mock-user-id', testUserId)
-        .set('x-mock-user-role', 'RECRUITER');
+        .set(auth);
 
       expect(res.status).toBe(403);
       expect(res.body.error.code).toBe('FORBIDDEN');
-      expect(res.body.error.message).toContain('Candidate access required');
     });
   });
 
@@ -100,7 +107,7 @@ describe('Candidate Profile and CV Module', () => {
         },
       } as any);
 
-      const res = await request(app).get('/candidates/profile').set('x-mock-user-id', testUserId);
+      const res = await request(app).get('/candidates/profile').set(auth);
 
       expect(res.status).toBe(200);
       expect(res.body.fullName).toBe('John Doe');
@@ -109,14 +116,38 @@ describe('Candidate Profile and CV Module', () => {
       expect(res.body.skills).toEqual(['TypeScript', 'Node.js']);
     });
 
+    it('uses the email local part as fullName when the account has no name', async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValueOnce({
+        id: testUserId,
+        email: 'new.candidate@gmail.com',
+        fullName: null,
+        role: 'CANDIDATE',
+        candidateProfile: {
+          id: '11111111-1111-1111-1111-111111111112',
+          userId: testUserId,
+          headline: null,
+          bio: null,
+          location: null,
+          schoolMajor: null,
+          skills: [],
+          projectsActivities: null,
+          resumes: [],
+          createdAt: new Date('2026-01-01'),
+          updatedAt: new Date('2026-01-01'),
+        },
+      } as any);
+
+      const res = await request(app).get('/candidates/profile').set(auth);
+
+      expect(res.status).toBe(200);
+      expect(res.body.fullName).toBe('new.candidate');
+    });
+
     it('rejects update when fullName is blank or whitespace-only', async () => {
-      const res = await request(app)
-        .put('/candidates/profile')
-        .set('x-mock-user-id', testUserId)
-        .send({
-          fullName: '   ',
-          schoolMajor: 'Software Engineering',
-        });
+      const res = await request(app).put('/candidates/profile').set(auth).send({
+        fullName: '   ',
+        schoolMajor: 'Software Engineering',
+      });
 
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('VALIDATION_ERROR');
@@ -149,7 +180,7 @@ describe('Candidate Profile and CV Module', () => {
 
       const res = await request(app)
         .put('/candidates/profile')
-        .set('x-mock-user-id', testUserId)
+        .set(auth)
         .send({
           fullName: 'New Candidate Name',
           headline: 'Junior Developer',
@@ -168,7 +199,7 @@ describe('Candidate Profile and CV Module', () => {
 
   describe('User Story 2 & 3 - CV Document Lifecycle (Upload, Replace, Delete)', () => {
     it('rejects CV upload when file is missing', async () => {
-      const res = await request(app).post('/candidates/cv').set('x-mock-user-id', testUserId);
+      const res = await request(app).post('/candidates/cv').set(auth);
 
       expect(res.status).toBe(400);
     });
@@ -178,7 +209,7 @@ describe('Candidate Profile and CV Module', () => {
 
       const res = await request(app)
         .post('/candidates/cv')
-        .set('x-mock-user-id', testUserId)
+        .set(auth)
         .attach('cv', invalidBuffer, 'fake.pdf');
 
       expect(res.status).toBe(400);
@@ -207,7 +238,7 @@ describe('Candidate Profile and CV Module', () => {
 
       const res = await request(app)
         .post('/candidates/cv')
-        .set('x-mock-user-id', testUserId)
+        .set(auth)
         .attach('cv', validPdfBuffer, 'my_resume.pdf');
 
       expect(res.status).toBe(201);
@@ -244,7 +275,7 @@ describe('Candidate Profile and CV Module', () => {
 
       const res = await request(app)
         .post('/candidates/cv')
-        .set('x-mock-user-id', testUserId)
+        .set(auth)
         .attach('cv', validPdfBuffer, 'updated_cv.pdf');
 
       expect(res.status).toBe(201);
@@ -266,7 +297,7 @@ describe('Candidate Profile and CV Module', () => {
 
       vi.mocked(prisma.resume.delete).mockResolvedValueOnce({} as any);
 
-      const res = await request(app).delete('/candidates/cv').set('x-mock-user-id', testUserId);
+      const res = await request(app).delete('/candidates/cv').set(auth);
 
       expect(res.status).toBe(204);
       expect(prisma.resume.delete).toHaveBeenCalledWith({
@@ -292,7 +323,7 @@ describe('Candidate Profile and CV Module', () => {
         resumes: [],
       } as any);
 
-      const res = await request(app).get('/candidates/cv').set('x-mock-user-id', testUserId);
+      const res = await request(app).get('/candidates/cv').set(auth);
 
       expect(res.status).toBe(404);
       expect(res.body.error.code).toBe('NOT_FOUND');

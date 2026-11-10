@@ -1,10 +1,6 @@
 'use client';
 
-import {
-  accessTokenResponseSchema,
-  userDtoSchema,
-  type UserDto,
-} from '@launchly/shared';
+import type { UserDto } from '@launchly/shared';
 import {
   createContext,
   useCallback,
@@ -14,79 +10,64 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { authRequest, authRequestNoContent, AuthRequestError } from '@/lib/auth-api';
+import { getCurrentUser, logout as logoutRequest, refreshSession } from '@/lib/api/auth';
+import { ApiError, setAccessToken, setSessionExpiredHandler } from '@/lib/api/http';
 
 type AuthStatus = 'loading' | 'anonymous' | 'authenticated' | 'unavailable';
 
 type AuthContextValue = {
   status: AuthStatus;
-  accessToken: string | null;
   user: UserDto | null;
   error: string | null;
-  acceptSession: (accessToken: string, user: UserDto, expiresIn: number) => void;
+  acceptSession: (accessToken: string, user: UserDto) => void;
   logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-let refreshInFlight: Promise<{ accessToken: string; expiresIn: number }> | null = null;
 
-function refreshAccessToken() {
-  if (refreshInFlight) return refreshInFlight;
-  const pending = authRequest('/refresh', accessTokenResponseSchema, {
-    method: 'POST',
-  }).then(({ accessToken, expiresIn }) => ({ accessToken, expiresIn }));
-  const shared = pending.finally(() => {
-    if (refreshInFlight === shared) refreshInFlight = null;
-  });
-  refreshInFlight = shared;
-  return shared;
-}
-
-async function getCurrentUser(accessToken: string) {
-  return authRequest('/me', userDtoSchema, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-    cache: 'no-store',
-  });
-}
-
+/**
+ * Holds the signed-in user. The access token itself lives in `lib/api/http`,
+ * which attaches it to every request and refreshes it on 401.
+ */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>('loading');
-  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [user, setUser] = useState<UserDto | null>(null);
-  const [expiresAt, setExpiresAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const acceptSession = useCallback((token: string, currentUser: UserDto, expiresIn: number) => {
+  const acceptSession = useCallback((token: string, currentUser: UserDto) => {
     setAccessToken(token);
     setUser(currentUser);
-    setExpiresAt(Date.now() + expiresIn * 1000);
     setError(null);
     setStatus('authenticated');
   }, []);
 
-  const clearSession = useCallback(() => {
+  const endSession = useCallback(() => {
     setAccessToken(null);
     setUser(null);
-    setExpiresAt(null);
+    setError(null);
+    setStatus('anonymous');
   }, []);
 
+  useEffect(() => {
+    setSessionExpiredHandler(endSession);
+    return () => setSessionExpiredHandler(null);
+  }, [endSession]);
+
+  // Restore the session from the refresh cookie on first load.
   useEffect(() => {
     let active = true;
     void (async () => {
       try {
-        const refreshed = await refreshAccessToken();
-        const currentUser = await getCurrentUser(refreshed.accessToken);
-        if (active) acceptSession(refreshed.accessToken, currentUser, refreshed.expiresIn);
+        const { accessToken } = await refreshSession();
+        const currentUser = await getCurrentUser();
+        if (active) acceptSession(accessToken, currentUser);
       } catch (cause) {
         if (!active) return;
-        if (cause instanceof AuthRequestError && cause.status === 401) {
-          clearSession();
-          setStatus('anonymous');
+        if (cause instanceof ApiError && cause.status === 401) {
+          endSession();
         } else {
           setError(
-            cause instanceof AuthRequestError
-              ? cause.message
-              : 'Không thể khôi phục phiên đăng nhập.',
+            cause instanceof ApiError ? cause.message : 'Không thể khôi phục phiên đăng nhập.',
           );
           setStatus('unavailable');
         }
@@ -95,51 +76,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       active = false;
     };
-  }, [acceptSession, clearSession]);
-
-  useEffect(() => {
-    if (status !== 'authenticated' || !expiresAt) return;
-    const delay = Math.max(1000, expiresAt - Date.now() - 60_000);
-    const timer = window.setTimeout(() => {
-      void (async () => {
-        try {
-          const refreshed = await refreshAccessToken();
-          const currentUser = await getCurrentUser(refreshed.accessToken);
-          acceptSession(refreshed.accessToken, currentUser, refreshed.expiresIn);
-        } catch (cause) {
-          clearSession();
-          if (cause instanceof AuthRequestError && cause.status === 401) {
-            setError(null);
-            setStatus('anonymous');
-          } else {
-            setError(
-              cause instanceof AuthRequestError
-                ? cause.message
-                : 'Không thể gia hạn phiên đăng nhập.',
-            );
-            setStatus('unavailable');
-          }
-        }
-      })();
-    }, delay);
-    return () => window.clearTimeout(timer);
-  }, [acceptSession, clearSession, expiresAt, status]);
+  }, [acceptSession, endSession]);
 
   const logout = useCallback(async () => {
-    if (accessToken) {
-      await authRequestNoContent('/logout', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+    try {
+      await logoutRequest();
+    } finally {
+      endSession();
     }
-    clearSession();
-    setError(null);
-    setStatus('anonymous');
-  }, [accessToken, clearSession]);
+  }, [endSession]);
 
   const value = useMemo(
-    () => ({ status, accessToken, user, error, acceptSession, logout }),
-    [acceptSession, accessToken, error, logout, status, user],
+    () => ({ status, user, error, acceptSession, logout }),
+    [acceptSession, error, logout, status, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

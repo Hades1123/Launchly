@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { FileText, Download, RefreshCw, Trash2, AlertTriangle } from 'lucide-react';
+import { deleteCv, downloadCv } from '@/lib/api/candidate';
 
 interface CvViewerProps {
   originalFileName: string;
@@ -20,6 +21,7 @@ export function CvViewer({
   const [isDeleting, setIsDeleting] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const formattedDate = uploadedAt
     ? new Date(uploadedAt).toLocaleDateString('en-US', {
@@ -36,21 +38,31 @@ export function CvViewer({
     setDeleteError(null);
 
     try {
-      const res = await fetch('/api/candidates/cv', {
-        method: 'DELETE',
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error?.message || data.message || 'Failed to delete CV.');
-      }
-
+      await deleteCv();
       setShowConfirmModal(false);
       onCvDeleted();
     } catch (err: unknown) {
       setDeleteError(err instanceof Error ? err.message : 'An error occurred during deletion.');
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  // A plain link cannot send the Bearer token, so fetch the file and save it as a blob.
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    setDeleteError(null);
+    try {
+      const url = URL.createObjectURL(await downloadCv());
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = originalFileName;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (err: unknown) {
+      setDeleteError(err instanceof Error ? err.message : 'Failed to download CV.');
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -77,15 +89,16 @@ export function CvViewer({
       </div>
 
       <div className="flex flex-col gap-2">
-        <a
-          href="/api/candidates/cv"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex w-full items-center justify-center gap-2 rounded-control bg-secondary px-4 py-2 text-xs font-semibold text-secondary-foreground transition-colors hover:bg-secondary/80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        <Button
+          variant="soft"
+          type="button"
+          onClick={handleDownload}
+          disabled={isDownloading}
+          className="w-full text-xs"
         >
           <Download className="size-3.5" />
-          <span>View / Download CV</span>
-        </a>
+          <span>{isDownloading ? 'Downloading...' : 'Download CV'}</span>
+        </Button>
 
         <div className="flex gap-2">
           <Button variant="soft" onClick={onStartReplace} className="flex-1 text-xs">

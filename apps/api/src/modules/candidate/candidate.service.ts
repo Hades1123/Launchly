@@ -1,6 +1,7 @@
 import type { Readable } from 'stream';
 import { prisma } from '@/lib/prisma';
 import { AppError } from '@/lib/app-error';
+import { nameFromEmail } from '@/lib/utils';
 import { getStorageProvider, type StorageProvider } from '@/providers/storage';
 import { validateCvFile } from './cv-validator';
 import type { CandidateProfile, UpdateCandidateProfileInput, CvMetadata } from '@launchly/shared';
@@ -49,7 +50,8 @@ export class CandidateService {
     return {
       id: profile.id,
       userId: user.id,
-      fullName: user.fullName ?? '',
+      // Registration stores the email local part; older accounts may still have no name.
+      fullName: user.fullName ?? nameFromEmail(user.email),
       headline: profile.headline ?? null,
       bio: profile.bio ?? null,
       location: profile.location ?? null,

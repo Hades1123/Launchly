@@ -5,7 +5,7 @@ import { LogOut } from 'lucide-react';
 import { useState } from 'react';
 import { AuthFeedback } from '@/components/auth/auth-ui';
 import { useAuth } from '@/lib/auth-context';
-import { authErrorMessage } from '@/lib/auth-api';
+import { authErrorMessage } from '@/lib/auth-helpers';
 
 export function AuthHeaderActions() {
   const { status, user, logout, error: sessionError } = useAuth();

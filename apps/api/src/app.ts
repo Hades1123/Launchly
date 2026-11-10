@@ -11,7 +11,7 @@ import { createMailProvider } from '@/providers/mail/mail-provider';
 import { createCompanyRouter } from '@/modules/company/company.routes';
 import { createCompanyService } from '@/modules/company/company.service';
 import { healthRouter } from '@/modules/health/health.routes';
-import { candidateRouter } from '@/modules/candidate/candidate.routes';
+import { createCandidateRouter } from '@/modules/candidate/candidate.routes';
 import { jobRouter } from '@/modules/job/job.routes';
 import { notFound } from '@/middlewares/not-found';
 import { errorHandler } from '@/middlewares/error-handler';
@@ -29,12 +29,9 @@ export function createApp(
   app.use(cookieParser());
 
   app.use('/health', healthRouter);
-  app.use('/api/candidates', candidateRouter);
-  app.use('/candidates', candidateRouter);
-  app.use('/api/jobs', jobRouter);
   app.use('/jobs', jobRouter);
-
   app.use('/auth', createAuthRouter(authService));
+  app.use('/candidates', createCandidateRouter(authService));
   app.use('/companies', createCompanyRouter(authService, createCompanyService(prisma)));
   app.use(notFound);
   app.use(errorHandler);

@@ -2,9 +2,11 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { messageResponseSchema, resendVerificationSchema } from '@launchly/shared';
+import { resendVerificationSchema } from '@launchly/shared';
 import { AuthFeedback, AuthField, AuthHeading, SubmitButton } from '@/components/auth/auth-ui';
-import { authErrorMessage, authRequest, AuthRequestError } from '@/lib/auth-api';
+import { authErrorMessage } from '@/lib/auth-helpers';
+import { resendVerification, verifyEmail } from '@/lib/api/auth';
+import { ApiError } from '@/lib/api/http';
 
 type VerificationState = 'verifying' | 'success' | 'expired' | 'missing' | 'error';
 
@@ -22,14 +24,11 @@ export function VerifyEmailFlow({ token }: { token?: string }) {
     started.current = true;
     void (async () => {
       try {
-        await authRequest('/verify-email', messageResponseSchema, {
-          method: 'POST',
-          body: JSON.stringify({ token }),
-        });
+        await verifyEmail({ token });
         window.history.replaceState(null, '', '/verify-email');
         setState('success');
       } catch (cause) {
-        if (cause instanceof AuthRequestError && cause.status === 400) {
+        if (cause instanceof ApiError && cause.status === 400) {
           window.history.replaceState(null, '', '/verify-email');
           setState('expired');
         } else {
@@ -52,10 +51,7 @@ export function VerifyEmailFlow({ token }: { token?: string }) {
       return;
     }
     try {
-      const result = await authRequest('/resend-verification', messageResponseSchema, {
-        method: 'POST',
-        body: JSON.stringify(parsed.data),
-      });
+      const result = await resendVerification(parsed.data);
       setNotice(result.message);
     } catch (cause) {
       setError(authErrorMessage(cause));
@@ -72,7 +68,9 @@ export function VerifyEmailFlow({ token }: { token?: string }) {
           title="Đang xác minh"
           description="Đang kiểm tra liên kết xác minh của bạn."
         />
-        <p role="status" className="text-sm text-muted-foreground">Vui lòng chờ trong giây lát…</p>
+        <p role="status" className="text-sm text-muted-foreground">
+          Vui lòng chờ trong giây lát…
+        </p>
       </section>
     );
   }
@@ -128,8 +126,16 @@ export function VerifyEmailFlow({ token }: { token?: string }) {
         title={state === 'expired' ? 'Liên kết không còn hiệu lực' : 'Chưa có liên kết xác minh'}
         description="Nhập email đăng ký để yêu cầu gửi lại liên kết xác minh."
       />
-      {error && <div className="mb-4"><AuthFeedback tone="error">{error}</AuthFeedback></div>}
-      {notice && <div className="mb-4"><AuthFeedback tone="success">{notice}</AuthFeedback></div>}
+      {error && (
+        <div className="mb-4">
+          <AuthFeedback tone="error">{error}</AuthFeedback>
+        </div>
+      )}
+      {notice && (
+        <div className="mb-4">
+          <AuthFeedback tone="success">{notice}</AuthFeedback>
+        </div>
+      )}
       <form className="space-y-4" onSubmit={resend} noValidate>
         <AuthField
           label="Email đăng ký"

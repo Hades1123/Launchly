@@ -25,6 +25,11 @@ export class LocalStorageProvider implements StorageProvider {
     return storageKey;
   }
 
+  async saveAs(storageKey: string, fileBuffer: Buffer): Promise<void> {
+    await this.ensureDir();
+    await fs.promises.writeFile(path.join(this.baseDir, path.basename(storageKey)), fileBuffer);
+  }
+
   async delete(storageKey: string): Promise<void> {
     const filePath = path.join(this.baseDir, path.basename(storageKey));
     try {
