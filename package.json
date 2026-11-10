@@ -17,7 +17,11 @@
     "format:check": "prettier --check .",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
+    "db:generate": "pnpm --filter @launchly/api db:generate",
     "db:migrate": "pnpm --filter @launchly/api db:migrate",
+    "db:deploy": "pnpm --filter @launchly/api db:deploy",
+    "db:sync": "pnpm --filter @launchly/api db:sync",
+    "db:reset": "pnpm --filter @launchly/api db:reset",
     "db:seed": "pnpm --filter @launchly/api db:seed"
   },
   "devDependencies": {
