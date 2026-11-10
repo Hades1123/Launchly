@@ -1,18 +1,28 @@
 import { Router } from 'express';
-import { CandidateController } from './candidate.controller';
-import { authenticate, requireCandidateAuth } from '@/middlewares/auth';
+import { updateCandidateProfileSchema } from '@launchly/shared';
+import { authenticate } from '@/middlewares/authenticate';
+import { authorize } from '@/middlewares/authorize';
 import { uploadCvMiddleware } from '@/middlewares/upload';
+import { validate } from '@/middlewares/validate';
+import type { createAuthService } from '@/modules/auth/auth.service';
+import { CandidateController } from '@/modules/candidate/candidate.controller';
+
+type AuthService = ReturnType<typeof createAuthService>;
 
 export function createCandidateRouter(
+  authService: AuthService,
   controller: CandidateController = new CandidateController(),
 ): Router {
   const router = Router();
 
-  // All candidate routes require authentication and CANDIDATE role
-  router.use(authenticate, requireCandidateAuth);
+  router.use(authenticate(authService), authorize('CANDIDATE'));
 
   router.get('/profile', controller.getProfile);
-  router.put('/profile', controller.updateProfile);
+  router.put(
+    '/profile',
+    validate({ body: updateCandidateProfileSchema }),
+    controller.updateProfile,
+  );
 
   router.post('/cv', uploadCvMiddleware, controller.uploadCv);
   router.delete('/cv', controller.deleteCv);
@@ -20,5 +30,3 @@ export function createCandidateRouter(
 
   return router;
 }
-
-export const candidateRouter = createCandidateRouter();
