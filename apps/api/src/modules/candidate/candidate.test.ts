@@ -116,6 +116,33 @@ describe('Candidate Profile and CV Module', () => {
       expect(res.body.skills).toEqual(['TypeScript', 'Node.js']);
     });
 
+    it('uses the email local part as fullName when the account has no name', async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValueOnce({
+        id: testUserId,
+        email: 'new.candidate@gmail.com',
+        fullName: null,
+        role: 'CANDIDATE',
+        candidateProfile: {
+          id: '11111111-1111-1111-1111-111111111112',
+          userId: testUserId,
+          headline: null,
+          bio: null,
+          location: null,
+          schoolMajor: null,
+          skills: [],
+          projectsActivities: null,
+          resumes: [],
+          createdAt: new Date('2026-01-01'),
+          updatedAt: new Date('2026-01-01'),
+        },
+      } as any);
+
+      const res = await request(app).get('/candidates/profile').set(auth);
+
+      expect(res.status).toBe(200);
+      expect(res.body.fullName).toBe('new.candidate');
+    });
+
     it('rejects update when fullName is blank or whitespace-only', async () => {
       const res = await request(app).put('/candidates/profile').set(auth).send({
         fullName: '   ',

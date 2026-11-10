@@ -18,8 +18,12 @@ export class ApiError extends Error {
   }
 }
 
+type SchemaIssue = { path: PropertyKey[]; message: string };
+
 type ResponseSchema<T> = {
-  safeParse: (input: unknown) => { success: true; data: T } | { success: false };
+  safeParse: (
+    input: unknown,
+  ) => { success: true; data: T } | { success: false; error: { issues: SchemaIssue[] } };
 };
 
 export type RequestOptions = {
@@ -149,9 +153,31 @@ export async function request<T>(
   }
   const result = schema.safeParse(payload);
   if (!result.success) {
+    reportContractMismatch(options.method ?? 'GET', path, result.error.issues, payload);
     throw new ApiError('INTERNAL_ERROR', 'Máy chủ trả về dữ liệu không hợp lệ.', response.status);
   }
   return result.data;
+}
+
+/**
+ * A response that fails its shared schema is still a 2xx in the Network tab,
+ * so outside production log which fields broke the contract.
+ */
+function reportContractMismatch(
+  method: string,
+  path: string,
+  issues: SchemaIssue[],
+  payload: unknown,
+) {
+  if (process.env.NODE_ENV === 'production') return;
+  const fields = issues.map((issue) => ({
+    field: issue.path.map(String).join('.') || '(root)',
+    message: issue.message,
+  }));
+  console.error(`[api] ${method} ${path}: response does not match the shared schema`, {
+    issues: fields,
+    payload,
+  });
 }
 
 /** Sends a request whose response body is ignored (e.g. 204 No Content). */

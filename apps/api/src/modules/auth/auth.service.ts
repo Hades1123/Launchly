@@ -7,6 +7,7 @@ import {
 } from '@/generated/prisma/client';
 import { env } from '@/lib/env';
 import { HttpError } from '@/lib/http-error';
+import { nameFromEmail } from '@/lib/utils';
 import {
   generateOpaqueToken,
   hashPassword,
@@ -158,7 +159,7 @@ export function createAuthService(
       let user: PublicUser;
       try {
         user = await prisma.user.create({
-          data: { email, passwordHash, role: input.role },
+          data: { email, passwordHash, role: input.role, fullName: nameFromEmail(email) },
           select: { id: true, email: true, fullName: true, role: true, emailVerifiedAt: true },
         });
       } catch (error) {
@@ -393,7 +394,7 @@ export function createAuthService(
           data: {
             email: identity.email,
             googleId: identity.subject,
-            fullName: identity.fullName,
+            fullName: identity.fullName ?? nameFromEmail(identity.email),
             role,
             emailVerifiedAt: new Date(),
           },
