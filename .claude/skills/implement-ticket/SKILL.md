@@ -47,12 +47,13 @@ Create one todo per phase. Each phase has an entry check, actions, an exit gate,
 
 ### Phase 0. Input and resume
 
-**Entry:** a Story key (`SCRUM-n`) or its URL. A Subtask key: read it, switch to its parent Story, and say so. No key: ask for one; do not scope an idea here (that is `create-implementation-item`).
+**Entry:** a Story key (`SCRUM-n`) or its URL. Older parents are `Task`s with Subtasks; treat them like a Story. A Subtask key: read it, switch to its parent Story, and say so. No key: ask for one; do not scope an idea here (that is `create-implementation-item`).
 
 1. Read the Story with `getJiraIssue` (description, comments, links) and each Subtask.
 2. **Delivery label:** exactly one of `feature`, `bug`, `maintenance`. None or several: ask which applies, with a recommendation from the Story text, then preview the `editJiraIssue` label change and apply it on a yes. Do this before any branch exists.
 3. **Clarification Subtask** with unanswered questions that block a decision: list them and stop. A person resolves them first.
-4. **Resume table.** Check each in order and record what exists:
+4. **Dependencies:** a `Depends on` / `is blocked by` link to a ticket that is not Done: name it and stop, unless the user says to go ahead.
+5. **Resume table.** Check each in order and record what exists:
 
    | Check                                                               | If found                                                                                                         |
    | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
