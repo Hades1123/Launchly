@@ -89,7 +89,7 @@ and ask. Without a contract the review cannot reach a verdict.
 ## 3. Run fresh verification
 
 Check out the head SHA in a scratch worktree (`git worktree add --detach
-<scratch-path> <sha>`, then `pnpm install --frozen-lockfile` there) and rerun every
+<scratch-path> <sha>`, then `pnpm install --frozen-lockfile`, `pnpm db:generate`, and copy each `apps/*/.env` from the main checkout, or from `.env.example` when it has none) and rerun every
 gate the label requires, yourself. Do not reuse the implementer's results:
 
 | Gate                  | Command                                       | Applies to                    |
@@ -100,7 +100,7 @@ gate the label requires, yourself. Do not reuse the implementer's results:
 | Changed-file coverage | `pnpm test:coverage && pnpm coverage:changed` | `feature`                     |
 | e2e                   | `pnpm --filter @launchly/web test:e2e`        | `feature` touching `apps/web` |
 
-The e2e run needs the local database (`pn db:up`, port 5433) with the demo seed;
+The e2e run needs the local database (`pnpm db:up`, port 5433) with the demo seed;
 it is local, not remote-only. Record each exact command, exit code, and the
 relevant output lines. Then:
 
@@ -147,7 +147,8 @@ and evidence.
    always Critical.
 7. **Scope and size.** No unrelated changes, speculative abstractions, or new
    dependencies the issue does not justify. Handwritten changes stay within the
-   issue's line limit (default ≤300 lines, excluding generated files and lockfiles),
+   issue's line limit (default ≤300 lines, excluding generated files, lockfiles,
+   `specs/**` and `apps/web/e2e/**`, the same rule `implement-ticket` uses),
    measured with `git diff --stat`. There is no file-count limit.
 8. **Documentation.** Every doc task named in the issue is done and matches the
    delivered behavior.

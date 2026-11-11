@@ -238,6 +238,9 @@ requires a plan that states the reason and is reviewed like an architecture chan
   PR reviewers for the person the user named in that run, after the user confirms the preview.
 - **Remote writes**: every agent write to Jira or GitHub (create, edit, comment, review) is shown
   as an exact preview first and runs only on a yes given while that preview is on screen.
+  Exception: once a person approved creating a PR, the implementing agent may update that PR's
+  own evidence table, plan-approval line, and pre-review comment in the same shape without a new
+  preview.
 
 ## Governance
 

@@ -60,7 +60,7 @@ Repository skills live in `.claude/skills/` (Claude Code loads them automaticall
 4. Merge    a person merges and moves the ticket to Done
 ```
 
-`REQUEST_CHANGES` sends the PR back to `implement-ticket`, which resumes at Phase 4. Every new commit needs a new review. Agents never merge, push to `main`, or transition tickets; every agent write to Jira or GitHub is previewed and needs a yes.
+`REQUEST_CHANGES` sends the PR back to `implement-ticket`, which resumes at Phase 4. Every new commit needs a new review. Agents never merge, push to `main`, or transition tickets; every agent write to Jira or GitHub is previewed and needs a yes (only exception: `implement-ticket` updating its own PR's evidence table and pre-review comment after the PR's creation was approved). A `REQUEST_CHANGES` review puts the PR back in Draft and starts a new pre-review cycle (up to 3 returns to implementation).
 
 | Skill                                                                                                                | Use for                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -93,6 +93,6 @@ Branches, commits, and PR titles carry the Jira key so the Jira–GitHub integra
 - Site: `https://hcmut-team-vmaq1hvy.atlassian.net`
 - Cloud ID (Atlassian MCP): `bec02efe-55db-40ac-a5fc-4b23fd1c1674`
 - Project: **Launchly**, key `SCRUM` (team-managed software project)
-- Issue types: `Epic`, `Story`, `Task`, `Subtask` (no `Bug` type; file bugs as `Task` with label `bug`)
+- Issue types: `Epic`, `Story`, `Task`, `Subtask` (no `Bug` type; file a bug as a `Story` with the `bug` delivery label)
 - Ticket URL: `https://hcmut-team-vmaq1hvy.atlassian.net/browse/<KEY>`
 - Confluence is on the same site and may be read for requirements context.
