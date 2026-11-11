@@ -70,9 +70,15 @@ BREAKING CHANGE: `username` is now `email` in loginSchema.
    pn typecheck
    pn lint
    pn test
+   pn test:coverage && pn coverage:changed   # feature tickets: ≥80 % lines and branches on changed files
+   pn --filter @launchly/web test:e2e        # feature tickets that touch apps/web
    ```
-4. Open a pull request into `main` titled `[<JIRA-KEY>] <outcome>`, e.g. `[SCRUM-12] Add login endpoint`, and link the Jira ticket in the description.
-5. Every PR needs an independent review with an `APPROVED` verdict (see the agent workflow in `AGENTS.md` and `.specify/memory/constitution.md`). A person merges.
+   Which gates apply depends on the Story's label (`feature`, `bug`, `maintenance`); see the table in `AGENTS.md`.
+4. Open the pull request into `main` as a **Draft**, titled `[<JIRA-KEY>] <outcome>`, e.g. `[SCRUM-12] Add login endpoint`, and link the Jira ticket in the description. The automated pre-review (code review comment, Playwright e2e) runs on the Draft.
+5. When every gate is green, mark the PR ready for review and assign a reviewer on GitHub and in Jira. The `implement-ticket` skill does steps 1–5 for agents.
+6. The reviewer runs `review-implementation` in their own session. It reruns the gates and posts one GitHub review (`APPROVE` or `REQUEST_CHANGES`). Only an approved PR is merged, and a person merges it.
+
+See the agent workflow in `AGENTS.md` and `.specify/memory/constitution.md` for the full rules.
 
 ## Code style
 
