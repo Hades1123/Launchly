@@ -1,33 +1,44 @@
 <!--
 Sync Impact Report
 ==================
-Version change: 1.1.0 → 1.2.0
-Bump rationale: MINOR. Development Workflow and Quality Gates adds a checkpoint-commit exemption
-and makes the checklist gate binding on autonomous agents. Both materially expand guidance; no
-principle is removed.
+Version change: 1.2.0 → 2.0.0
+Bump rationale: MAJOR. Development Workflow and Quality Gates is redefined around three skills
+(create-implementation-item, implement-ticket, review-implementation). The review gate moves from
+an agent-only verdict to a reviewer-run review posted on GitHub, and Human ownership gains a
+reviewer-assignment exception. Both change what earlier versions required.
 
-Modified principles: none
+Modified principles:
+  - IV. Tested Business Logic: adds the changed-file coverage gate (feature tickets) and the
+    Playwright e2e gate (feature tickets touching apps/web); drops the outdated "no tests exist"
+    rationale.
 Modified sections:
   - Development Workflow and Quality Gates:
-    - Spec-driven features: only a person may tick or override checklist items; an agent asked to
-      proceed with open items MUST answer "no" and stop.
-    - New Checkpoint exemption: one unbuildable, Jira-keyed checkpoint commit is allowed on a
-      Draft PR at fail-fast halt; such PRs are squash-merged.
-    - Review: runs on PRs ready for review; Draft PRs are not reviewed.
+    - New Scoping and Delivery labels bullets (feature / bug / maintenance).
+    - Maintenance exemption keyed to the `maintenance` label.
+    - Local gates extended with `pn coverage:changed` and `pn --filter @launchly/web test:e2e`.
+    - New Pre-review bullet: Draft PR, automated code review posted as a PR comment, at most 3
+      fix rounds.
+    - Review: the assigned reviewer runs review-implementation, which reruns the gates and posts
+      one GitHub review after the reviewer confirms it.
+    - Human ownership: agents may set the Jira assignee and PR reviewers for a person the user
+      named in that run.
 Added sections: none
 Removed sections: none
 
 Templates and docs checked:
   - .specify/templates/*.md ✅ no change needed
-  - AGENTS.md ✅ checklist gate wording aligned with this amendment
-  - CONTRIBUTING.md ✅ commit format unchanged; checkpoint uses the normal format
-  - .claude/skills/create-implementation-issue (SKILL.md, issue template) ✅ checkpoint message
-    and checklist step aligned
-  - .claude/skills/review-implementation ✅ skips Draft PRs, size rule aligned
+  - AGENTS.md ⚠ rewritten for workflow v2 (same change set)
+  - CONTRIBUTING.md ⚠ Workflow section updated (same change set)
+  - .claude/skills/create-implementation-item ⚠ new; replaces create-implementation-issue and
+    publish-jira-issue (removed)
+  - .claude/skills/implement-ticket ⚠ new
+  - .claude/skills/review-implementation ⚠ reruns gates and posts the GitHub review
 
 Follow-up TODOs:
-  - No tests and no CI exist yet; Principle IV and the quality gates are enforced locally and in
-    review until CI is added.
+  - `pn coverage:changed` and `pn --filter @launchly/web test:e2e` do not exist yet; they are
+    delivered by two prerequisite maintenance tickets. Until then implement-ticket halts at the
+    gate that needs them.
+  - No CI exists; the gates are enforced locally by implement-ticket and again in review.
 -->
 
 # Launchly Constitution
@@ -109,9 +120,18 @@ Behaviour that carries business rules MUST ship with automated tests in the same
   implement the minimum that makes it pass, then refactor only while tests stay green. The RED and
   GREEN output is recorded in the PR or task evidence.
 - Pure UI layout and configuration-only changes are exempt but MUST still pass typecheck and lint.
+- Tickets labelled `feature` MUST reach at least 80 % line coverage and 80 % branch coverage on
+  every changed source file (`src/**`, excluding tests, generated code, and type declarations),
+  checked with `pn test:coverage` followed by `pn coverage:changed`.
+- Tickets labelled `feature` whose diff touches `apps/web` MUST add Playwright end-to-end specs in
+  `apps/web/e2e/` covering each acceptance criterion and edge case the UI exposes, and
+  `pn --filter @launchly/web test:e2e` MUST pass. API-only features rely on supertest endpoint
+  tests.
+- Tickets labelled `bug` or `maintenance` are exempt from the coverage and e2e gates; a `bug` still
+  needs the failing-first test above.
 
-**Rationale**: no tests exist yet and there is no CI, so the habit has to be set from the first
-feature; otherwise regressions in auth and role checks will surface only in demos.
+**Rationale**: there is no CI, so these gates are enforced locally by the implementing agent and
+again by the reviewer; without them, regressions in auth and role checks surface only in demos.
 
 ### V. Safe Data Evolution
 
@@ -170,9 +190,16 @@ requires a plan that states the reason and is reviewed like an architecture chan
   `<type>/SCRUM-123-short-slug`; commits use Conventional Commits with the Jira key,
   `<type>(<scope>): SCRUM-123 <summary>`, scopes `api`, `web`, `shared`, `db`, `deps`; PR titles
   use `[SCRUM-123] <outcome>`.
+- **Scoping**: new work is scoped with the `create-implementation-item` skill. It produces a Jira
+  `Story` (business level) with one `Subtask` per touched area (`api`, `web`, `shared`, `db`) and
+  writes to Jira only after a person approves the exact writes it lists (its Gate 1).
+- **Delivery labels**: every Story carries exactly one of `feature`, `bug`, or `maintenance`. The
+  label decides which gates apply (Principle IV, Maintenance exemption). Delivery runs through the
+  `implement-ticket` skill on the Story key: one branch, one Spec Kit feature, one PR.
 - **Spec-driven features**: every change that adds or alters behaviour follows the Spec Kit flow
   under `specs/<feature>/` (specify → clarify → checklist → plan → tasks → analyze → human approval
-  → implement). The plan's Constitution Check MUST pass, or list justified exceptions in Complexity
+  → implement). The git branch and the spec directory are named independently: the branch follows
+  Tracking, the directory is created by `.specify/scripts/bash/create-new-feature.sh`. The plan's Constitution Check MUST pass, or list justified exceptions in Complexity
   Tracking, before tasks are generated. Every CRITICAL analyze finding and every open checklist item
   MUST be resolved before implement starts. Only a person may tick a checklist item or override an
   open one; an autonomous agent asked whether to proceed with open checklist items MUST answer
@@ -180,23 +207,37 @@ requires a plan that states the reason and is reviewed like an architecture chan
 - **Maintenance exemption**: behaviour-preserving maintenance MAY skip Spec Kit. This covers
   refactors with no observable change, dependency updates within pinned ranges, tooling, lint,
   formatting, and documentation fixes, and bug fixes that restore already specified behaviour. The
-  Jira issue MUST cite this rule, and its acceptance criteria become the execution contract. If the
-  scope grows to new or changed behaviour, work stops and enters the Spec Kit flow.
-- **Local gates**: before pushing, `pn typecheck`, `pn lint`, and `pn test` MUST pass. Commits stay
-  small and each leaves the project buildable.
+  Story MUST carry the `maintenance` label (or `bug` for a restoring fix) and cite this rule, and
+  its acceptance criteria become the execution contract. If the scope grows to new or changed
+  behaviour, work stops and enters the Spec Kit flow.
+- **Local gates**: before pushing, `pn typecheck`, `pn lint`, and `pn test` MUST pass; for `feature`
+  tickets also `pn test:coverage && pn coverage:changed`, and for `feature` tickets touching
+  `apps/web` also `pn --filter @launchly/web test:e2e` (Principle IV). A gate whose command does not
+  exist yet blocks; it is never skipped. Commits stay small and each leaves the project buildable.
+- **Pre-review**: the implementing agent opens the PR as a Draft, runs an automated code review of
+  the diff (Next.js/React best practices and `docs/Frontend-Conventions.md` for `apps/web`,
+  `docs/Backend-Conventions.md` for `apps/api`), and posts the result as one PR comment for the
+  head commit. Critical or Important findings and e2e failures send the work back to
+  implementation, at most 3 rounds; after that the agent halts under the Checkpoint exemption.
 - **Checkpoint exemption**: an agent that halts on a terminal failure, size limit, or turn ceiling
   MAY push one checkpoint commit that leaves the project unbuildable, only to a PR that stays in
   Draft. The commit still uses the Jira-keyed format, for example
   `chore(api): SCRUM-123 checkpoint before halt`. A PR that contains a checkpoint commit is
   squash-merged, so the checkpoint never reaches `main` on its own.
-- **Review**: every change reaches `main` through a pull request with an independent review (the
-  `review-implementation` skill, run in a session that did not write the code) on the final head
-  commit of a PR that is ready for review; Draft PRs are not reviewed. It returns `APPROVED` or `REJECTED` and checks compliance with this constitution. A
-  `REJECTED` verdict lists the violated principle, requirement, or failing gate with the minimum fix.
-  A new commit needs a new review.
-- **Human ownership**: people approve issue drafts, publish tickets, hand work to agents, merge
-  PRs, and transition tickets. Agents MUST NOT merge, push to `main`, or transition tickets unless
-  explicitly told to.
+- **Review**: every change reaches `main` through a pull request with an independent review on the
+  final head commit of a PR that is ready for review; Draft PRs are not reviewed. The assigned
+  reviewer runs the `review-implementation` skill in their own session (never the session that
+  wrote the code). It reruns every applicable gate on the head commit, checks the pre-review comment
+  and the e2e specs, returns `APPROVED` or `REJECTED`, and checks compliance with this
+  constitution. A `REJECTED` verdict lists the violated principle, requirement, or failing gate with
+  the minimum fix. After the reviewer confirms the exact text, it posts one GitHub review
+  (`APPROVE` or `REQUEST_CHANGES`). A new commit needs a new review.
+- **Human ownership**: people approve ticket writes, hand work to agents, approve plans, choose
+  reviewers, merge PRs, and transition tickets. Agents MUST NOT merge, push to `main`, or transition
+  tickets unless explicitly told to. Exception: `implement-ticket` may set the Jira assignee and the
+  PR reviewers for the person the user named in that run, after the user confirms the preview.
+- **Remote writes**: every agent write to Jira or GitHub (create, edit, comment, review) is shown
+  as an exact preview first and runs only on a yes given while that preview is on screen.
 
 ## Governance
 
@@ -214,4 +255,4 @@ they disagree, this document wins and the other file is corrected.
   touched by the change. Unjustified violations are grounds for `REJECTED`. The team reviews the
   constitution at least once per milestone and amends it when practice has drifted.
 
-**Version**: 1.2.0 | **Ratified**: 2026-11-04 | **Last Amended**: 2026-11-06
+**Version**: 2.0.0 | **Ratified**: 2026-11-04 | **Last Amended**: 2026-11-12
