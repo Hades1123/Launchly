@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* global process, console */
 // Spreads ticket keys over people at random, keeping per-person counts within 1 of each other.
 // Usage: node assign.mjs '<keys JSON array>' '<people JSON array of {accountId, displayName}>'
 import { fileURLToPath } from 'node:url';

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* global process, console */
 // Reads one wave out of a wave-plan markdown file (see docs/plans/mvp-wave-plan.md).
 // Usage: node parse-wave.mjs <file> "<Wave n>"
 import { readFileSync } from 'node:fs';
