@@ -2,10 +2,11 @@ import { extractText, getDocumentProxy } from 'unpdf';
 import { AppError } from '@/lib/app-error';
 import { getStorageProvider, type StorageProvider } from '@/providers/storage';
 
-const UNREADABLE = new AppError(
-  'VALIDATION_ERROR',
-  'We could not read any text from this PDF. Export your CV as a text-based PDF and upload it again.',
-);
+const unreadable = () =>
+  new AppError(
+    'VALIDATION_ERROR',
+    'We could not read any text from this PDF. Export your CV as a text-based PDF and upload it again.',
+  );
 
 function normalise(text: string): string {
   return text
@@ -22,14 +23,17 @@ function normalise(text: string): string {
  */
 export async function extractPdfText(buffer: Buffer): Promise<string> {
   let text: string;
+  let pdf: Awaited<ReturnType<typeof getDocumentProxy>> | undefined;
   try {
-    const pdf = await getDocumentProxy(new Uint8Array(buffer));
+    pdf = await getDocumentProxy(new Uint8Array(buffer));
     ({ text } = await extractText(pdf, { mergePages: true }));
   } catch {
-    throw UNREADABLE;
+    throw unreadable();
+  } finally {
+    await pdf?.loadingTask.destroy();
   }
   const clean = normalise(text);
-  if (!clean) throw UNREADABLE;
+  if (!clean) throw unreadable();
   return clean;
 }
 
