@@ -64,7 +64,7 @@ As a developer on the Launchly team, I want an end-to-end test setup for the web
 
 ### Files
 
-- Create: `apps/web/playwright.config.ts` (Chromium only; `webServer` entries start the API on 4000 and the web app on 3000, `reuseExistingServer: true`), `apps/web/e2e/smoke.spec.ts`
+- Create: `apps/web/playwright.config.ts` (Chromium only; `webServer` entries start the API on 4100 and the web app on 3100 with `node` directly and `reuseExistingServer: false`, so a dev server or another project on 3000/4000 is never tested by mistake), `apps/web/e2e/helpers/auth.ts`, `apps/web/e2e/smoke.spec.ts`
 - Modify: `apps/web/package.json` (script `test:e2e`, devDependency `@playwright/test`), `.gitignore` (`playwright-report/`, `test-results/`), `README.md` (short "Running e2e locally" section), `pnpm-lock.yaml`
 
 ### Test cases
@@ -148,12 +148,12 @@ As a candidate, I want to know each hiring round's format and how long it takes,
 
 - AC1: a recruiter can set format and duration per round and the values persist (SCRUM-41's builder).
 - AC2: the candidate-facing data and timeline show them; empty values are hidden, not "null".
-- AC3: format values map to readable labels (ONLINE "Online", ONSITE "On-site", PHONE "Phone call", ASSIGNMENT "Take-home assignment") and durations to "<n> min" in one shared place used by builder and timeline.
+- AC3: format values map to readable labels (ONLINE "Online", ONSITE "On-site", PHONE "Phone call", ASSIGNMENT "Take-home assignment") and durations to "<n> min" in one shared place used by the public timeline (the recruiter builder keeps its own Vietnamese labels).
 
 ### Files
 
 - Create: `packages/shared/src/constants/job-round-format.ts` (labels, `formatRoundDuration`) + test, `apps/api/src/modules/job/job-rounds-public.integration.test.ts` (`RUN_DB_TESTS=1`)
-- Modify: `packages/shared/src/utils/process-timeline.ts` and `apps/web/src/components/recruiter/rounds-builder.tsx` to use the shared labels, `packages/shared/src/index.ts`
+- Labels and `roundMeta` were created with SCRUM-29's `process-timeline.ts` (needed first); `packages/shared/src/index.ts` exports them. The recruiter builder is unchanged.
 
 ### Test cases
 

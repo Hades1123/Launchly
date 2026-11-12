@@ -1,6 +1,6 @@
 import type { RoundFormat } from '../schemas/job-round';
 
-/** Candidate-facing names for each round format. One place, used by the builder and the timeline. */
+/** Candidate-facing names for each round format, used by the public timeline. (The recruiter builder keeps its own Vietnamese labels.) */
 export const ROUND_FORMAT_LABELS: Record<RoundFormat, string> = {
   ONLINE: 'Online',
   ONSITE: 'On-site',
