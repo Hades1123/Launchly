@@ -124,6 +124,18 @@ Run from the repository root. `pn` is the short alias for `pnpm` (available sinc
 
 Run a script in a single package with `pn --filter @launchly/api <script>`.
 
+## Running e2e tests locally
+
+End-to-end tests use Playwright (Chromium) against the local stack.
+
+```bash
+pn db:up && pn db:migrate && pn db:seed   # database up, migrated, demo data loaded
+pnpm --filter @launchly/web exec playwright install chromium   # once per machine
+pn --filter @launchly/web test:e2e        # starts the API and web app if they are not running
+```
+
+Specs live in `apps/web/e2e/`. All seeded accounts use the demo password from `apps/api/prisma/seed/data.ts`.
+
 ## Conventions
 
 ### Shared package
