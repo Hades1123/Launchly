@@ -13,6 +13,12 @@ export interface GeminiOptions {
   fetch?: typeof fetch;
 }
 
+/** A failed or aborted call (including a timeout while the body is read) as a 503. */
+function unavailable(error: unknown): AppError {
+  const timedOut = error instanceof Error && ['TimeoutError', 'AbortError'].includes(error.name);
+  return new AppError('AI_UNAVAILABLE', timedOut ? 'AI request timed out' : 'AI request failed');
+}
+
 type GeminiReply = { candidates?: { content?: { parts?: { text?: string }[] } }[] };
 
 /** Calls the Gemini `generateContent` REST API with `fetch`; the key is sent in a header, never logged. */
@@ -27,7 +33,15 @@ export class GeminiAiProvider implements AiProvider {
 
   async generateJson<T>(input: GenerateJsonInput<T>): Promise<T> {
     // Gemini takes plain JSON Schema without the draft marker.
-    const responseJsonSchema: Record<string, unknown> = z.toJSONSchema(input.schema);
+    let responseJsonSchema: Record<string, unknown>;
+    try {
+      responseJsonSchema = z.toJSONSchema(input.schema);
+    } catch {
+      throw new AppError(
+        'INTERNAL_ERROR',
+        'The expected AI reply cannot be described as JSON Schema',
+      );
+    }
     delete responseJsonSchema.$schema;
 
     let response: Response;
@@ -43,16 +57,19 @@ export class GeminiAiProvider implements AiProvider {
         signal: AbortSignal.timeout(this.timeoutMs),
       });
     } catch (error) {
-      const timedOut =
-        error instanceof Error && ['TimeoutError', 'AbortError'].includes(error.name);
-      throw new AppError('AI_UNAVAILABLE', timedOut ? 'AI request timed out' : 'AI request failed');
+      throw unavailable(error);
     }
     if (!response.ok) {
       throw new AppError('AI_UNAVAILABLE', `AI request failed with status ${response.status}`);
     }
 
-    const text = ((await response.json()) as GeminiReply).candidates?.[0]?.content?.parts?.[0]
-      ?.text;
+    let reply: GeminiReply;
+    try {
+      reply = (await response.json()) as GeminiReply;
+    } catch (error) {
+      throw unavailable(error);
+    }
+    const text = reply.candidates?.[0]?.content?.parts?.[0]?.text;
     let value: unknown;
     try {
       value = JSON.parse(text ?? '');

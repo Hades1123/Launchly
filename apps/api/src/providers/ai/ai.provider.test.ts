@@ -117,6 +117,48 @@ describe('GeminiAiProvider', () => {
     expect((await network.generateJson(input).catch((e) => e)).code).toBe('AI_UNAVAILABLE');
   });
 
+  it('applies the 30 s timeout through an AbortSignal', async () => {
+    const spy = vi.spyOn(AbortSignal, 'timeout');
+    const fetchImpl = vi.fn(async () => geminiReply(valid));
+    await make(fetchImpl).generateJson(input);
+
+    expect(spy).toHaveBeenCalledWith(30_000);
+    const init = (fetchImpl.mock.calls[0] as unknown as [string, any])[1];
+    expect(init.signal).toBeInstanceOf(AbortSignal);
+    spy.mockRestore();
+  });
+
+  it('aborts a request that never answers once the timeout passes', async () => {
+    const hanging = vi.fn(
+      (_url: string, init: any) =>
+        new Promise((_resolve, reject) => {
+          init.signal.addEventListener('abort', () => reject(init.signal.reason));
+        }),
+    );
+    const provider = new GeminiAiProvider({
+      apiKey: 'secret-key',
+      model: 'm',
+      timeoutMs: 20,
+      fetch: hanging as any,
+    });
+    const error = await provider.generateJson(input).catch((e) => e);
+
+    expect(error.code).toBe('AI_UNAVAILABLE');
+    expect(error.message).toMatch(/timed out/i);
+  });
+
+  it('maps a 200 reply whose body is not JSON to AI_UNAVAILABLE', async () => {
+    const broken = make(
+      vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        json: async () => Promise.reject(new SyntaxError('bad json')),
+      })),
+    );
+
+    expect((await broken.generateJson(input).catch((e) => e)).code).toBe('AI_UNAVAILABLE');
+  });
+
   it('maps a timeout to AI_UNAVAILABLE', async () => {
     const timeout = Object.assign(new Error('timed out'), { name: 'TimeoutError' });
     const provider = make(vi.fn(async () => Promise.reject(timeout)));
