@@ -35,3 +35,21 @@ test('AC3: empty round name shows a validation error', async ({ page }) => {
 
   await expect(page.getByText('Tên vòng là bắt buộc.')).toBeVisible();
 });
+
+test('SCRUM-51 AC1: recruiter sets format and duration and they persist', async ({ page }) => {
+  await page.getByRole('button', { name: /Thêm vòng/ }).click();
+  await page.getByLabel('Tên vòng').fill('Bài tập về nhà');
+  await page.getByLabel('Hình thức').selectOption('ASSIGNMENT');
+  await page.getByLabel('Thời lượng (phút)').fill('120');
+  await page.getByRole('button', { name: SAVE }).click();
+  await expect(page.getByText('Đã lưu quy trình tuyển dụng.')).toBeVisible();
+
+  await page.reload();
+  await expect(page.getByLabel('Hình thức')).toHaveValue('ASSIGNMENT');
+  await expect(page.getByLabel('Thời lượng (phút)')).toHaveValue('120');
+
+  // Leave the seeded job as it was.
+  await page.getByRole('button', { name: 'Xóa vòng 1' }).click();
+  await page.getByRole('button', { name: SAVE }).click();
+  await expect(page.getByText('Đã lưu quy trình tuyển dụng.')).toBeVisible();
+});
