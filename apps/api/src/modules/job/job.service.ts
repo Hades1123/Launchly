@@ -1,7 +1,7 @@
 import type { PrismaClient, Prisma } from '@/generated/prisma/client';
 import { prisma as defaultPrisma } from '@/lib/prisma';
 import type { JobFilterQuery, PublicJobListResponse, PublicJobItem } from '@launchly/shared';
-import { normalizeVietnamese } from '@launchly/shared';
+import { normalizeVietnamese, roundFormatSchema, type RoundFormat } from '@launchly/shared';
 import type { PublicJobDetail } from '@launchly/shared';
 import { AppError } from '@/lib/app-error';
 import { salarySelect, toPublicSalary } from './job-salary';
@@ -123,6 +123,21 @@ export class JobService {
         level: true,
         location: true,
         company: { select: { id: true, name: true } },
+        stages: {
+          orderBy: { position: 'asc' },
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            position: true,
+            format: true,
+            estimatedDurationMinutes: true,
+          },
+        },
+        notes: {
+          orderBy: { position: 'asc' },
+          select: { id: true, content: true, position: true },
+        },
         ...salarySelect,
       },
     });
@@ -135,6 +150,14 @@ export class JobService {
       location: job.location,
       company: { id: job.company.id, name: job.company.name },
       salary: toPublicSalary(job),
+      // `format` is free text in the database; only known values reach candidates.
+      stages: job.stages.map((stage) => ({
+        ...stage,
+        format: roundFormatSchema.safeParse(stage.format).success
+          ? (stage.format as RoundFormat)
+          : null,
+      })),
+      notes: job.notes,
     };
   }
 }
