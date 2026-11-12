@@ -3,16 +3,15 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { ArrowDown, ArrowUp, LoaderCircle, Plus, Trash2 } from 'lucide-react';
 import {
-  apiErrorSchema,
   MAX_ROUND_DURATION_MINUTES,
   MAX_ROUNDS,
   MIN_ROUND_DURATION_MINUTES,
-  roundsResponseSchema,
   validateRoundDrafts,
   type RoundFormat,
 } from '@launchly/shared';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { getJobRounds, replaceJobRounds } from '@/lib/api/job-rounds';
 import { useAuth } from '@/lib/auth-context';
 import { cn } from '@/lib/cn';
 
@@ -47,7 +46,7 @@ const fieldClass = (error?: string) =>
   );
 
 export function RoundsBuilder({ jobId }: { jobId: string }) {
-  const { accessToken, status } = useAuth();
+  const { status } = useAuth();
   const [rows, setRows] = useState<Row[]>([]);
   const [errors, setErrors] = useState<RowErrors[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,16 +55,11 @@ export function RoundsBuilder({ jobId }: { jobId: string }) {
   const loadedFor = useRef<string | null>(null);
 
   useEffect(() => {
-    if (status !== 'authenticated' || !accessToken || loadedFor.current === jobId) return;
+    if (status !== 'authenticated' || loadedFor.current === jobId) return;
     loadedFor.current = jobId;
     (async () => {
       try {
-        const res = await fetch(`/api/jobs/${jobId}/rounds`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-          cache: 'no-store',
-        });
-        if (!res.ok) throw new Error(await errorText(res));
-        const { rounds } = roundsResponseSchema.parse(await res.json());
+        const { rounds } = await getJobRounds(jobId);
         setRows(
           rounds.map((r) => ({
             key: r.id,
@@ -82,7 +76,7 @@ export function RoundsBuilder({ jobId }: { jobId: string }) {
         setLoading(false);
       }
     })();
-  }, [accessToken, jobId, status]);
+  }, [jobId, status]);
 
   function update(key: string, patch: Partial<Row>) {
     setRows((current) => current.map((r) => (r.key === key ? { ...r, ...patch } : r)));
@@ -109,20 +103,15 @@ export function RoundsBuilder({ jobId }: { jobId: string }) {
     }
     setSaving(true);
     try {
-      const res = await fetch(`/api/jobs/${jobId}/rounds`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-        body: JSON.stringify({
-          rounds: rows.map((r) => ({
-            ...(r.id ? { id: r.id } : {}),
-            name: r.name.trim(),
-            format: r.format,
-            estimatedDurationMinutes: Number(r.duration),
-          })),
-        }),
+      const { rounds } = await replaceJobRounds(jobId, {
+        rounds: rows.map((r) => ({
+          ...(r.id ? { id: r.id } : {}),
+          name: r.name.trim(),
+          // validateRows() above rejects an empty format, so it is set here.
+          format: r.format as RoundFormat,
+          estimatedDurationMinutes: Number(r.duration),
+        })),
       });
-      if (!res.ok) throw new Error(await errorText(res));
-      const { rounds } = roundsResponseSchema.parse(await res.json());
       setRows(
         rounds.map((r) => ({
           key: r.id,
@@ -275,16 +264,6 @@ function Field({
       {error && <span className="block text-xs font-normal text-danger">{error}</span>}
     </label>
   );
-}
-
-async function errorText(res: Response): Promise<string> {
-  try {
-    const parsed = apiErrorSchema.safeParse(await res.json());
-    if (parsed.success) return parsed.data.error.message;
-  } catch {
-    /* fall through */
-  }
-  return 'Không thể xử lý yêu cầu. Vui lòng thử lại.';
 }
 
 function errorMessage(error: unknown): string {
