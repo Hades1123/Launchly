@@ -80,7 +80,6 @@ describe('public job schemas', () => {
       notes: [{ id: 'n1', content: 'Be on time', position: 1 }],
     };
     expect(publicJobDetailSchema.safeParse(detail).success).toBe(true);
-    const { stages: _stages, ...withoutStages } = detail;
-    expect(publicJobDetailSchema.safeParse(withoutStages).success).toBe(false);
+    expect(publicJobDetailSchema.safeParse({ ...detail, stages: undefined }).success).toBe(false);
   });
 });
