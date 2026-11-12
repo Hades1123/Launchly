@@ -41,8 +41,7 @@ Delivered with the normal single-ticket flow, not by `implement-bunch-ticket`. S
 | --- | --- | --- | --- | --- | --- |
 | SCRUM-46 | Set up Playwright e2e with a smoke test (build first in this wave) | web | maintenance | 3 | — |
 | SCRUM-41 | Process rounds builder for job postings (10 commits exist on local branch `feat/SCRUM-41-process-rounds-builder`, not on GitHub: reuse them, then finish and test) | shared, api, web, db | feature | 2 | — |
-| SCRUM-29 | View hiring process and company notes (only spec `docs/SCRUM-29-job-detail-process-notes-plan` is on GitHub; implement it) | api, web | feature | 3 | SCRUM-47 |
-| SCRUM-47 | Return full job details from the public job detail API | api, shared | feature | 2 | — |
+| SCRUM-29 | View hiring process and company notes (only spec `docs/SCRUM-29-job-detail-process-notes-plan` is on GitHub; implement it) | api, shared, web, db | feature | 3 | SCRUM-41 |
 | SCRUM-48 | Candidate applies to a job via API | api, shared, db | feature | 3 | — |
 | SCRUM-49 | Swappable AI provider with a mock driver | api | feature | 3 | — |
 | SCRUM-50 | Extract text from uploaded PDF CVs (PDF only, Vietnamese and English; DOCX dropped, so a DOCX upload must give a clear "export as text-based PDF" error) | api | feature | 3 | — |
@@ -52,6 +51,7 @@ Delivered with the normal single-ticket flow, not by `implement-bunch-ticket`. S
 
 | Key | Ticket | Area | Label | Pts | Depends on |
 | --- | --- | --- | --- | --- | --- |
+| SCRUM-47 | Return full job details from the public job detail API (stages with format and duration already come from SCRUM-29; add requirements, benefits, industry, createdAt, company summary) | api, shared | feature | 2 | SCRUM-29 |
 | SCRUM-53 | Job detail page for candidates | web | feature | 3 | SCRUM-46, SCRUM-47, SCRUM-29 |
 | SCRUM-54 | Candidate lists own applications with status history via API | api, shared | feature | 2 | SCRUM-48 |
 | SCRUM-55 | Recruiter lists applicants and changes their status via API (backend only; must document the endpoint contract for SCRUM-60) | api, shared | feature | 3 | SCRUM-48 |
