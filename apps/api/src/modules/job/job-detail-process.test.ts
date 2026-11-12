@@ -82,6 +82,14 @@ describe('GET /jobs/:id process and notes', () => {
     expect(findFirst.mock.calls[0][0].select.notes.orderBy).toEqual({ position: 'asc' });
   });
 
+  it('shows an unknown stored format as no format instead of leaking free text', async () => {
+    findFirst.mockResolvedValue({ ...row(), stages: [{ ...STAGES[0], format: 'WHATEVER' }] });
+    const res = await request(app).get(`/jobs/${ID}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.stages[0].format).toBeNull();
+  });
+
   it('404 body is identical for an unknown and a pending job, and no internal fields leak', async () => {
     findFirst.mockResolvedValue(null);
     const unknown = await request(app).get(`/jobs/${ID}`);
