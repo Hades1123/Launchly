@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { JOB_LEVELS } from '../constants/job';
 import { publicSalarySchema } from './job-salary';
+import { roundFormatSchema } from './job-round';
 
 export const jobLevelSchema = z.enum(JOB_LEVELS);
 
@@ -49,6 +50,25 @@ export type PublicJobListResponse = z.infer<typeof publicJobListResponseSchema>;
 export const jobIdParamsSchema = z.object({ id: z.string().uuid() });
 export type JobIdParams = z.infer<typeof jobIdParamsSchema>;
 
+/** One hiring round as candidates see it. Format and duration are null until the recruiter sets them. */
+export const publicJobStageSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().nullable(),
+  position: z.number().int(),
+  format: roundFormatSchema.nullable(),
+  estimatedDurationMinutes: z.number().int().nullable(),
+});
+export type PublicJobStage = z.infer<typeof publicJobStageSchema>;
+
+/** A note the company left for applicants. */
+export const publicJobNoteSchema = z.object({
+  id: z.string(),
+  content: z.string(),
+  position: z.number().int(),
+});
+export type PublicJobNote = z.infer<typeof publicJobNoteSchema>;
+
 export const publicJobDetailSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -57,5 +77,7 @@ export const publicJobDetailSchema = z.object({
   location: z.string(),
   company: z.object({ id: z.string(), name: z.string() }),
   salary: publicSalarySchema,
+  stages: z.array(publicJobStageSchema),
+  notes: z.array(publicJobNoteSchema),
 });
 export type PublicJobDetail = z.infer<typeof publicJobDetailSchema>;
