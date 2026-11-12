@@ -1,6 +1,16 @@
 <!--
 Sync Impact Report
 ==================
+Version change: 2.0.0 → 2.1.0
+Bump rationale: MINOR. Adds the Wave delivery bullet (implement-bunch-ticket skill) and references
+it as an exception in Review, Human ownership and Remote writes. Rules defined by the team; no
+separate approval.
+Templates and docs checked:
+  - AGENTS.md ⚠ skill row, flow line and exception note added (same change set)
+  - .claude/skills/implement-bunch-ticket ⚠ new
+
+Previous entry
+--------------
 Version change: 1.2.0 → 2.0.0
 Bump rationale: MAJOR. Development Workflow and Quality Gates is redefined around three skills
 (create-implementation-item, implement-ticket, review-implementation). The review gate moves from
@@ -196,6 +206,16 @@ requires a plan that states the reason and is reviewed like an architecture chan
 - **Delivery labels**: every Story carries exactly one of `feature`, `bug`, or `maintenance`. The
   label decides which gates apply (Principle IV, Maintenance exemption). Delivery runs through the
   `implement-ticket` skill on the Story key: one branch, one Spec Kit feature, one PR.
+- **Wave delivery**: tickets listed in one wave of a wave plan (`docs/plans/*.md`) MAY be delivered
+  together by the `implement-bunch-ticket` skill. For those tickets: one branch
+  `feat/wave-<n>-<slug>` and one PR may carry several Jira keys (commits stay per key); one wave
+  plan at `specs/wave-<n>-<slug>/plan.md`, approved by the person who ran the skill, replaces the
+  full Spec Kit chain; the agent MAY add the tickets to the active sprint, set balanced assignees,
+  transition them To Do → In Progress → In Review, and comment on them without further previews;
+  the gates run as in Local gates, except that a missing coverage command is recorded as not
+  available; an independent review by a fresh agent that did not write the code, plus green gates
+  and e2e, satisfies Review. Each ticket gets a Jira comment stating it was delivered under this
+  exception. These rules are defined by the team and need no separate approval.
 - **Spec-driven features**: every change that adds or alters behaviour follows the Spec Kit flow
   under `specs/<feature>/` (specify → clarify → checklist → plan → tasks → analyze → human approval
   → implement). The git branch and the spec directory are named independently: the branch follows
@@ -219,6 +239,8 @@ requires a plan that states the reason and is reviewed like an architecture chan
   `docs/Backend-Conventions.md` for `apps/api`), and posts the result as one PR comment for the
   head commit. Critical or Important findings and e2e failures send the work back to
   implementation, at most 3 rounds; after that the agent halts under the Checkpoint exemption.
+  Exception: Wave delivery (the fresh-agent review runs before the PR is opened and is recorded in
+  the PR body; the PR opens ready for review, or as a Draft after a halt).
 - **Checkpoint exemption**: an agent that halts on a terminal failure, size limit, or turn ceiling
   MAY push one checkpoint commit that leaves the project unbuildable, only to a PR that stays in
   Draft. The commit still uses the Jira-keyed format, for example
@@ -231,16 +253,17 @@ requires a plan that states the reason and is reviewed like an architecture chan
   and the e2e specs, returns `APPROVED` or `REJECTED`, and checks compliance with this
   constitution. A `REJECTED` verdict lists the violated principle, requirement, or failing gate with
   the minimum fix. After the reviewer confirms the exact text, it posts one GitHub review
-  (`APPROVE` or `REQUEST_CHANGES`). A new commit needs a new review.
+  (`APPROVE` or `REQUEST_CHANGES`). A new commit needs a new review. Exception: Wave delivery.
 - **Human ownership**: people approve ticket writes, hand work to agents, approve plans, choose
   reviewers, merge PRs, and transition tickets. Agents MUST NOT merge, push to `main`, or transition
   tickets unless explicitly told to. Exception: `implement-ticket` may set the Jira assignee and the
   PR reviewers for the person the user named in that run, after the user confirms the preview.
+  Exception: Wave delivery.
 - **Remote writes**: every agent write to Jira or GitHub (create, edit, comment, review) is shown
   as an exact preview first and runs only on a yes given while that preview is on screen.
   Exception: once a person approved creating a PR, the implementing agent may update that PR's
   own evidence table, plan-approval line, and pre-review comment in the same shape without a new
-  preview.
+  preview. Exception: Wave delivery.
 
 ## Governance
 
@@ -258,4 +281,4 @@ they disagree, this document wins and the other file is corrected.
   touched by the change. Unjustified violations are grounds for `REJECTED`. The team reviews the
   constitution at least once per milestone and amends it when practice has drifted.
 
-**Version**: 2.0.0 | **Ratified**: 2026-11-04 | **Last Amended**: 2026-11-12
+**Version**: 2.1.0 | **Ratified**: 2026-11-04 | **Last Amended**: 2026-11-12
