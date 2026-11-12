@@ -34,7 +34,7 @@ Create one todo per step below. On any stop: say the step, the exact error, and 
 2. `git fetch -q origin`.
 3. Run `parse-wave.mjs` with the user's file and wave. Error → show it and stop. `number` 0 → stop: "Wave 0 is in-flight work; deliver it with implement-ticket."
 4. `getJiraIssue` for every key: description (user story, scope, acceptance criteria, dependencies), labels, status, current assignee and sprint. A ticket already Done → drop it from the run and say so. A ticket not in To Do, or already assigned, is flagged for Step 5.
-5. Dependencies: for every key in `dependsOn` (and any `## Dependencies` key in the ticket text), merged means `git log origin/main --oneline | grep -qw "<KEY>"` (whole key, so `SCRUM-4` never matches `SCRUM-41`), or its Jira status category is Done. Unmet ones: list them per ticket and ask whether to run the rest of the wave without those tickets or stop.
+5. Dependencies: a dependency on a key **in the same wave** is satisfied by build order (Step 2 builds it first); it must be in the run, so if it was dropped (Done) or excluded, treat it like an unmet dependency. For every other key in `dependsOn` (and any `## Dependencies` key in the ticket text), merged means `git log origin/main --oneline | grep -qw "<KEY>"` (whole key, so `SCRUM-4` never matches `SCRUM-41`), or its Jira status category is Done. Unmet ones: list them per ticket and ask whether to run the rest of the wave without those tickets or stop.
 
 ## Step 2. Analyse the wave together
 
@@ -42,7 +42,8 @@ Read code from `origin/main`. Per ticket: what exists, what changes, which areas
 
 - files touched by more than one ticket;
 - several tickets changing `apps/api/prisma/schema.prisma` → **one** combined migration;
-- build order: tooling tickets (label `maintenance`, e.g. Playwright setup) first, then shared schemas, then API, then web.
+- existing work: before planning a ticket, look for code that already exists for it (`git branch -a`, `gh pr list --state all`, local branches named with its key); reuse it (cherry-pick or rebase onto `origin/main`) instead of re-implementing, and say so in the plan;
+- build order: same-wave `dependsOn` first, then tooling tickets (label `maintenance`, e.g. Playwright setup) first, then shared schemas, then API, then web.
 
 ## Step 3. Clarify once
 

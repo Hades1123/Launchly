@@ -22,18 +22,16 @@ post job with process → admin approves → candidate finds job → checks CV f
 
 - Each wave is a `## Wave <n> — <title>` section with one ticket table.
 - Table columns: `Key | Ticket | Area | Label | Pts | Depends on`.
-- `Depends on` lists Jira keys that must be merged into `main` before the ticket starts; `—` means none.
+- `Depends on` lists Jira keys that must be merged into `main` before the ticket starts; `—` means none. A key from the **same wave** is built earlier in that wave (build order), not required to be merged first.
 - Ticket content (user story, scope, acceptance criteria) lives in Jira; this file only groups and orders.
 
 ## Wave 0 — Finish in-flight work
 
-Delivered with the normal single-ticket flow, not by `implement-bunch-ticket`.
+Delivered with the normal single-ticket flow, not by `implement-bunch-ticket`. SCRUM-41 and SCRUM-29 moved to Wave 1 on 2026-11-12: no implementation of them exists on GitHub (no PR, no pushed code branch).
 
 | Key | Ticket | Area | Label | Pts | Depends on |
 | --- | --- | --- | --- | --- | --- |
 | SCRUM-26 | Post a job with process and notes (subtasks 39, 40, 42, 44, 45; SCRUM-43 deferred) | api, web, db | feature | — | — |
-| SCRUM-41 | Process rounds builder for job postings | api, web | feature | — | — |
-| SCRUM-29 | View hiring process and company notes | api, web | feature | — | — |
 | SCRUM-27 | Approve companies and jobs | api, web | feature | — | — |
 | SCRUM-52 | PO decision: job levels Intern/Fresher/Junior (15 min, no dev slot) | — | clarification | 1 | — |
 
@@ -42,11 +40,13 @@ Delivered with the normal single-ticket flow, not by `implement-bunch-ticket`.
 | Key | Ticket | Area | Label | Pts | Depends on |
 | --- | --- | --- | --- | --- | --- |
 | SCRUM-46 | Set up Playwright e2e with a smoke test (build first in this wave) | web | maintenance | 3 | — |
+| SCRUM-41 | Process rounds builder for job postings (10 commits exist on local branch `feat/SCRUM-41-process-rounds-builder`, not on GitHub: reuse them, then finish and test) | shared, api, web, db | feature | 2 | — |
+| SCRUM-29 | View hiring process and company notes (only spec `docs/SCRUM-29-job-detail-process-notes-plan` is on GitHub; implement it) | api, web | feature | 3 | SCRUM-47 |
 | SCRUM-47 | Return full job details from the public job detail API | api, shared | feature | 2 | — |
 | SCRUM-48 | Candidate applies to a job via API | api, shared, db | feature | 3 | — |
 | SCRUM-49 | Swappable AI provider with a mock driver | api | feature | 3 | — |
 | SCRUM-50 | Extract text from uploaded PDF and DOCX CVs | api | feature | 3 | — |
-| SCRUM-51 | Show format and duration for each hiring round | api, shared, web, db | feature | 2 | SCRUM-41, SCRUM-29 |
+| SCRUM-51 | Show format and duration for each hiring round (SCRUM-41's migration already adds `format` and `estimatedDurationMinutes` to `JobStage`; reuse them, add only what is missing) | api, shared, web, db | feature | 2 | SCRUM-41, SCRUM-29 |
 
 ## Wave 2 — Core APIs and entry pages
 
