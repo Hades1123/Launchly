@@ -33,8 +33,8 @@ Create one todo per step below. On any stop: say the step, the exact error, and 
 1. `git status --porcelain --untracked-files=no` must be empty. Otherwise stop: list the files and ask the user to commit or stash them. Never stash or discard yourself.
 2. `git fetch -q origin`.
 3. Run `parse-wave.mjs` with the user's file and wave. Error → show it and stop. `number` 0 → stop: "Wave 0 is in-flight work; deliver it with implement-ticket."
-4. `getJiraIssue` for every key: description (user story, scope, acceptance criteria, dependencies), labels, status. A ticket already Done → drop it from the run and say so.
-5. Dependencies: for every key in `dependsOn` (and any `## Dependencies` key in the ticket text), merged means `git log origin/main --oneline | grep -q "<KEY>"`, or its Jira status category is Done. Unmet ones: list them per ticket and ask whether to run the rest of the wave without those tickets or stop.
+4. `getJiraIssue` for every key: description (user story, scope, acceptance criteria, dependencies), labels, status, current assignee and sprint. A ticket already Done → drop it from the run and say so. A ticket not in To Do, or already assigned, is flagged for Step 5.
+5. Dependencies: for every key in `dependsOn` (and any `## Dependencies` key in the ticket text), merged means `git log origin/main --oneline | grep -qw "<KEY>"` (whole key, so `SCRUM-4` never matches `SCRUM-41`), or its Jira status category is Done. Unmet ones: list them per ticket and ask whether to run the rest of the wave without those tickets or stop.
 
 ## Step 2. Analyse the wave together
 
@@ -60,13 +60,13 @@ Before asking, prepare the Jira writes so the user approves them together with t
 2. **Assignees:** `assign.mjs` with the wave's keys and the pool. Fill the plan's Assignee column.
 3. **Sprint:** `searchJiraIssuesUsingJql` `project = SCRUM AND sprint in openSprints()` with field `customfield_10020`; take the entry with `state: "active"` (id and name). None → ask which sprint.
 
-Show: plan path, the ticket table with assignees, the sprint, and the writes that follow (sprint, assignee, In Progress, comment for each ticket). Ask for approval. Changes → revise and show again. Only an explicit yes from the user counts. Then fill the plan's `Plan approved by` line.
+A ticket that already has an assignee keeps it (run `assign.mjs` only for unassigned tickets) unless the user says otherwise. Show: plan path, the ticket table with **current → new** status, assignee and sprint per ticket (flagged tickets from Step 1 marked ⚠ with their current state, since someone may already be working on them), and the writes that follow (sprint, assignee, In Progress, comment for each ticket). The user may also add or remove people from the pool here. Ask for approval. Changes → revise and show again. Only an explicit yes from the user counts. Then fill the plan's `Plan approved by` line.
 
 ## Step 6. Jira moves (before any code)
 
 For each ticket, without further previews (covered by Step 5):
 
-1. `editJiraIssue` fields `{ "customfield_10020": <sprintId>, "assignee": { "accountId": "<id>" } }`.
+1. `editJiraIssue` fields `{ "customfield_10020": <sprintId>, "assignee": { "accountId": "<id>" } }` (omit `assignee` for a ticket that keeps its existing assignee).
 2. `getTransitionsForJiraIssue`, then `transitionJiraIssue` with the transition whose target status is **In Progress**.
 3. `addCommentToJiraIssue`: "Delivered under the implement-bunch-ticket rule exception (constitution: Wave delivery — one branch/PR for the wave, minimal plan, agent Jira moves, agent review). Wave <n>: <title>. Plan: `specs/wave-<n>-<slug>/plan.md` on branch `feat/wave-<n>-<slug>`."
 4. Read back status, sprint and assignee. Print the ticket → assignee → status table.
@@ -86,7 +86,7 @@ For each ticket, without further previews (covered by Step 5):
 Round counter starts at 1.
 
 1. **Gates** (repo root): `pnpm typecheck`, `pnpm lint`, `pnpm test`. For `feature` tickets also `pnpm test:coverage && pnpm coverage:changed` if both scripts exist in the root `package.json`; otherwise record `not available: <missing script>`, never `pass`.
-2. **e2e** when the diff touches `apps/web` and `apps/web/package.json` has `test:e2e`: `pnpm db:up`, `pnpm db:migrate`, `pnpm db:seed`, then `pnpm --filter @launchly/web test:e2e`. Docker not running → stop and report.
+2. **e2e** when the diff touches `apps/web`. If `apps/web/package.json` has no `test:e2e` script (the wave did not include or build the Playwright setup ticket first), **stop**: a missing e2e command blocks, it is never skipped (constitution, Local gates). Otherwise `pnpm db:up`, `pnpm db:migrate`, `pnpm db:seed`, then `pnpm --filter @launchly/web test:e2e`. Docker not running → stop and report.
 3. **Agent review:** dispatch a fresh `general-purpose` subagent (never review your own diff) with: `git diff origin/main...HEAD`, the plan path, the Jira keys and their AC, and these checklists — `code-review` skill at high effort; for `apps/web` `vercel-react-best-practices` and `docs/Frontend-Conventions.md`; for `apps/api` `docs/Backend-Conventions.md`; for `packages/shared` constitution Principle I. It returns a findings table (`# | Severity | File:line | Finding`) and a verdict `APPROVED`/`REJECTED`, plus per ticket whether every AC is proven by a passing test.
 4. **Decide:** any failing gate, failing e2e, unproven AC, or Critical/Important finding → back to Step 7 with that list, round + 1. A 4th round would start → **halt**: commit `chore(<scope>): SCRUM-<n> checkpoint before halt` if the tree has unbuildable work, push, open the PR as **Draft** (merge note: squash required), leave tickets In Progress, report what failed in each round.
 

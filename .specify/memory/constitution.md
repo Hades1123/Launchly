@@ -239,6 +239,8 @@ requires a plan that states the reason and is reviewed like an architecture chan
   `docs/Backend-Conventions.md` for `apps/api`), and posts the result as one PR comment for the
   head commit. Critical or Important findings and e2e failures send the work back to
   implementation, at most 3 rounds; after that the agent halts under the Checkpoint exemption.
+  Exception: Wave delivery (the fresh-agent review runs before the PR is opened and is recorded in
+  the PR body; the PR opens ready for review, or as a Draft after a halt).
 - **Checkpoint exemption**: an agent that halts on a terminal failure, size limit, or turn ceiling
   MAY push one checkpoint commit that leaves the project unbuildable, only to a PR that stays in
   Draft. The commit still uses the Jira-keyed format, for example
