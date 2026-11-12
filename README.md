@@ -131,10 +131,10 @@ End-to-end tests use Playwright (Chromium) against the local stack.
 ```bash
 pn db:up && pn db:migrate && pn db:seed   # database up, migrated, demo data loaded
 pnpm --filter @launchly/web exec playwright install chromium   # once per machine
-pn --filter @launchly/web test:e2e        # starts the API and web app if they are not running
+pn --filter @launchly/web test:e2e        # starts the API (:4100) and web app (:3100) itself
 ```
 
-Specs live in `apps/web/e2e/`. All seeded accounts use the demo password from `apps/api/prisma/seed/data.ts`.
+The tests start their own API and web app on ports 4100 and 3100 (never your dev servers on 3000 and 4000), so stop anything that uses those ports first. Specs live in `apps/web/e2e/`. All seeded accounts use the demo password from `apps/api/prisma/seed/data.ts`.
 
 ## Conventions
 
