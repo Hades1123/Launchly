@@ -69,6 +69,7 @@ export async function runSeed(
       companies: await upsertAll(seedData.companies, (a) => tx.company.upsert(a)),
       jobs: await upsertAll(seedData.jobs, (a) => tx.job.upsert(a)),
       jobStages: await upsertAll(seedData.jobStages, (a) => tx.jobStage.upsert(a)),
+      jobNotes: await upsertAll(seedData.jobNotes, (a) => tx.jobNote.upsert(a)),
       applications: await upsertAll(seedData.applications, (a) => tx.application.upsert(a)),
       applicationStatusHistory: await upsertAll(seedData.applicationStatusHistory, (a) =>
         tx.applicationStatusHistory.upsert(a),
