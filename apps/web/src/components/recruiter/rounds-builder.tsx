@@ -84,6 +84,7 @@ export function RoundsBuilder({ jobId }: { jobId: string }) {
   }
 
   function move(index: number, delta: -1 | 1) {
+    setErrors([]);
     setRows((current) => {
       const target = index + delta;
       if (target < 0 || target >= current.length) return current;
@@ -129,7 +130,7 @@ export function RoundsBuilder({ jobId }: { jobId: string }) {
     }
   }
 
-  if (status === 'loading' || loading) {
+  if (status === 'loading') {
     return <p className="text-sm text-muted-foreground">Đang tải quy trình…</p>;
   }
   if (status !== 'authenticated') {
@@ -138,6 +139,9 @@ export function RoundsBuilder({ jobId }: { jobId: string }) {
         Vui lòng đăng nhập bằng tài khoản nhà tuyển dụng.
       </p>
     );
+  }
+  if (loading) {
+    return <p className="text-sm text-muted-foreground">Đang tải quy trình…</p>;
   }
 
   return (
@@ -175,14 +179,17 @@ export function RoundsBuilder({ jobId }: { jobId: string }) {
                     <Button
                       variant="icon"
                       aria-label={`Xóa vòng ${index + 1}`}
-                      onClick={() => setRows((c) => c.filter((r) => r.key !== row.key))}
+                      onClick={() => {
+                        setErrors([]);
+                        setRows((c) => c.filter((r) => r.key !== row.key));
+                      }}
                     >
                       <Trash2 className="size-4 text-danger" aria-hidden />
                     </Button>
                   </div>
                 </div>
-                <div className="grid gap-3 sm:grid-cols-[2fr_1fr_1fr]">
-                  <Field label="Tên vòng" error={err.name}>
+                <div className="grid gap-3 sm:grid-cols-4">
+                  <Field label="Tên vòng" error={err.name} className="sm:col-span-2">
                     <input
                       className={fieldClass(err.name)}
                       value={row.name}
@@ -251,14 +258,16 @@ export function RoundsBuilder({ jobId }: { jobId: string }) {
 function Field({
   label,
   error,
+  className,
   children,
 }: {
   label: string;
   error?: string;
+  className?: string;
   children: React.ReactNode;
 }) {
   return (
-    <label className="block space-y-1.5 text-sm font-semibold text-foreground">
+    <label className={cn('block space-y-1.5 text-sm font-semibold text-foreground', className)}>
       {label}
       {children}
       {error && <span className="block text-xs font-normal text-danger">{error}</span>}
