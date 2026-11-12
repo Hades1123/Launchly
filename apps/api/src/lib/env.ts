@@ -21,7 +21,7 @@ export const envSchema = z
     SES_FROM: z.preprocess((value) => (value === '' ? undefined : value), z.email().optional()),
     GEMINI_API_KEY: z.string().optional(),
     AI_DRIVER: z.enum(['mock', 'gemini']).default('mock'),
-    AI_MODEL: z.string().min(1).default('gemini-2.5-flash'),
+    AI_MODEL: z.string().min(1).default('gemini-3.5-flash'),
   })
   .refine((e) => e.AI_DRIVER !== 'gemini' || Boolean(e.GEMINI_API_KEY), {
     path: ['GEMINI_API_KEY'],

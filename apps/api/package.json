@@ -8,6 +8,7 @@
     "build": "tsup",
     "start": "node dist/server.js",
     "typecheck": "tsc -p tsconfig.json",
+    "ai:smoke": "tsx --env-file-if-exists=.env scripts/ai-smoke.ts",
     "test": "vitest run --passWithNoTests",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
