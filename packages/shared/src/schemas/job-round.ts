@@ -26,8 +26,6 @@ export const replaceRoundsSchema = z.object({
 });
 export type ReplaceRoundsInput = z.infer<typeof replaceRoundsSchema>;
 
-export const jobIdParamsSchema = z.object({ id: z.uuid() });
-
 export const roundDtoSchema = z.object({
   id: z.uuid(),
   name: z.string(),
