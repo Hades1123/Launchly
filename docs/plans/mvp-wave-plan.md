@@ -45,7 +45,7 @@ Delivered with the normal single-ticket flow, not by `implement-bunch-ticket`. S
 | SCRUM-47 | Return full job details from the public job detail API | api, shared | feature | 2 | — |
 | SCRUM-48 | Candidate applies to a job via API | api, shared, db | feature | 3 | — |
 | SCRUM-49 | Swappable AI provider with a mock driver | api | feature | 3 | — |
-| SCRUM-50 | Extract text from uploaded PDF and DOCX CVs | api | feature | 3 | — |
+| SCRUM-50 | Extract text from uploaded PDF CVs (PDF only, Vietnamese and English; DOCX dropped, so a DOCX upload must give a clear "export as text-based PDF" error) | api | feature | 3 | — |
 | SCRUM-51 | Show format and duration for each hiring round (SCRUM-41's migration already adds `format` and `estimatedDurationMinutes` to `JobStage`; reuse them, add only what is missing) | api, shared, web, db | feature | 2 | SCRUM-41, SCRUM-29 |
 
 ## Wave 2 — Core APIs and entry pages
@@ -54,7 +54,7 @@ Delivered with the normal single-ticket flow, not by `implement-bunch-ticket`. S
 | --- | --- | --- | --- | --- | --- |
 | SCRUM-53 | Job detail page for candidates | web | feature | 3 | SCRUM-46, SCRUM-47, SCRUM-29 |
 | SCRUM-54 | Candidate lists own applications with status history via API | api, shared | feature | 2 | SCRUM-48 |
-| SCRUM-55 | Recruiter lists applicants and changes their status via API | api, shared | feature | 3 | SCRUM-48 |
+| SCRUM-55 | Recruiter lists applicants and changes their status via API (backend only; must document the endpoint contract for SCRUM-60) | api, shared | feature | 3 | SCRUM-48 |
 | SCRUM-56 | AI scores how well a CV matches a job description | api, shared | feature | 3 | SCRUM-49, SCRUM-50 |
 | SCRUM-57 | Recruiter sees own jobs with applicant counts | api, web | feature | 2 | SCRUM-26 |
 
@@ -64,7 +64,7 @@ Delivered with the normal single-ticket flow, not by `implement-bunch-ticket`. S
 | --- | --- | --- | --- | --- | --- |
 | SCRUM-58 | Candidate applies from the job detail page | web | feature | 3 | SCRUM-48, SCRUM-53 |
 | SCRUM-59 | Replace mock My Applications page with real status tracking | web | feature | 3 | SCRUM-54 |
-| SCRUM-60 | Recruiter reviews applicants and updates their status | web | feature | 3 | SCRUM-55, SCRUM-57 |
+| SCRUM-60 | Recruiter reviews applicants and updates their status (frontend only; consumes the SCRUM-55 API as-is, build after SCRUM-59 in this wave so its AC can check the candidate view) | web | feature | 3 | SCRUM-55, SCRUM-57 |
 | SCRUM-61 | CV fit check on the CV review page with AI consent | api, web, db | feature | 3 | SCRUM-56, SCRUM-53 |
 
 ## Wave 4 — Finish and demo
