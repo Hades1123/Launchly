@@ -72,7 +72,7 @@ export default function CandidateProfilePage() {
   return (
     <>
       <SiteHeader />
-      <main className="min-h-screen bg-background pt-36 pb-16 xl:pt-28">
+      <main className="min-h-screen bg-background pt-24 pb-16 xl:pt-28">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <header className="mb-8">
             <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
