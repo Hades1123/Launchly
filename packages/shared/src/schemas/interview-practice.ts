@@ -58,8 +58,38 @@ export type PracticeHistoryQuery = z.infer<typeof practiceHistoryQuerySchema>;
 const practiceAnswerSchema = z.object({
   answer: z.string(),
   feedback: z.string().nullable(),
-  score: z.number().nullable(),
 });
+
+const feedbackText = z.string().trim().min(1);
+
+/** Advisory feedback for one round. No score, rank or verdict by design. */
+export const practiceFeedbackBodySchema = z.object({
+  overview: feedbackText,
+  strengths: z.array(feedbackText).min(1),
+  improvements: z.array(feedbackText).min(1),
+});
+
+/** What the AI must return for a completed round: the body plus one note per question. */
+export const generatedRoundFeedbackSchema = practiceFeedbackBodySchema.extend({
+  answers: z.array(feedbackText).length(PRACTICE_QUESTIONS_PER_ROUND),
+});
+export type GeneratedRoundFeedback = z.infer<typeof generatedRoundFeedbackSchema>;
+
+/** What the AI must return for the whole workflow. */
+export const generatedPracticeSummarySchema = practiceFeedbackBodySchema.extend({
+  nextSteps: z.array(feedbackText).min(1),
+});
+export type GeneratedPracticeSummary = z.infer<typeof generatedPracticeSummarySchema>;
+
+/** A feedback or summary as the candidate receives it, with the advisory disclaimer. */
+export const practiceRoundFeedbackDtoSchema = practiceFeedbackBodySchema.extend({
+  disclaimer: z.string(),
+});
+export const practiceSummaryDtoSchema = generatedPracticeSummarySchema.extend({
+  disclaimer: z.string(),
+});
+export type PracticeRoundFeedbackDto = z.infer<typeof practiceRoundFeedbackDtoSchema>;
+export type PracticeSummaryDto = z.infer<typeof practiceSummaryDtoSchema>;
 
 export const practiceQuestionDtoSchema = z.object({
   id: z.uuid(),
@@ -75,7 +105,7 @@ export const practiceRoundDtoSchema = z.object({
   name: z.string(),
   position: z.number().int().positive(),
   status: practiceStatusSchema,
-  feedback: z.string().nullable(),
+  feedback: practiceRoundFeedbackDtoSchema.nullable(),
   questions: z.array(practiceQuestionDtoSchema),
 });
 export type PracticeRoundDto = z.infer<typeof practiceRoundDtoSchema>;
@@ -91,7 +121,7 @@ export const practiceSessionDtoSchema = z.object({
   interviewConsentAt: z.string().nullable(),
   lastActivityAt: z.string(),
   expiresAt: z.string().nullable(),
-  summary: z.string().nullable(),
+  summary: practiceSummaryDtoSchema.nullable(),
   createdAt: z.string(),
   rounds: z.array(practiceRoundDtoSchema),
 });

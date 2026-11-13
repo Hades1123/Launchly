@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import { PRACTICE_FEEDBACK_DISCLAIMER } from '../constants/interview-practice';
 import {
+  generatedPracticeSummarySchema,
+  generatedRoundFeedbackSchema,
   generatedPracticeQuestionsSchema,
+  practiceRoundDtoSchema,
   practiceAnswerInputSchema,
   practiceHistoryQuerySchema,
   practiceHistoryResponseSchema,
@@ -133,5 +137,77 @@ describe('practiceAnswerInputSchema', () => {
     expect(practiceAnswerInputSchema.parse({ answer: '  hello ' }).answer).toBe('hello');
     expect(practiceAnswerInputSchema.safeParse({ answer: '   ' }).success).toBe(false);
     expect(practiceAnswerInputSchema.safeParse({ answer: 'x'.repeat(5001) }).success).toBe(false);
+  });
+});
+
+describe('generated feedback schemas', () => {
+  const body = { overview: 'Solid start.', strengths: ['Clear'], improvements: ['Add examples'] };
+
+  it('round feedback needs one feedback text per question (five)', () => {
+    const five = ['a', 'b', 'c', 'd', 'e'];
+    expect(generatedRoundFeedbackSchema.safeParse({ ...body, answers: five }).success).toBe(true);
+    expect(
+      generatedRoundFeedbackSchema.safeParse({ ...body, answers: five.slice(1) }).success,
+    ).toBe(false);
+    expect(
+      generatedRoundFeedbackSchema.safeParse({ ...body, answers: ['a', 'b', 'c', 'd', ' '] })
+        .success,
+    ).toBe(false);
+    expect(
+      generatedRoundFeedbackSchema.safeParse({ ...body, strengths: [], answers: five }).success,
+    ).toBe(false);
+  });
+
+  it('summary needs an overview, strengths, improvements and next steps', () => {
+    expect(
+      generatedPracticeSummarySchema.safeParse({ ...body, nextSteps: ['Practice aloud'] }).success,
+    ).toBe(true);
+    expect(generatedPracticeSummarySchema.safeParse({ ...body, nextSteps: [] }).success).toBe(
+      false,
+    );
+    expect(generatedPracticeSummarySchema.safeParse(body).success).toBe(false);
+  });
+
+  it('carries no score, rank or verdict field', () => {
+    for (const schema of [generatedRoundFeedbackSchema, generatedPracticeSummarySchema]) {
+      const keys = Object.keys(schema.shape).join(' ');
+      expect(keys).not.toMatch(/score|rank|percentile|verdict|pass|hire|recommend/i);
+    }
+  });
+});
+
+describe('practice DTO feedback', () => {
+  it('has the advisory disclaimer and no answer score', () => {
+    expect(PRACTICE_FEEDBACK_DISCLAIMER).toBe(
+      'AI-generated practice feedback is advisory and may be incorrect; it does not affect hiring decisions.',
+    );
+    const round = {
+      id: STAGE,
+      stageId: null,
+      name: 'Online',
+      position: 1,
+      status: 'COMPLETED',
+      feedback: {
+        overview: 'Ok',
+        strengths: ['a'],
+        improvements: ['b'],
+        disclaimer: PRACTICE_FEEDBACK_DISCLAIMER,
+      },
+      questions: [
+        {
+          id: JOB,
+          position: 1,
+          prompt: 'Q',
+          source: 'ROUND_PROCESS',
+          answer: { answer: 'A', feedback: 'f' },
+        },
+      ],
+    };
+    const parsed = practiceRoundDtoSchema.parse(round);
+    expect(parsed.feedback?.disclaimer).toBe(PRACTICE_FEEDBACK_DISCLAIMER);
+    expect(JSON.stringify(parsed)).not.toContain('score');
+    expect(practiceRoundDtoSchema.safeParse({ ...round, feedback: 'plain text' }).success).toBe(
+      false,
+    );
   });
 });
