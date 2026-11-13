@@ -218,3 +218,57 @@ describe('POST /admin/jobs/:id/approve and /reject', () => {
     log.mockRestore();
   });
 });
+
+describe('outcome email to the job creator (US2)', () => {
+  let ctx: ReturnType<typeof makeApp>;
+  beforeEach(() => {
+    ctx = makeApp();
+  });
+
+  it('emails the creator once when a job is published (FR-009)', async () => {
+    ctx.prisma.job.update.mockResolvedValue(row({ publicationStatus: 'PUBLISHED' }));
+    await request(ctx.app).post(`/admin/jobs/${ID}/approve`).set(auth).expect(200);
+    await vi.waitFor(() => expect(ctx.mail.send).toHaveBeenCalledTimes(1));
+    expect(ctx.mail.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'hr@acme.test',
+        subject: expect.stringContaining('Backend intern'),
+      }),
+    );
+  });
+
+  it('emails the creator the reason when a job is rejected (FR-009)', async () => {
+    ctx.prisma.job.update.mockResolvedValue(
+      row({ publicationStatus: 'REJECTED', moderationReason: 'Not entry level' }),
+    );
+    await request(ctx.app)
+      .post(`/admin/jobs/${ID}/reject`)
+      .set(auth)
+      .send({ reason: 'Not entry level' })
+      .expect(200);
+    await vi.waitFor(() => expect(ctx.mail.send).toHaveBeenCalledTimes(1));
+    expect(ctx.mail.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'hr@acme.test',
+        text: expect.stringContaining('Not entry level'),
+      }),
+    );
+  });
+
+  it('keeps the decision and logs a fixed message when the email fails (FR-010, E6)', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    ctx.mail.send.mockRejectedValueOnce(new Error('550 hr@acme.test rejected'));
+    ctx.prisma.job.update.mockResolvedValue(row({ publicationStatus: 'PUBLISHED' }));
+    const res = await request(ctx.app).post(`/admin/jobs/${ID}/approve`).set(auth);
+    expect(res.status).toBe(200);
+    await vi.waitFor(() => expect(log).toHaveBeenCalledWith('Job moderation email failed'));
+    log.mockRestore();
+  });
+
+  it('sends no email when the decision is refused', async () => {
+    ctx.prisma.job.update.mockRejectedValue(notPending);
+    ctx.prisma.job.findUnique.mockResolvedValue({ publicationStatus: 'PUBLISHED' });
+    await request(ctx.app).post(`/admin/jobs/${ID}/approve`).set(auth).expect(409);
+    expect(ctx.mail.send).not.toHaveBeenCalled();
+  });
+});
