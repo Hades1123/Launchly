@@ -8,29 +8,29 @@ Wave plan source: `docs/plans/interview-practice-wave-plan.md` · Branch: `feat/
 
 Build order: SCRUM-68 first (it creates the routes, API client and components SCRUM-69 extends).
 
-| Key      | Title                                                    | Label   | Areas | Depends on                     | Assignee         |
-| -------- | -------------------------------------------------------- | ------- | ----- | ------------------------------ | ---------------- |
-| SCRUM-68 | Replace the mock interview demo with text-only practice  | feature | web   | SCRUM-64, SCRUM-65 (merged)    | SƠN NGUYỄN VÕ ĐỨC |
-| SCRUM-69 | Show interview practice history and feedback             | feature | web   | SCRUM-66, SCRUM-67 (merged), SCRUM-68 | SƠN NGUYỄN VÕ ĐỨC |
+| Key      | Title                                                   | Label   | Areas | Depends on                            | Assignee          |
+| -------- | ------------------------------------------------------- | ------- | ----- | ------------------------------------- | ----------------- |
+| SCRUM-68 | Replace the mock interview demo with text-only practice | feature | web   | SCRUM-64, SCRUM-65 (merged)           | SƠN NGUYỄN VÕ ĐỨC |
+| SCRUM-69 | Show interview practice history and feedback            | feature | web   | SCRUM-66, SCRUM-67 (merged), SCRUM-68 | SƠN NGUYỄN VÕ ĐỨC |
 
 ## Clarifications
 
 All answered by the recommended defaults ("defaults", user, 2026-11-14).
 
-| #   | Ticket   | Question            | Answer                                                                                                                                                | Source             |
-| --- | -------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| Q1  | SCRUM-68 | Job picking         | "Practice this interview" link on the job detail page → `/interview-practice?jobId=…`; practice page also lists recent published jobs with `searchJobs` | user (default)     |
-| Q2  | SCRUM-68 | Unsupported rounds  | All stages shown; only ONLINE/PHONE selectable (`isInteractiveRoundFormat`); others labelled "information only"                                       | user (default)     |
-| Q3  | SCRUM-68 | Pages               | `/interview-practice` (start + History tab), `/interview-practice/[id]` (active round, then results)                                                   | user (default)     |
-| Q4  | SCRUM-68 | Round flow          | Consent → start → generate questions per round (30 s loading, retry on 503) → five answers saved one by one → feedback enabled after five → summary    | user (default)     |
-| Q5  | SCRUM-68 | Mobile              | Single column from 360 px; e2e at phone width                                                                                                          | user (default)     |
-| Q6  | SCRUM-68 | Footer label        | `site-footer.tsx` label → "Luyện phỏng vấn AI"; nav and landing card unchanged                                                                         | user (default)     |
-| Q7  | SCRUM-68 | Mock code           | Delete unimported mock files (`waveform`, `countdown-timer`, `session-bar`, `session-footer`, `conversation-panel`, `rich-text`, `action-button`, `feedback-panel`, `mock-interview-session`) | user (default) |
-| Q8  | SCRUM-69 | History             | History tab, 10 per page via API pagination; rows link to `/interview-practice/[id]`; Resume only when `expiresAt` is in the future; expired → 404 notice | user (default)     |
-| Q9  | SCRUM-69 | Source labels       | JOB_DESCRIPTION "From the job description", JOB_REQUIREMENTS "From the requirements", ROUND_PROCESS "From the interview round"                          | user (default)     |
-| Q10 | both     | Language            | English copy in new practice UI; nav/footer keep Vietnamese                                                                                            | user (default)     |
-| Q11 | both     | Docs                | Update `docs/Interview-Practice.md`; wave plan doc edits ride in this PR                                                                               | user (default), memory rule |
-| Q12 | both     | Jira ticket text    | Corrections from the wave plan ("Ticket text to correct") shown at the approval gate, applied only after the yes                                       | user (default)     |
+| #   | Ticket   | Question           | Answer                                                                                                                                                                                        | Source                      |
+| --- | -------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| Q1  | SCRUM-68 | Job picking        | "Practice this interview" link on the job detail page → `/interview-practice?jobId=…`; practice page also lists recent published jobs with `searchJobs`                                       | user (default)              |
+| Q2  | SCRUM-68 | Unsupported rounds | All stages shown; only ONLINE/PHONE selectable (`isInteractiveRoundFormat`); others labelled "information only"                                                                               | user (default)              |
+| Q3  | SCRUM-68 | Pages              | `/interview-practice` (start + History tab), `/interview-practice/[id]` (active round, then results)                                                                                          | user (default)              |
+| Q4  | SCRUM-68 | Round flow         | Consent → start → generate questions per round (30 s loading, retry on 503) → five answers saved one by one → feedback enabled after five → summary                                           | user (default)              |
+| Q5  | SCRUM-68 | Mobile             | Single column from 360 px; e2e at phone width                                                                                                                                                 | user (default)              |
+| Q6  | SCRUM-68 | Footer label       | `site-footer.tsx` label → "Luyện phỏng vấn AI"; nav and landing card unchanged                                                                                                                | user (default)              |
+| Q7  | SCRUM-68 | Mock code          | Delete unimported mock files (`waveform`, `countdown-timer`, `session-bar`, `session-footer`, `conversation-panel`, `rich-text`, `action-button`, `feedback-panel`, `mock-interview-session`) | user (default)              |
+| Q8  | SCRUM-69 | History            | History tab, 10 per page via API pagination; rows link to `/interview-practice/[id]`; Resume only when `expiresAt` is in the future; expired → 404 notice                                     | user (default)              |
+| Q9  | SCRUM-69 | Source labels      | JOB_DESCRIPTION "From the job description", JOB_REQUIREMENTS "From the requirements", ROUND_PROCESS "From the interview round"                                                                | user (default)              |
+| Q10 | both     | Language           | English copy in new practice UI; nav/footer keep Vietnamese                                                                                                                                   | user (default)              |
+| Q11 | both     | Docs               | Update `docs/Interview-Practice.md`; wave plan doc edits ride in this PR                                                                                                                      | user (default), memory rule |
+| Q12 | both     | Jira ticket text   | Corrections from the wave plan ("Ticket text to correct") shown at the approval gate, applied only after the yes                                                                              | user (default)              |
 
 ## Cross-ticket changes
 
@@ -71,14 +71,14 @@ As a candidate, I want to choose a published job and practice its supported inte
 
 ### Test cases
 
-| ID | Type | File::test name                                                                 | Proves |
-| -- | ---- | ------------------------------------------------------------------------------- | ------ |
-| T1 | e2e  | `scrum-68-text-practice.spec.ts::AC1: start full workflow and a single round`   | AC1    |
-| T2 | e2e  | `scrum-68-text-practice.spec.ts::AC2: consent is required before start`         | AC2    |
-| T3 | e2e  | `scrum-68-text-practice.spec.ts::AC3: informational rounds, five questions, no timer or voice` | AC3 |
-| T4 | e2e  | `scrum-68-text-practice.spec.ts::AC4: answers survive a reload`                 | AC4    |
-| T5 | e2e  | `scrum-68-text-practice.spec.ts::AC5: no score, rank or verdict and no mock content` | AC5 |
-| T6 | e2e  | `scrum-68-text-practice.spec.ts::AC1: usable at 360 px wide`                    | AC1 (mobile) |
+| ID  | Type | File::test name                                                                                | Proves       |
+| --- | ---- | ---------------------------------------------------------------------------------------------- | ------------ |
+| T1  | e2e  | `scrum-68-text-practice.spec.ts::AC1: start full workflow and a single round`                  | AC1          |
+| T2  | e2e  | `scrum-68-text-practice.spec.ts::AC2: consent is required before start`                        | AC2          |
+| T3  | e2e  | `scrum-68-text-practice.spec.ts::AC3: informational rounds, five questions, no timer or voice` | AC3          |
+| T4  | e2e  | `scrum-68-text-practice.spec.ts::AC4: answers survive a reload`                                | AC4          |
+| T5  | e2e  | `scrum-68-text-practice.spec.ts::AC5: no score, rank or verdict and no mock content`           | AC5          |
+| T6  | e2e  | `scrum-68-text-practice.spec.ts::AC1: usable at 360 px wide`                                   | AC1 (mobile) |
 
 ## SCRUM-69 — Show interview practice history and feedback
 
@@ -104,10 +104,10 @@ As a candidate, I want to review completed practice sessions, round feedback and
 
 Seed: `candidate1@launchly.test` owns one completed seeded session; `resetPractice` and `expirePractice` reset state; the API runs with `AI_DRIVER=mock`, so tests assert five items, not text.
 
-| ID | Type | File::test name                                                                  | Proves |
-| -- | ---- | -------------------------------------------------------------------------------- | ------ |
-| T1 | e2e  | `scrum-69-practice-history.spec.ts::AC1: completed session shows rounds, source labels, feedback and summary` | AC1 |
-| T2 | e2e  | `scrum-69-practice-history.spec.ts::AC2: empty history, pagination and API error states` | AC2 |
-| T3 | e2e  | `scrum-69-practice-history.spec.ts::AC3: resume only within 24 h, expired session is gone` | AC3 |
-| T4 | e2e  | `scrum-69-practice-history.spec.ts::AC4: no score or verdict, recruiter and other candidate are blocked` | AC4 |
-| T5 | e2e  | `scrum-69-practice-history.spec.ts::AC5: disclaimer shown with feedback and summary` | AC5 |
+| ID  | Type | File::test name                                                                                               | Proves |
+| --- | ---- | ------------------------------------------------------------------------------------------------------------- | ------ |
+| T1  | e2e  | `scrum-69-practice-history.spec.ts::AC1: completed session shows rounds, source labels, feedback and summary` | AC1    |
+| T2  | e2e  | `scrum-69-practice-history.spec.ts::AC2: empty history, pagination and API error states`                      | AC2    |
+| T3  | e2e  | `scrum-69-practice-history.spec.ts::AC3: resume only within 24 h, expired session is gone`                    | AC3    |
+| T4  | e2e  | `scrum-69-practice-history.spec.ts::AC4: no score or verdict, recruiter and other candidate are blocked`      | AC4    |
+| T5  | e2e  | `scrum-69-practice-history.spec.ts::AC5: disclaimer shown with feedback and summary`                          | AC5    |

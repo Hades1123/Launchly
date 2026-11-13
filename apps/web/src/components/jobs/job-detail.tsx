@@ -93,6 +93,9 @@ export function JobDetail({ job, variant = 'page' }: JobDetailProps) {
           <Link href={`/cv-review?jobId=${job.id}`} className={buttonClasses('soft')}>
             Check my CV fit
           </Link>
+          <Link href={`/interview-practice?jobId=${job.id}`} className={buttonClasses('soft')}>
+            Practice this interview
+          </Link>
         </div>
       </Card>
 
