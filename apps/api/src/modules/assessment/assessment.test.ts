@@ -222,6 +222,51 @@ describe('POST /assessments', () => {
     expect(data.failureReason).toBeTruthy();
   });
 
+  it('403 without a candidate profile and 404 for an unknown CV', async () => {
+    ctx.prisma.candidateProfile.findUnique.mockResolvedValueOnce(null);
+    expect((await post(ctx, { resumeId: RESUME, jobId: JOB })).status).toBe(403);
+
+    ctx.prisma.resume.findUnique.mockResolvedValueOnce(null);
+    const res = await post(ctx, { resumeId: RESUME, jobId: JOB });
+    expect(res.status).toBe(404);
+    expect(ctx.prisma.aiAssessment.create).not.toHaveBeenCalled();
+  });
+
+  it('a provider crash stores a generic FAILED row and hides the vendor message', async () => {
+    const crash: AiProvider = {
+      generateJson: () => Promise.reject(new Error('vendor secret detail')),
+    };
+    const crashCtx = makeApp({ ai: crash });
+    const res = await post(crashCtx, { resumeId: RESUME, jobId: JOB });
+
+    expect(res.status).toBe(503);
+    expect(JSON.stringify(res.body)).not.toContain('vendor secret detail');
+    expect(crashCtx.prisma.aiAssessment.create.mock.calls[0]![0].data).toMatchObject({
+      status: 'FAILED',
+      failureReason: 'The AI request failed',
+    });
+  });
+
+  it('omits the requirements block for a job that lists none', async () => {
+    const seen: GenerateJsonInput<unknown>[] = [];
+    const bare = makeApp({
+      ai: new MockAiProvider({
+        respond: (input) => {
+          seen.push(input);
+          return validResult;
+        },
+      }),
+    });
+    bare.prisma.job.findFirst.mockResolvedValue({
+      title: 'Frontend Intern',
+      description: 'Build UI with React.',
+      requirements: [],
+    });
+    await post(bare, { resumeId: RESUME, jobId: JOB });
+
+    expect(seen[0]!.prompt).not.toContain('Requirements:');
+  });
+
   it('the prompt contains CV and job text only, no profile PII', async () => {
     const seen: GenerateJsonInput<unknown>[] = [];
     const spy = makeApp({

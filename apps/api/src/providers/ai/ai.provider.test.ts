@@ -8,7 +8,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { AppError } from '@/lib/app-error';
 import { envSchema } from '@/lib/env';
-import { AI_TIMEOUT_MS, createAiProvider, withTimeout } from '@/providers/ai';
+import { AI_TIMEOUT_MS, createAiProvider, getAiProvider, withTimeout } from '@/providers/ai';
 import { GeminiAiProvider } from '@/providers/ai/gemini-ai.provider';
 import { MockAiProvider } from '@/providers/ai/mock-ai.provider';
 
@@ -210,5 +210,25 @@ describe('withTimeout', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe('getAiProvider', () => {
+  it('returns one shared provider for the configured driver', () => {
+    const first = getAiProvider();
+
+    expect(first).toBeInstanceOf(MockAiProvider);
+    expect(getAiProvider()).toBe(first);
+  });
+
+  it('needs a key for the gemini driver and forwards a custom fetch', () => {
+    expect(() => createAiProvider({ driver: 'gemini', model: 'm' })).toThrow(/GEMINI_API_KEY/);
+    const provider = createAiProvider({
+      driver: 'gemini',
+      model: 'm',
+      geminiApiKey: 'k',
+      fetch: vi.fn() as unknown as typeof fetch,
+    });
+    expect(provider).toBeInstanceOf(GeminiAiProvider);
   });
 });
