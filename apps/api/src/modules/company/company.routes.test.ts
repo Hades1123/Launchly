@@ -26,7 +26,12 @@ const row = {
 function makeApp(role: 'RECRUITER' | 'CANDIDATE' = 'RECRUITER') {
   const prisma = {
     company: { findFirst: vi.fn(), create: vi.fn() },
+    $executeRaw: vi.fn(),
+    $transaction: vi.fn(),
   };
+  prisma.$transaction.mockImplementation(async (run: (tx: typeof prisma) => unknown) =>
+    run(prisma),
+  );
   const authService = {
     verifyAccessToken: vi.fn(() => ({ userId: 'user-1', sessionId: 'session-1' })),
     getSessionUser: vi.fn(async () => ({ id: 'user-1', role })),

@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { createCompanySchema } from '@launchly/shared';
 import type { PrismaClient } from '@/generated/prisma/client';
 import { AppError } from '@/lib/app-error';
 import { createAdminCompanyService } from '@/modules/admin/admin-company.service';
@@ -32,7 +33,9 @@ describe.runIf(process.env.RUN_DB_TESTS === '1')('admin company decisions (integ
 
   afterAll(async () => {
     if (!prisma) return;
-    if (ownerId) await prisma.company.deleteMany({ where: { ownerId } });
+    await prisma.company.deleteMany({
+      where: { owner: { email: { endsWith: `${suffix}@example.com` } } },
+    });
     await prisma.user.deleteMany({ where: { email: { endsWith: `${suffix}@example.com` } } });
     await prisma.$disconnect();
   });
@@ -59,5 +62,26 @@ describe.runIf(process.env.RUN_DB_TESTS === '1')('admin company decisions (integ
       id: companyId,
       moderationReason: null,
     });
+  });
+
+  it('creates only one of two concurrent registrations by the same recruiter (FR-016)', async () => {
+    const recruiterId = (
+      await prisma.user.create({
+        data: { email: `mod-racer-${suffix}@example.com`, role: 'RECRUITER' },
+      })
+    ).id;
+    const companies = createCompanyService(prisma);
+
+    const results = await Promise.allSettled([
+      companies.create(recruiterId, createCompanySchema.parse({ name: 'Race A', address: 'HCMC' })),
+      companies.create(recruiterId, createCompanySchema.parse({ name: 'Race B', address: 'HCMC' })),
+    ]);
+
+    expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+    expect(
+      ((results.find((r) => r.status === 'rejected') as PromiseRejectedResult).reason as AppError)
+        .code,
+    ).toBe('CONFLICT');
+    await prisma.company.deleteMany({ where: { ownerId: recruiterId } });
   });
 });
