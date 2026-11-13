@@ -171,3 +171,52 @@ describe('POST /admin/companies/:id/approve and /reject', () => {
     expect(res.status).toBe(404);
   });
 });
+
+describe('outcome email to the recruiter (US2)', () => {
+  let ctx: ReturnType<typeof makeApp>;
+  beforeEach(() => {
+    ctx = makeApp();
+    ctx.prisma.company.updateMany.mockResolvedValue({ count: 1 });
+  });
+
+  it('emails the owner once when a company is approved (FR-008)', async () => {
+    ctx.prisma.company.findUnique.mockResolvedValue(row({ moderationStatus: 'APPROVED' }));
+    await request(ctx.app).post(`/admin/companies/${ID}/approve`).set(auth).expect(200);
+    await vi.waitFor(() => expect(ctx.mail.send).toHaveBeenCalledTimes(1));
+    expect(ctx.mail.send).toHaveBeenCalledWith(
+      expect.objectContaining({ to: 'owner@acme.test', subject: expect.stringContaining('Acme') }),
+    );
+  });
+
+  it('emails the owner the reason when a company is rejected (FR-008)', async () => {
+    ctx.prisma.company.findUnique.mockResolvedValue(
+      row({ moderationStatus: 'REJECTED', moderationReason: 'No licence' }),
+    );
+    await request(ctx.app)
+      .post(`/admin/companies/${ID}/reject`)
+      .set(auth)
+      .send({ reason: 'No licence' })
+      .expect(200);
+    await vi.waitFor(() => expect(ctx.mail.send).toHaveBeenCalledTimes(1));
+    expect(ctx.mail.send).toHaveBeenCalledWith(
+      expect.objectContaining({ to: 'owner@acme.test', text: expect.stringContaining('No licence') }),
+    );
+  });
+
+  it('keeps the decision and logs when the email fails (FR-009, E7)', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    ctx.mail.send.mockRejectedValueOnce(new Error('smtp down'));
+    ctx.prisma.company.findUnique.mockResolvedValue(row({ moderationStatus: 'APPROVED' }));
+    const res = await request(ctx.app).post(`/admin/companies/${ID}/approve`).set(auth);
+    expect(res.status).toBe(200);
+    await vi.waitFor(() => expect(log).toHaveBeenCalled());
+    log.mockRestore();
+  });
+
+  it('sends no email when the decision is refused (FR-014)', async () => {
+    ctx.prisma.company.updateMany.mockResolvedValue({ count: 0 });
+    ctx.prisma.company.findUnique.mockResolvedValue(row({ moderationStatus: 'APPROVED' }));
+    await request(ctx.app).post(`/admin/companies/${ID}/approve`).set(auth).expect(409);
+    expect(ctx.mail.send).not.toHaveBeenCalled();
+  });
+});

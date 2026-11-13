@@ -2,6 +2,7 @@ import type { AdminCompany, CompanyModerationStatus } from '@launchly/shared';
 import type { PrismaClient } from '@/generated/prisma/client';
 import { AppError } from '@/lib/app-error';
 import type { MailProvider } from '@/providers/mail/mail-provider';
+import { createModerationEmail } from '@/providers/mail/moderation-email-templates';
 
 const adminCompanySelect = {
   id: true,
@@ -36,11 +37,26 @@ function toDto({ owner, reviewedAt, createdAt, ...rest }: AdminCompanyRow): Admi
 
 type Decision = { moderationStatus: 'APPROVED' | 'REJECTED'; moderationReason: string | null };
 
-export function createAdminCompanyService(prisma: PrismaClient, _mail: MailProvider) {
+export function createAdminCompanyService(prisma: PrismaClient, mail: MailProvider) {
   async function get(id: string): Promise<AdminCompany> {
     const company = await prisma.company.findUnique({ where: { id }, select: adminCompanySelect });
     if (!company) throw new AppError('NOT_FOUND', 'Company not found');
     return toDto(company);
+  }
+
+  /** Emails the owner without holding up the response; a failure is only logged (FR-009). */
+  function notifyOwner(company: AdminCompany) {
+    const email =
+      company.moderationStatus === 'APPROVED'
+        ? createModerationEmail({ kind: 'company-approved', companyName: company.name })
+        : createModerationEmail({
+            kind: 'company-rejected',
+            companyName: company.name,
+            reason: company.moderationReason ?? '',
+          });
+    void mail.send({ to: company.ownerEmail, ...email }).catch((error: unknown) => {
+      console.error('Company moderation email failed', error);
+    });
   }
 
   /** Applies a decision only while the company is still pending, so two admins cannot both decide. */
@@ -53,6 +69,7 @@ export function createAdminCompanyService(prisma: PrismaClient, _mail: MailProvi
     if (count === 0) {
       throw new AppError('CONFLICT', `Company is already ${company.moderationStatus}`);
     }
+    notifyOwner(company);
     return company;
   }
 
