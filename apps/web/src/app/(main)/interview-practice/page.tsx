@@ -54,7 +54,13 @@ export default async function InterviewPracticePage({ searchParams }: PageProps)
       </nav>
 
       <CandidateGate next={history ? '/interview-practice?tab=history' : '/interview-practice'}>
-        {history ? <PracticeHistory /> : jobId ? <PracticeStart jobId={jobId} /> : <JobPicker />}
+        {history ? (
+          <PracticeHistory />
+        ) : jobId ? (
+          <PracticeStart key={jobId} jobId={jobId} />
+        ) : (
+          <JobPicker />
+        )}
       </CandidateGate>
     </div>
   );

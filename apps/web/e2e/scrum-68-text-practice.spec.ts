@@ -1,14 +1,7 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 import { signIn, waitForSession } from './helpers/auth';
 import { resetPractice } from './helpers/db';
-import {
-  API,
-  CANDIDATE,
-  jobWithInteractiveRounds,
-  questionsUrl,
-  startRoundPractice,
-  token,
-} from './helpers/practice';
+import { API, BASE, CANDIDATE, questionsUrl, startRoundPractice, token } from './helpers/practice';
 
 /**
  * SCRUM-68: the text-only practice flow (start, consent, questions, answers) in the browser.
@@ -19,17 +12,33 @@ import {
 test.beforeEach(() => resetPractice(CANDIDATE));
 test.afterAll(() => resetPractice(CANDIDATE));
 
-/** A public job with at least one interactive round, with its title and every stage. */
-async function practiceJob(request: APIRequestContext) {
-  const found = await jobWithInteractiveRounds(request, 1);
-  const detail = await (await request.get(`${API}/jobs/${found.id}`)).json();
-  return {
-    id: found.id,
-    title: detail.title as string,
-    stages: detail.stages as { id: string; name: string; format: string | null }[],
-    interactive: found.interactive,
-  };
+type Stage = { id: string; name: string; format: string | null };
+const isInteractive = (stage: Stage) => stage.format === 'ONLINE' || stage.format === 'PHONE';
+
+/** A public job whose stages satisfy `accept`, with its title, stages and interactive rounds. */
+async function findJob(request: APIRequestContext, accept: (stages: Stage[]) => boolean) {
+  const list = await request.get(`${API}/jobs?limit=50`);
+  for (const item of (await list.json()).data as { id: string }[]) {
+    const detail = await (await request.get(`${API}/jobs/${item.id}`)).json();
+    const stages = detail.stages as Stage[];
+    if (accept(stages)) {
+      return {
+        id: item.id,
+        title: detail.title as string,
+        stages,
+        interactive: stages.filter(isInteractive),
+      };
+    }
+  }
+  throw new Error('The seed has no published job with the rounds this test needs');
 }
+
+const anyInteractive = (stages: Stage[]) => stages.some(isInteractive);
+/** At least two interactive rounds, so "all rounds" and "one round" differ. */
+const severalInteractive = (stages: Stage[]) => stages.filter(isInteractive).length >= 2;
+/** Interactive and informational rounds together. */
+const mixedRounds = (stages: Stage[]) =>
+  anyInteractive(stages) && stages.some((s) => !isInteractive(s));
 
 async function openPractice(page: Page, jobId: string) {
   await signIn(page, CANDIDATE);
@@ -47,7 +56,7 @@ test('AC1: start the full workflow from a job link and a single round from the j
   page,
   request,
 }) => {
-  const job = await practiceJob(request);
+  const job = await findJob(request, severalInteractive);
   await signIn(page, CANDIDATE);
   await waitForSession(page);
 
@@ -62,6 +71,7 @@ test('AC1: start the full workflow from a job link and a single round from the j
     await consentAndStart(page);
     const rounds = page.getByRole('list', { name: 'Rounds' }).getByRole('listitem');
     await expect(rounds).toHaveCount(job.interactive.length);
+    expect(job.interactive.length).toBeGreaterThanOrEqual(2);
   });
 
   await test.step('a single round can be picked after finding the job in the list', async () => {
@@ -78,7 +88,7 @@ test('AC1: start the full workflow from a job link and a single round from the j
 });
 
 test('AC2: starting needs the separate interview AI consent', async ({ page, request }) => {
-  const job = await practiceJob(request);
+  const job = await findJob(request, anyInteractive);
   await openPractice(page, job.id);
 
   const start = page.getByRole('button', { name: 'Start practice' });
@@ -89,15 +99,66 @@ test('AC2: starting needs the separate interview AI consent', async ({ page, req
   await expect(start).toBeDisabled();
 });
 
+test('AC2: API errors are shown as they are and nothing is made up', async ({ page, request }) => {
+  const job = await findJob(request, anyInteractive);
+  const auth = await token(request, CANDIDATE);
+
+  await test.step('a refused start shows the API message and stays on the page', async () => {
+    await openPractice(page, job.id);
+    await page.route('**/candidates/me/interview-practice', async (route) => {
+      if (route.request().method() !== 'POST') return route.continue();
+      await route.fulfill({
+        status: 400,
+        json: {
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'This job has no description to practice from',
+          },
+        },
+      });
+    });
+    await page.getByRole('checkbox', { name: /I agree/ }).check();
+    await page.getByRole('button', { name: 'Start practice' }).click();
+    await expect(
+      page.getByRole('alert').filter({ hasText: 'This job has no description to practice from' }),
+    ).toBeVisible();
+    await expect(page).toHaveURL(/\/interview-practice\?jobId=/);
+    await expect(page.getByRole('button', { name: 'Start practice' })).toBeEnabled();
+    await page.unroute('**/candidates/me/interview-practice');
+  });
+
+  await test.step('a failed question generation shows the message and can be retried', async () => {
+    const started = await request.post(BASE, {
+      headers: auth,
+      data: { jobId: job.id, consent: true, stageId: job.interactive[0]!.id },
+    });
+    const session = await started.json();
+    await page.route('**/rounds/*/questions', (route) =>
+      route.fulfill({
+        status: 503,
+        json: { error: { code: 'AI_UNAVAILABLE', message: 'The AI service is unavailable' } },
+      }),
+    );
+    await page.goto(`/interview-practice/${session.id}`);
+    await page.getByRole('button', { name: 'Generate questions' }).click();
+    await expect(
+      page.getByRole('alert').filter({ hasText: 'The AI service is unavailable' }),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Generate questions' })).toBeEnabled();
+    await expect(page.getByRole('list', { name: 'Questions' })).toHaveCount(0);
+  });
+});
+
 test('AC3: informational rounds, exactly five text questions and no timer or media', async ({
   page,
   request,
 }) => {
-  const job = await practiceJob(request);
+  const job = await findJob(request, mixedRounds);
   await openPractice(page, job.id);
 
   await test.step('rounds that are not ONLINE or PHONE are information only', async () => {
     const informational = job.stages.length - job.interactive.length;
+    expect(informational).toBeGreaterThan(0);
     await expect(page.getByText('Information only')).toHaveCount(informational);
     await expect(page.getByText('Interactive', { exact: true })).toHaveCount(
       job.interactive.length,
@@ -147,18 +208,22 @@ test('AC5: no score, rank or verdict and none of the old mock content', async ({
   await signIn(page, CANDIDATE);
   await waitForSession(page);
 
-  for (const url of ['/interview-practice', `/interview-practice/${session.id}`]) {
-    await page.goto(url);
-    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-    await expect(page.getByText(/score|percentile|ranking|verdict|pass rate/i)).toHaveCount(0);
-    await expect(page.getByText(/%/)).toHaveCount(0);
-    await expect(page.getByText('VinTech Solutions')).toHaveCount(0);
-    await expect(page.getByText('Nguyễn Minh Anh')).toHaveCount(0);
-  }
+  // The job list shows real job titles, so only the session page is scanned for score words.
+  await page.goto('/interview-practice');
+  await expect(page.getByRole('heading', { level: 1, name: 'Interview practice' })).toBeVisible();
+  await expect(page.getByText('VinTech Solutions')).toHaveCount(0);
+  await expect(page.getByText('Nguyễn Minh Anh')).toHaveCount(0);
+
+  await page.goto(`/interview-practice/${session.id}`);
+  await expect(page.getByRole('textbox', { name: /Answer to question/ })).toHaveCount(5);
+  await expect(page.getByText(/score|percentile|ranking|verdict|pass rate/i)).toHaveCount(0);
+  await expect(page.getByText(/%/)).toHaveCount(0);
+  await expect(page.getByText('VinTech Solutions')).toHaveCount(0);
+  await expect(page.getByText('Nguyễn Minh Anh')).toHaveCount(0);
 });
 
 test('AC1: the start page is usable at 360 px wide', async ({ page, request }) => {
-  const job = await practiceJob(request);
+  const job = await findJob(request, anyInteractive);
   await page.setViewportSize({ width: 360, height: 740 });
   await openPractice(page, job.id);
 

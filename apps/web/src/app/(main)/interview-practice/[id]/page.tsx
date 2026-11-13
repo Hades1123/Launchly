@@ -14,7 +14,7 @@ export default async function PracticeSessionPage({ params }: PageProps) {
         Interview practice
       </h1>
       <CandidateGate next={`/interview-practice/${id}`}>
-        <PracticeSession id={id} />
+        <PracticeSession key={id} id={id} />
       </CandidateGate>
     </div>
   );
