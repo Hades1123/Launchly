@@ -54,20 +54,33 @@ export function createAdminCompanyService(prisma: PrismaClient, mail: MailProvid
             companyName: company.name,
             reason: company.moderationReason ?? '',
           });
-    void mail.send({ to: company.ownerEmail, ...email }).catch((error: unknown) => {
-      console.error('Company moderation email failed', error);
+    // A fixed message only: mail errors carry the recipient and the server response.
+    void mail.send({ to: company.ownerEmail, ...email }).catch(() => {
+      console.error('Company moderation email failed');
     });
   }
 
-  /** Applies a decision only while the company is still pending, so two admins cannot both decide. */
+  /**
+   * Applies a decision in one conditional update, so it only lands while the company is still
+   * pending and two admins cannot both decide (E1).
+   */
   async function decide(id: string, reviewerId: string, decision: Decision): Promise<AdminCompany> {
-    const { count } = await prisma.company.updateMany({
-      where: { id, moderationStatus: 'PENDING' },
-      data: { ...decision, reviewedById: reviewerId, reviewedAt: new Date() },
-    });
-    const company = await get(id);
-    if (count === 0) {
-      throw new AppError('CONFLICT', `Company is already ${company.moderationStatus}`);
+    let company: AdminCompany;
+    try {
+      const row = await prisma.company.update({
+        where: { id, moderationStatus: 'PENDING' },
+        data: { ...decision, reviewedById: reviewerId, reviewedAt: new Date() },
+        select: adminCompanySelect,
+      });
+      company = toDto(row);
+    } catch (error) {
+      if ((error as { code?: string } | null)?.code !== 'P2025') throw error;
+      const current = await prisma.company.findUnique({
+        where: { id },
+        select: { moderationStatus: true },
+      });
+      if (!current) throw new AppError('NOT_FOUND', 'Company not found');
+      throw new AppError('CONFLICT', `Company is already ${current.moderationStatus}`);
     }
     notifyOwner(company);
     return company;
