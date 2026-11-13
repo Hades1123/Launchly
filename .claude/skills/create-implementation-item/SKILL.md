@@ -36,8 +36,8 @@ Every Story ends this skill with exactly one label. It decides the gates `implem
 | Label         | When                                                            | Spec Kit                                                                              | 80 % changed-file coverage            | Playwright e2e             |
 | ------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------- | -------------------------- |
 | `feature`     | new or changed behaviour                                        | yes                                                                                   | yes                                   | yes, if `apps/web` changes |
-| `bug`         | restores already specified behaviour                            | yes, unless the fix only restores already specified behaviour (Maintenance exemption) | no; a test that fails without the fix | no                         |
-| `maintenance` | behaviour-preserving: refactor, deps within pins, tooling, docs | no (cite the constitution's Maintenance exemption)                                    | no                                    | no                         |
+| `bug`         | restores already specified behaviour                            | yes, unless the fix only restores already specified behaviour (Maintenance exemption) | no; a test that fails without the fix | yes, if `apps/web` changes |
+| `maintenance` | behaviour-preserving: refactor, deps within pins, tooling, docs | no (cite the constitution's Maintenance exemption)                                    | no                                    | yes, if `apps/web` changes |
 
 Pick it in step 4 and state it in the scoping summary.
 

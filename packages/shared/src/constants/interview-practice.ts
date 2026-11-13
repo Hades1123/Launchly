@@ -10,3 +10,7 @@ export const INTERACTIVE_ROUND_FORMATS = ['ONLINE', 'PHONE'] as const;
 export function isInteractiveRoundFormat(format: string | null | undefined): boolean {
   return (INTERACTIVE_ROUND_FORMATS as readonly string[]).includes(format ?? '');
 }
+
+/** Shown with every round feedback and summary so the UI never retypes it. */
+export const PRACTICE_FEEDBACK_DISCLAIMER =
+  'AI-generated practice feedback is advisory and may be incorrect; it does not affect hiring decisions.';

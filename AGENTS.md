@@ -80,17 +80,18 @@ Repository skills live in `.claude/skills/` (Claude Code loads them automaticall
 | Story label   | Spec Kit                                                                      | Unit gate                                                 | ≥80 % lines and branches on changed files | Code review on Draft PR | Playwright e2e               |
 | ------------- | ----------------------------------------------------------------------------- | --------------------------------------------------------- | ----------------------------------------- | ----------------------- | ---------------------------- |
 | `feature`     | yes                                                                           | typecheck, lint, test                                     | yes                                       | yes                     | yes, when `apps/web` changes |
-| `bug`         | yes, unless the fix only restores specified behaviour (Maintenance exemption) | typecheck, lint, test + a test that fails without the fix | no                                        | yes                     | no                           |
-| `maintenance` | no (cite the Maintenance exemption)                                           | typecheck, lint, test                                     | no                                        | yes                     | no                           |
+| `bug`         | yes, unless the fix only restores specified behaviour (Maintenance exemption) | typecheck, lint, test + a test that fails without the fix | no                                        | yes                     | yes, when `apps/web` changes |
+| `maintenance` | no (cite the Maintenance exemption)                                           | typecheck, lint, test                                     | no                                        | yes                     | yes, when `apps/web` changes |
 
-Commands: `pn typecheck`, `pn lint`, `pn test`, `pn test:coverage && pn coverage:changed`, `pn --filter @launchly/web test:e2e`. A gate whose command is missing blocks; it is never skipped. The code review uses the `code-review` skill plus `vercel-react-best-practices` and `docs/Frontend-Conventions.md` for `apps/web`, `docs/Backend-Conventions.md` for `apps/api`, and posts one PR comment starting `<!-- implement-ticket:code-review`. e2e specs live in `apps/web/e2e/scrum-<n>-<slug>.spec.ts`.
+Commands: `pn typecheck`, `pn lint`, `pn test`, `pn test:coverage && pn coverage:changed`, `pn --filter @launchly/web test:e2e`. A gate whose command is missing blocks; it is never skipped. The code review uses the `code-review` skill plus `vercel-react-best-practices` and `docs/Frontend-Conventions.md` for `apps/web`, `docs/Backend-Conventions.md` for `apps/api`, and posts one PR comment starting `<!-- implement-ticket:code-review`. Any change under `apps/web` needs e2e, whatever the label. e2e specs live in `apps/web/e2e/scrum-<n>-<slug>.spec.ts`.
 
 ### Prerequisite tooling
 
-Two gate commands do not exist yet. Until their tickets are merged, `implement-ticket` stops at those gates for `feature` Stories:
+One gate command does not exist yet. Until its ticket is merged, `implement-ticket` stops at that gate for `feature` Stories:
 
-- `pn test:coverage` and `pn coverage:changed`: changed-file coverage tooling (ticket: not yet created).
-- `pn --filter @launchly/web test:e2e`: Playwright harness for `apps/web` (ticket: not yet created).
+- `pn test:coverage` and `pn coverage:changed`: changed-file coverage tooling (ticket: not yet created). Wave 5 and 6 read each package's `coverage/coverage-summary.json` instead and record the method.
+
+`pn --filter @launchly/web test:e2e` (the Playwright harness for `apps/web`) exists; a missing `test:e2e` script still blocks any Story, of any label, whose diff touches `apps/web`.
 
 Branches, commits, and PR titles carry the Jira key so the Jira–GitHub integration links them: branch `<type>/SCRUM-123-short-slug`, commit `<type>(<scope>): SCRUM-123 <summary>`, PR title `[SCRUM-123] <outcome>`.
 

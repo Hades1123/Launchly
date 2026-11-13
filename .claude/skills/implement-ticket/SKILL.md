@@ -20,8 +20,8 @@ Read first: `AGENTS.md`, `.specify/memory/constitution.md` (Principle IV and "De
 | Label         | Spec Kit (Phase 3)                                                                       | Unit gate (Phase 4)                                                      | Code review (Phase 5) | e2e (Phase 5)                        |
 | ------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | --------------------- | ------------------------------------ |
 | `feature`     | yes                                                                                      | typecheck, lint, test, `pn test:coverage && pn coverage:changed` (≥80 %) | yes                   | yes when the diff touches `apps/web` |
-| `bug`         | yes, unless the Story cites the Maintenance exemption (fix restores specified behaviour) | typecheck, lint, test, plus a test that fails without the fix            | yes                   | no                                   |
-| `maintenance` | no (Story must cite the Maintenance exemption)                                           | typecheck, lint, test                                                    | yes                   | no                                   |
+| `bug`         | yes, unless the Story cites the Maintenance exemption (fix restores specified behaviour) | typecheck, lint, test, plus a test that fails without the fix            | yes                   | yes when the diff touches `apps/web` |
+| `maintenance` | no (Story must cite the Maintenance exemption)                                           | typecheck, lint, test                                                    | yes                   | yes when the diff touches `apps/web` |
 
 Commands (run from the repo root; `pn` is an interactive alias, so scripts use `pnpm`):
 
@@ -139,8 +139,9 @@ The first push of the branch opens the PR, whatever the label: in Phase 3 step 4
    - `apps/api/**`: apply `docs/Backend-Conventions.md` (AppError, `validate()`, route → controller → service → Prisma).
    - `packages/shared/**`: constitution Principle I (one Zod schema, `!` for breaking changes).
 2. Post or update **one** PR comment whose first line is `<!-- implement-ticket:code-review head=<sha> round=<k> -->`, followed by a table: `| # | Severity | File:line | Finding | Disposition |`. Disposition is `fixed in <sha>`, `justified: <reason>`, or `open`. Preview the first post; later updates to the same comment follow the same text shape and need no new gate.
-3. **e2e** (`feature` and the diff touches `apps/web`):
+3. **e2e** (the diff touches `apps/web`, whatever the label):
    - Write `apps/web/e2e/scrum-<n>-<slug>.spec.ts`. One `test()` per acceptance criterion and per E-id the UI exposes (every Story E-id is UI-exposed unless the Story or a Subtask marks it `(API only)`), titled `AC<k>: ...` / `E<k>: ...`.
+   - A `maintenance` Story has no Spec Kit and may have no acceptance criteria: cover the flows the change could affect (constitution, Principle IV); for a `bug`, the failing flow. Title those tests after the flow, not `AC<k>`.
    - Locate by role, label and text (`getByRole`, `getByLabel`, `getByText`), never by CSS class. No `waitForTimeout`; wait on visible state.
    - Run `pnpm --filter @launchly/web test:e2e`. Record the result in the PR body. Commit the specs: `test(web): SCRUM-<n> add e2e specs`.
 4. **Decide:**

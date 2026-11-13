@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { PRACTICE_QUESTIONS_PER_ROUND } from '../constants/interview-practice';
 
 export const practiceScopeSchema = z.enum(['FULL', 'ROUND']);
 export type PracticeScope = z.infer<typeof practiceScopeSchema>;
@@ -16,6 +17,37 @@ export const startPracticeSchema = z.object({
 export type StartPracticeInput = z.infer<typeof startPracticeSchema>;
 
 export const practiceSessionIdParamsSchema = z.object({ id: z.uuid() });
+export const practiceRoundParamsSchema = z.object({ id: z.uuid(), roundId: z.uuid() });
+export const practiceQuestionParamsSchema = z.object({ id: z.uuid(), questionId: z.uuid() });
+
+/** Where a generated question comes from; shown to the candidate as a readable label. */
+export const practiceQuestionSourceSchema = z.enum([
+  'JOB_DESCRIPTION',
+  'JOB_REQUIREMENTS',
+  'ROUND_PROCESS',
+]);
+export type PracticeQuestionSource = z.infer<typeof practiceQuestionSourceSchema>;
+
+/** What the AI must return for one round: exactly five questions, each with a source. */
+export const generatedPracticeQuestionsSchema = z.object({
+  questions: z
+    .array(
+      z.object({
+        prompt: z.string().trim().min(1),
+        source: practiceQuestionSourceSchema,
+      }),
+    )
+    .length(PRACTICE_QUESTIONS_PER_ROUND),
+});
+export type GeneratedPracticeQuestions = z.infer<typeof generatedPracticeQuestionsSchema>;
+
+export const PRACTICE_ANSWER_MAX_LENGTH = 5000;
+
+/** Save or replace the text answer to one question. */
+export const practiceAnswerInputSchema = z.object({
+  answer: z.string().trim().min(1, 'Write an answer').max(PRACTICE_ANSWER_MAX_LENGTH),
+});
+export type PracticeAnswerInput = z.infer<typeof practiceAnswerInputSchema>;
 
 export const practiceHistoryQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -26,8 +58,38 @@ export type PracticeHistoryQuery = z.infer<typeof practiceHistoryQuerySchema>;
 const practiceAnswerSchema = z.object({
   answer: z.string(),
   feedback: z.string().nullable(),
-  score: z.number().nullable(),
 });
+
+const feedbackText = z.string().trim().min(1);
+
+/** Advisory feedback for one round. No score, rank or verdict by design. */
+export const practiceFeedbackBodySchema = z.object({
+  overview: feedbackText,
+  strengths: z.array(feedbackText).min(1),
+  improvements: z.array(feedbackText).min(1),
+});
+
+/** What the AI must return for a completed round: the body plus one note per question. */
+export const generatedRoundFeedbackSchema = practiceFeedbackBodySchema.extend({
+  answers: z.array(feedbackText).length(PRACTICE_QUESTIONS_PER_ROUND),
+});
+export type GeneratedRoundFeedback = z.infer<typeof generatedRoundFeedbackSchema>;
+
+/** What the AI must return for the whole workflow. */
+export const generatedPracticeSummarySchema = practiceFeedbackBodySchema.extend({
+  nextSteps: z.array(feedbackText).min(1),
+});
+export type GeneratedPracticeSummary = z.infer<typeof generatedPracticeSummarySchema>;
+
+/** A feedback or summary as the candidate receives it, with the advisory disclaimer. */
+export const practiceRoundFeedbackDtoSchema = practiceFeedbackBodySchema.extend({
+  disclaimer: z.string(),
+});
+export const practiceSummaryDtoSchema = generatedPracticeSummarySchema.extend({
+  disclaimer: z.string(),
+});
+export type PracticeRoundFeedbackDto = z.infer<typeof practiceRoundFeedbackDtoSchema>;
+export type PracticeSummaryDto = z.infer<typeof practiceSummaryDtoSchema>;
 
 export const practiceQuestionDtoSchema = z.object({
   id: z.uuid(),
@@ -43,7 +105,7 @@ export const practiceRoundDtoSchema = z.object({
   name: z.string(),
   position: z.number().int().positive(),
   status: practiceStatusSchema,
-  feedback: z.string().nullable(),
+  feedback: practiceRoundFeedbackDtoSchema.nullable(),
   questions: z.array(practiceQuestionDtoSchema),
 });
 export type PracticeRoundDto = z.infer<typeof practiceRoundDtoSchema>;
@@ -59,7 +121,7 @@ export const practiceSessionDtoSchema = z.object({
   interviewConsentAt: z.string().nullable(),
   lastActivityAt: z.string(),
   expiresAt: z.string().nullable(),
-  summary: z.string().nullable(),
+  summary: practiceSummaryDtoSchema.nullable(),
   createdAt: z.string(),
   rounds: z.array(practiceRoundDtoSchema),
 });

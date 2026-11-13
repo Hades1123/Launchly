@@ -23,6 +23,37 @@ export function createInterviewPracticeController(service: Service) {
       res.json(practiceSessionDtoSchema.parse(await service.resume(userId, id)));
     }) satisfies RequestHandler,
 
+    generateQuestions: (async (req, res) => {
+      const { userId } = currentAuth(res.locals);
+      const { session, created } = await service.generateQuestions(
+        userId,
+        String(req.params.id),
+        String(req.params.roundId),
+      );
+      res.status(created ? 201 : 200).json(practiceSessionDtoSchema.parse(session));
+    }) satisfies RequestHandler,
+
+    generateFeedback: (async (req, res) => {
+      const { userId } = currentAuth(res.locals);
+      const { session, created } = await service.generateFeedback(
+        userId,
+        String(req.params.id),
+        String(req.params.roundId),
+      );
+      res.status(created ? 201 : 200).json(practiceSessionDtoSchema.parse(session));
+    }) satisfies RequestHandler,
+
+    saveAnswer: (async (req, res) => {
+      const { userId } = currentAuth(res.locals);
+      const session = await service.saveAnswer(
+        userId,
+        String(req.params.id),
+        String(req.params.questionId),
+        req.body,
+      );
+      res.json(practiceSessionDtoSchema.parse(session));
+    }) satisfies RequestHandler,
+
     history: (async (req, res) => {
       const { userId } = currentAuth(res.locals);
       const query = req.query as unknown as PracticeHistoryQuery;
