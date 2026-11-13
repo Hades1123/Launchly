@@ -44,7 +44,9 @@ test('AC1: an admin opens the queue from the account menu and sees pending compa
   await page.getByRole('menuitem', { name: 'Duyệt nội dung' }).click();
 
   await expect(page.getByRole('heading', { level: 1, name: 'Duyệt nội dung' })).toBeVisible();
-  await expect(page.getByRole('tab', { name: 'Công ty', selected: true })).toBeVisible();
+  await expect(
+    page.getByRole('navigation', { name: 'Loại nội dung' }).getByRole('link', { name: 'Công ty' }),
+  ).toHaveAttribute('aria-current', 'page');
   const item = page.getByRole('listitem').filter({ hasText: PENDING });
   await expect(item.getByRole('link', { name: PENDING })).toBeVisible();
   await expect(item.getByText(/Gửi lúc/)).toBeVisible();
@@ -124,4 +126,45 @@ test('AC4/E4: a rejected recruiter sees the reason and can register another comp
   await sidebar.getByRole('link', { name: 'Đăng ký công ty khác' }).click();
   await expect(page).toHaveURL(/\/company\/register$/);
   await expect(page.getByPlaceholder('Ví dụ: Launchly Corp')).toHaveValue('');
+});
+
+test('a failed reject keeps the dialog open with the typed reason (review #2)', async ({
+  page,
+}) => {
+  await openPendingCompany(page);
+  await page.route('**/admin/companies/*/reject', (route) =>
+    route.fulfill({
+      status: 500,
+      contentType: 'application/json',
+      body: JSON.stringify({ error: { code: 'INTERNAL_ERROR', message: 'boom' } }),
+    }),
+  );
+  await page.getByRole('button', { name: 'Từ chối' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Từ chối công ty' });
+  await dialog.getByLabel('Lý do từ chối').fill('Thiếu giấy phép');
+  await dialog.getByRole('button', { name: 'Xác nhận từ chối' }).click();
+
+  await expect(dialog.getByRole('alert')).toBeVisible();
+  await expect(dialog.getByLabel('Lý do từ chối')).toHaveValue('Thiếu giấy phép');
+});
+
+test('an unknown company shows a Vietnamese not-found message (review #3)', async ({ page }) => {
+  await signIn(page, ADMIN);
+  await page.goto('/admin/moderation/companies/00000000-0000-4000-8000-000000000000');
+  await expect(page.getByText('Không tìm thấy công ty')).toBeVisible();
+});
+
+test.describe('on a phone', () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  test('AC4/E4: a rejected recruiter sees the reason and the register link (review #1)', async ({
+    page,
+  }) => {
+    await signIn(page, REJECTED_RECRUITER);
+    await page.goto('/recruiter/jobs');
+    const header = page.getByRole('banner');
+    await expect(header.getByText(/Lý do:/)).toBeVisible();
+    await header.getByRole('link', { name: 'Đăng ký công ty khác' }).click();
+    await expect(page).toHaveURL(/\/company\/register$/);
+  });
 });
