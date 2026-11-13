@@ -9,6 +9,7 @@ import { assertSeedAllowed } from './seed/run';
  *
  *   consent <candidate email>               clear the AI consent
  *   application <candidate email> <title>   delete that candidate's application to the job
+ *   moderation                              seeded companies back to their moderation state
  */
 async function main(): Promise<void> {
   assertSeedAllowed({ nodeEnv: env.NODE_ENV, databaseUrl: env.DATABASE_URL });
@@ -30,7 +31,29 @@ async function main(): Promise<void> {
     return;
   }
 
-  throw new Error('Usage: e2e-reset.ts consent <email> | application <email> <job title>');
+  if (command === 'moderation') {
+    // "Draft Ventures" waits for review again; the rejected recruiter keeps only "QuickCash Jobs".
+    await prisma.company.updateMany({
+      where: { name: 'Draft Ventures' },
+      data: {
+        moderationStatus: 'PENDING',
+        moderationReason: null,
+        reviewedById: null,
+        reviewedAt: null,
+      },
+    });
+    await prisma.company.deleteMany({
+      where: {
+        owner: { email: 'recruiter.rejected@launchly.test' },
+        name: { not: 'QuickCash Jobs' },
+      },
+    });
+    return;
+  }
+
+  throw new Error(
+    'Usage: e2e-reset.ts consent <email> | application <email> <job title> | moderation',
+  );
 }
 
 main()
