@@ -7,9 +7,9 @@ import {
 import { AppError } from '@/lib/app-error';
 import { publicJobWhere } from '@/modules/job/job.service';
 import { getResumeText } from '@/modules/candidate/cv-text.service';
-import { getAiProvider, type AiProvider } from '@/providers/ai';
+import { AI_TIMEOUT_MS, getAiProvider, withTimeout, type AiProvider } from '@/providers/ai';
 
-export const ASSESSMENT_TIMEOUT_MS = 30_000;
+export const ASSESSMENT_TIMEOUT_MS = AI_TIMEOUT_MS;
 
 const SYSTEM_PROMPT = [
   'You are a recruiter who checks how well a candidate CV matches a job description.',
@@ -36,22 +36,6 @@ function jobToText(job: { title: string; description: string; requirements: stri
     ? `\nRequirements:\n${job.requirements.map((r) => `- ${r}`).join('\n')}`
     : '';
   return `${job.title}\n${job.description}${requirements}`;
-}
-
-/** Rejects after `ms`; the timer is always cleared so a fast answer leaves nothing behind. */
-async function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
-  let timer: NodeJS.Timeout | undefined;
-  const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(
-      () => reject(new AppError('AI_UNAVAILABLE', `The AI timed out after ${ms / 1000} s`)),
-      ms,
-    );
-  });
-  try {
-    return await Promise.race([work, timeout]);
-  } finally {
-    clearTimeout(timer);
-  }
 }
 
 export function createAssessmentService(

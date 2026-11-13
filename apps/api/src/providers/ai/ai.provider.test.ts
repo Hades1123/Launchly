@@ -8,7 +8,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { AppError } from '@/lib/app-error';
 import { envSchema } from '@/lib/env';
-import { createAiProvider } from '@/providers/ai';
+import { AI_TIMEOUT_MS, createAiProvider, withTimeout } from '@/providers/ai';
 import { GeminiAiProvider } from '@/providers/ai/gemini-ai.provider';
 import { MockAiProvider } from '@/providers/ai/mock-ai.provider';
 
@@ -190,5 +190,25 @@ describe('MockAiProvider default reply', () => {
       schema: z.object({ suggestions: z.array(z.string().min(1)).min(3) }),
     });
     expect(out.suggestions).toHaveLength(3);
+  });
+});
+
+describe('withTimeout', () => {
+  it('resolves with the work result and rejects with AI_UNAVAILABLE after the limit', async () => {
+    expect(AI_TIMEOUT_MS).toBe(30_000);
+    await expect(withTimeout(Promise.resolve('ok'), 50)).resolves.toBe('ok');
+
+    vi.useFakeTimers();
+    try {
+      const slow = withTimeout(new Promise<string>(() => {}), 1000);
+      const assertion = expect(slow).rejects.toMatchObject({
+        code: 'AI_UNAVAILABLE',
+        message: 'The AI timed out after 1 s',
+      });
+      await vi.advanceTimersByTimeAsync(1000);
+      await assertion;
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

@@ -35,3 +35,4 @@ export function getAiProvider(): AiProvider {
 export * from './ai.interface';
 export * from './gemini-ai.provider';
 export * from './mock-ai.provider';
+export * from './with-timeout';

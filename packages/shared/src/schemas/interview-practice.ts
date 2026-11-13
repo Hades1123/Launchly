@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { PRACTICE_QUESTIONS_PER_ROUND } from '../constants/interview-practice';
 
 export const practiceScopeSchema = z.enum(['FULL', 'ROUND']);
 export type PracticeScope = z.infer<typeof practiceScopeSchema>;
@@ -16,6 +17,37 @@ export const startPracticeSchema = z.object({
 export type StartPracticeInput = z.infer<typeof startPracticeSchema>;
 
 export const practiceSessionIdParamsSchema = z.object({ id: z.uuid() });
+export const practiceRoundParamsSchema = z.object({ id: z.uuid(), roundId: z.uuid() });
+export const practiceQuestionParamsSchema = z.object({ id: z.uuid(), questionId: z.uuid() });
+
+/** Where a generated question comes from; shown to the candidate as a readable label. */
+export const practiceQuestionSourceSchema = z.enum([
+  'JOB_DESCRIPTION',
+  'JOB_REQUIREMENTS',
+  'ROUND_PROCESS',
+]);
+export type PracticeQuestionSource = z.infer<typeof practiceQuestionSourceSchema>;
+
+/** What the AI must return for one round: exactly five questions, each with a source. */
+export const generatedPracticeQuestionsSchema = z.object({
+  questions: z
+    .array(
+      z.object({
+        prompt: z.string().trim().min(1),
+        source: practiceQuestionSourceSchema,
+      }),
+    )
+    .length(PRACTICE_QUESTIONS_PER_ROUND),
+});
+export type GeneratedPracticeQuestions = z.infer<typeof generatedPracticeQuestionsSchema>;
+
+export const PRACTICE_ANSWER_MAX_LENGTH = 5000;
+
+/** Save or replace the text answer to one question. */
+export const practiceAnswerInputSchema = z.object({
+  answer: z.string().trim().min(1, 'Write an answer').max(PRACTICE_ANSWER_MAX_LENGTH),
+});
+export type PracticeAnswerInput = z.infer<typeof practiceAnswerInputSchema>;
 
 export const practiceHistoryQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),

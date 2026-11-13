@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  generatedPracticeQuestionsSchema,
+  practiceAnswerInputSchema,
   practiceHistoryQuerySchema,
   practiceHistoryResponseSchema,
   practiceSessionDtoSchema,
@@ -98,5 +100,38 @@ describe('response schemas', () => {
     });
     expect(parsed.data[0]).not.toHaveProperty('answers');
     expect(parsed.data[0]).not.toHaveProperty('rounds');
+  });
+});
+
+describe('generatedPracticeQuestionsSchema', () => {
+  const question = (source = 'JOB_DESCRIPTION') => ({ prompt: 'Describe a project', source });
+  const five = Array.from({ length: 5 }, () => question());
+
+  it('requires exactly five questions with a known source label', () => {
+    expect(generatedPracticeQuestionsSchema.safeParse({ questions: five }).success).toBe(true);
+    expect(
+      generatedPracticeQuestionsSchema.safeParse({ questions: five.slice(0, 4) }).success,
+    ).toBe(false);
+    expect(
+      generatedPracticeQuestionsSchema.safeParse({ questions: [...five, question()] }).success,
+    ).toBe(false);
+    expect(
+      generatedPracticeQuestionsSchema.safeParse({
+        questions: [...five.slice(0, 4), question('CV')],
+      }).success,
+    ).toBe(false);
+  });
+
+  it('rejects a blank question', () => {
+    const blank = [...five.slice(0, 4), { prompt: '  ', source: 'ROUND_PROCESS' }];
+    expect(generatedPracticeQuestionsSchema.safeParse({ questions: blank }).success).toBe(false);
+  });
+});
+
+describe('practiceAnswerInputSchema', () => {
+  it('trims the answer and rejects a blank or oversized one', () => {
+    expect(practiceAnswerInputSchema.parse({ answer: '  hello ' }).answer).toBe('hello');
+    expect(practiceAnswerInputSchema.safeParse({ answer: '   ' }).success).toBe(false);
+    expect(practiceAnswerInputSchema.safeParse({ answer: 'x'.repeat(5001) }).success).toBe(false);
   });
 });
