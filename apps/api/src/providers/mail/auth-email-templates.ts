@@ -1,3 +1,5 @@
+import { escapeHtml } from '@/providers/mail/html';
+
 type AuthEmailKind = 'verification' | 'google-link' | 'password-reset';
 
 const copy: Record<
@@ -40,19 +42,6 @@ const copy: Record<
     security: 'Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này. Mật khẩu hiện tại của bạn sẽ không thay đổi.',
   },
 };
-
-export function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (character) => {
-    const entities: Record<string, string> = {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;',
-    };
-    return entities[character] ?? character;
-  });
-}
 
 export function createAuthEmail(
   kind: AuthEmailKind,

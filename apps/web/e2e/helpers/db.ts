@@ -20,3 +20,8 @@ export function resetAiConsent(email: string) {
 export function resetApplication(email: string, jobTitle: string) {
   reset('application', email, jobTitle);
 }
+
+/** Puts the seeded pending and rejected companies back, and removes companies a spec registered. */
+export function resetModeration() {
+  reset('moderation');
+}
