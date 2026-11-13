@@ -4,6 +4,7 @@ import { resetApplication } from './helpers/db';
 
 const API = 'http://localhost:4100';
 const RECRUITER = 'recruiter@launchly.test';
+const OTHER_RECRUITER = 'recruiter.fpt@launchly.test';
 const CANDIDATE = 'candidate1@launchly.test';
 
 /** Open job of the seeded recruiter (`apps/api/prisma/seed/data.ts`). */
@@ -131,19 +132,16 @@ test('AC1: View CV opens the applicant resume as a PDF', async ({ page, request 
   await popup.close();
 });
 
-test('AC2: a 403 from the applicants API shows the forbidden state', async ({ page, request }) => {
+test('AC2: a recruiter who does not own the job sees the forbidden state', async ({
+  page,
+  request,
+}) => {
   const { jobId } = await applyAfresh(request);
-  await signIn(page, RECRUITER);
-  await page.route(`**/api/jobs/${jobId}/applications`, (route) =>
-    route.fulfill({
-      status: 403,
-      json: { error: { code: 'FORBIDDEN', message: 'You do not manage this job' } },
-    }),
-  );
+  await signIn(page, OTHER_RECRUITER);
   await page.goto(`/recruiter/jobs/${jobId}/applicants`);
 
-  await expect(page.getByRole('alert')).toContainText(
-    'Bạn không có quyền xem ứng viên của tin tuyển dụng này.',
-  );
+  await expect(
+    page.getByText('Bạn không có quyền xem ứng viên của tin tuyển dụng này.'),
+  ).toBeVisible();
   await expect(page.getByRole('table')).toHaveCount(0);
 });
