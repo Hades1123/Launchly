@@ -54,6 +54,8 @@ async function openResume(applicationId: string): Promise<void> {
     const url = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
     if (tab) tab.location.href = url;
     else window.location.assign(url);
+    // The tab has loaded the file well before this; release the in-memory copy.
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
   } catch (error) {
     tab?.close();
     throw error;
