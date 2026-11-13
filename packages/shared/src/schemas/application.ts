@@ -78,3 +78,44 @@ export const candidateApplicationDetailSchema = candidateApplicationItemSchema.e
   stages: z.array(applicationStageSchema),
 });
 export type CandidateApplicationDetail = z.infer<typeof candidateApplicationDetailSchema>;
+
+/** Statuses a recruiter may set. SUBMITTED is the starting state and WITHDRAWN belongs to the candidate. */
+export const RECRUITER_APPLICATION_STATUSES = [
+  'SCREENING',
+  'INTERVIEW',
+  'OFFER',
+  'ACCEPTED',
+  'REJECTED',
+] as const;
+export const recruiterApplicationStatusSchema = z.enum(RECRUITER_APPLICATION_STATUSES);
+export type RecruiterApplicationStatus = z.infer<typeof recruiterApplicationStatusSchema>;
+
+export const MAX_STATUS_NOTE_LENGTH = 1000;
+
+export const updateApplicationStatusSchema = z.object({
+  status: recruiterApplicationStatusSchema,
+  /** A stage of the application's own job. */
+  stageId: z.uuid().optional(),
+  note: z.string().trim().max(MAX_STATUS_NOTE_LENGTH).optional(),
+});
+export type UpdateApplicationStatusInput = z.infer<typeof updateApplicationStatusSchema>;
+
+/** One applicant as the recruiter of the job sees them. */
+export const recruiterApplicationSchema = z.object({
+  id: z.string(),
+  status: applicationStatusSchema,
+  submittedAt: z.string(),
+  candidate: z.object({
+    name: z.string(),
+    headline: z.string().nullable(),
+    skills: z.array(z.string()),
+  }),
+  resume: z.object({ id: z.string(), fileName: z.string() }),
+  currentStage: z.object({ id: z.string(), name: z.string() }).nullable(),
+});
+export type RecruiterApplication = z.infer<typeof recruiterApplicationSchema>;
+
+export const recruiterApplicationListSchema = z.object({
+  data: z.array(recruiterApplicationSchema),
+});
+export type RecruiterApplicationList = z.infer<typeof recruiterApplicationListSchema>;

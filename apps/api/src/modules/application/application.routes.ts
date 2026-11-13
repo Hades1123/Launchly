@@ -1,5 +1,9 @@
 import { Router } from 'express';
-import { applicationIdParamsSchema, createApplicationSchema } from '@launchly/shared';
+import {
+  applicationIdParamsSchema,
+  createApplicationSchema,
+  updateApplicationStatusSchema,
+} from '@launchly/shared';
 import { authenticate } from '@/middlewares/authenticate';
 import { authorize } from '@/middlewares/authorize';
 import { validate } from '@/middlewares/validate';
@@ -30,6 +34,20 @@ export function createApplicationRouter(authService: AuthService, service: Appli
     authorize('CANDIDATE'),
     validate({ params: applicationIdParamsSchema }),
     controller.getMine,
+  );
+  router.patch(
+    '/:id/status',
+    authenticate(authService),
+    authorize('RECRUITER'),
+    validate({ params: applicationIdParamsSchema, body: updateApplicationStatusSchema }),
+    controller.updateStatus,
+  );
+  router.get(
+    '/:id/resume',
+    authenticate(authService),
+    authorize('CANDIDATE', 'RECRUITER'),
+    validate({ params: applicationIdParamsSchema }),
+    controller.downloadResume,
   );
   return router;
 }
