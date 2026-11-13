@@ -12,6 +12,7 @@ const companySelect = {
   logoUrl: true,
   description: true,
   moderationStatus: true,
+  moderationReason: true,
   createdAt: true,
 } as const;
 
@@ -25,6 +26,7 @@ type CompanyRow = {
   logoUrl: string | null;
   description: string | null;
   moderationStatus: CompanyDto['moderationStatus'];
+  moderationReason: string | null;
   createdAt: Date;
 };
 

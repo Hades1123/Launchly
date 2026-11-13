@@ -19,6 +19,7 @@ const row = {
   logoUrl: null,
   description: null,
   moderationStatus: 'PENDING' as const,
+  moderationReason: null,
   createdAt: new Date('2026-11-07T00:00:00Z'),
 };
 

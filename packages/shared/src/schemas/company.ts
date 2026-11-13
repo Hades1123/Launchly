@@ -34,6 +34,7 @@ export const companyDtoSchema = z.object({
   logoUrl: z.string().nullable(),
   description: z.string().nullable(),
   moderationStatus: companyModerationStatusSchema,
+  moderationReason: z.string().nullable(),
   createdAt: z.string(),
 });
 export type CompanyDto = z.infer<typeof companyDtoSchema>;
