@@ -12,7 +12,7 @@ import {
 } from '@launchly/shared';
 import { AppError } from '@/lib/app-error';
 
-const jobSelect = {
+export const recruiterJobSelect = {
   id: true,
   title: true,
   description: true,
@@ -35,7 +35,7 @@ const jobSelect = {
   notes: { orderBy: { position: 'asc' }, select: { id: true, content: true, position: true } },
 } as const satisfies Prisma.JobSelect;
 
-type JobRow = Prisma.JobGetPayload<{ select: typeof jobSelect }>;
+type JobRow = Prisma.JobGetPayload<{ select: typeof recruiterJobSelect }>;
 
 /** Who may read or change a job: its creator or the owner of its company. */
 const accessSelect = {
@@ -53,7 +53,7 @@ function assertManages<T extends AccessRow>(job: T | null, userId: string): asse
   }
 }
 
-function toDto(row: JobRow): RecruiterJob {
+export function toRecruiterJobDto(row: JobRow): RecruiterJob {
   return {
     id: row.id,
     title: row.title,
@@ -202,10 +202,10 @@ export function createRecruiterJobService(prisma: PrismaClient) {
     async get(jobId: string, userId: string): Promise<RecruiterJob> {
       const job = await prisma.job.findUnique({
         where: { id: jobId },
-        select: { ...jobSelect, ...accessSelect },
+        select: { ...recruiterJobSelect, ...accessSelect },
       });
       assertManages(job, userId);
-      return toDto(job);
+      return toRecruiterJobDto(job);
     },
 
     /** Creates a draft, or a job waiting for admin approval, with its rounds and notes. */
@@ -213,9 +213,9 @@ export function createRecruiterJobService(prisma: PrismaClient) {
       const companyId = await approvedCompanyId(userId);
       const row = await prisma.job.create({
         data: { ...toJobData(input), companyId, createdById: userId },
-        select: jobSelect,
+        select: recruiterJobSelect,
       });
-      return toDto(row);
+      return toRecruiterJobDto(row);
     },
 
     /**
@@ -253,9 +253,9 @@ export function createRecruiterJobService(prisma: PrismaClient) {
             // A resubmitted job starts a new review; the old reason no longer applies.
             ...(input.action === 'SUBMIT' && { moderationReason: null }),
           },
-          select: jobSelect,
+          select: recruiterJobSelect,
         });
-        return toDto(row);
+        return toRecruiterJobDto(row);
       });
     },
 
