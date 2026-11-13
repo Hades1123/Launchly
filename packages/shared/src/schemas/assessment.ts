@@ -1,13 +1,13 @@
 import { z } from 'zod';
 
-export const MAX_JOB_DESCRIPTION_LENGTH = 10000;
+export const MAX_ASSESSMENT_JOB_DESCRIPTION_LENGTH = 10000;
 
 /** Send exactly one of `jobId` (a public job) or `jobDescription` (pasted text). */
 export const createAssessmentSchema = z
   .object({
     resumeId: z.uuid(),
     jobId: z.uuid().optional(),
-    jobDescription: z.string().trim().min(1).max(MAX_JOB_DESCRIPTION_LENGTH).optional(),
+    jobDescription: z.string().trim().min(1).max(MAX_ASSESSMENT_JOB_DESCRIPTION_LENGTH).optional(),
   })
   .refine((v) => (v.jobId === undefined) !== (v.jobDescription === undefined), {
     message: 'Send exactly one of jobId or jobDescription',
