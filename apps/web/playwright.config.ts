@@ -32,7 +32,13 @@ export default defineConfig({
       command: 'node --import tsx src/server.ts',
       cwd: '../api',
       url: `${API_URL}/health`,
-      env: { PORT: String(API_PORT), CORS_ORIGIN: WEB_URL, APP_URL: WEB_URL },
+      env: {
+        PORT: String(API_PORT),
+        CORS_ORIGIN: WEB_URL,
+        APP_URL: WEB_URL,
+        // The CV fit check runs against the deterministic mock AI, never a live key.
+        AI_DRIVER: 'mock',
+      },
       reuseExistingServer: false,
       gracefulShutdown: { signal: 'SIGTERM', timeout: 5_000 },
       timeout: 120_000,

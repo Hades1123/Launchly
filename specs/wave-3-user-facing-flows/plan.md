@@ -24,7 +24,7 @@ All answered "defaults" by the user.
 | Q2  | 61         | Consent endpoint                      | `POST /candidates/me/ai-consent`, candidate only, idempotent (keeps the first timestamp), returns the profile. `candidateProfileSchema` gains `aiConsentAcceptedAt: string \| null`.                                  | user   |
 | Q3  | 61         | CV list source                        | `GET /candidates/profile` (`resumes[]`, newest first). No new endpoint.                                                                                                                                              | user   |
 | Q4  | 58, 59, 61 | UI copy language                      | English.                                                                                                                                                                                                             | user   |
-| Q5  | 58         | e2e writes to the shared seeded DB    | Spec uses a seeded candidate and a job they have not applied to. A `beforeAll` helper (`apps/web/e2e/helpers/db.ts`) runs `apps/api/prisma/seed/e2e-reset.ts` (Prisma, no new dependency) to delete that application and reset consent, so reruns pass. | user   |
+| Q5  | 58         | e2e writes to the shared seeded DB    | Spec uses a seeded candidate and a job they have not applied to. A `beforeAll` helper (`apps/web/e2e/helpers/db.ts`) runs `apps/api/prisma/e2e-reset.ts` (Prisma, no new dependency) to delete that application and reset consent, so reruns pass. | user   |
 | Q6  | 58         | Already-applied detection             | Client `JobActions` loads `GET /applications/me` for candidates and matches `jobId`; the detail page stays a server component.                                                                                       | user   |
 | Q7  | 59         | Round list per application            | List uses `currentStageName`; expanding fetches `GET /applications/:id` and renders history + stages with the current stage marked.                                                                                  | user   |
 | Q8  | 59         | Mock-only widgets                     | Delete `FeedbackLog`, `PrepChecklist`, spotlight and `mock-applications.ts`. `?application=<id>` preselects one.                                                                                                      | user   |
@@ -35,7 +35,7 @@ All answered "defaults" by the user.
 
 - `apps/web/src/app/(main)/jobs/[id]/page.tsx`: SCRUM-61 replaces the disabled "Check my CV fit" button with a link to `/cv-review?jobId=<id>`; SCRUM-58 replaces the disabled "Apply" button with the client `JobActions` apply dialog. Both live in the `job-actions` slot; 61 lands first, 58 rebases on it.
 - `apps/web/src/lib/api/candidate.ts`: SCRUM-61 adds `acceptAiConsent`. New `apps/web/src/lib/api/applications.ts`: SCRUM-58 (create, list mine) and SCRUM-59 (detail) both append. New `apps/web/src/lib/api/assessments.ts`: SCRUM-61.
-- `apps/web/e2e/helpers/db.ts` and `apps/api/prisma/seed/e2e-reset.ts`: created by SCRUM-58, reused by SCRUM-61 (consent reset) and SCRUM-59 (no write needed; reads seeded applications).
+- `apps/web/e2e/helpers/db.ts` and `apps/api/prisma/e2e-reset.ts`: created by SCRUM-58, reused by SCRUM-61 (consent reset) and SCRUM-59 (no write needed; reads seeded applications).
 - `apps/web/playwright.config.ts`: SCRUM-61 adds `AI_DRIVER: 'mock'` to the API server env.
 - No Prisma migration in this wave.
 
@@ -99,7 +99,7 @@ As a candidate, I want to apply from the job page in at most two steps (pick a C
 
 ### Files
 
-- Create: `apps/web/src/components/jobs/job-actions.tsx`, `apps/web/src/components/jobs/apply-dialog.tsx`, `apps/web/src/lib/api/applications.ts`, `apps/web/e2e/scrum-58-apply.spec.ts`, `apps/api/prisma/seed/e2e-reset.ts`
+- Create: `apps/web/src/components/jobs/job-actions.tsx`, `apps/web/src/components/jobs/apply-dialog.tsx`, `apps/web/src/lib/api/applications.ts`, `apps/web/e2e/scrum-58-apply.spec.ts`, `apps/api/prisma/e2e-reset.ts`
 - Modify: `apps/web/src/app/(main)/jobs/[id]/page.tsx`
 
 ### Test cases

@@ -7,7 +7,7 @@ import { CompanyAvatar } from '@/components/jobs/company-avatar';
 import { CompanyNotes } from '@/components/jobs/company-notes';
 import { HiringProcessTimeline } from '@/components/jobs/hiring-process-timeline';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Button, buttonClasses } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ApiError } from '@/lib/api/http';
 import { getJob } from '@/lib/api/jobs';
@@ -109,14 +109,14 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
           <span className="text-subtle-foreground">Posted {postedOn}</span>
         </div>
 
-        {/* Slots for the Apply and "Check my CV fit" actions, wired by later stories. */}
+        {/* The Apply action is wired by a later story. */}
         <div className="flex flex-wrap gap-3" data-slot="job-actions">
           <Button disabled aria-disabled="true" className="opacity-60">
             Apply
           </Button>
-          <Button variant="soft" disabled aria-disabled="true" className="opacity-60">
+          <Link href={`/cv-review?jobId=${job.id}`} className={buttonClasses('soft')}>
             Check my CV fit
-          </Button>
+          </Link>
         </div>
       </Card>
 

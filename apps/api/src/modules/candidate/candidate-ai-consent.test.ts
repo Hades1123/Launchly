@@ -90,8 +90,7 @@ describe('POST /candidates/me/ai-consent', () => {
     const recruiter = await request(createApp(fakeAuthService('RECRUITER')))
       .post('/candidates/me/ai-consent')
       .set(auth);
-    const anonymous = await request(createApp(fakeAuthService()))
-      .post('/candidates/me/ai-consent');
+    const anonymous = await request(createApp(fakeAuthService())).post('/candidates/me/ai-consent');
 
     expect(recruiter.status).toBe(403);
     expect(anonymous.status).toBe(401);
