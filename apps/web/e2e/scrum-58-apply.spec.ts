@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { signIn } from './helpers/auth';
+import { signIn, waitForSession } from './helpers/auth';
 import { resetApplication } from './helpers/db';
 
 const CANDIDATE = 'candidate1@launchly.test';
@@ -10,6 +10,7 @@ const APPLIED_JOB = 'Senior Frontend Engineer';
 
 async function openJob(page: Page, title: string) {
   await page.goto(`/jobs?keyword=${encodeURIComponent(title)}`);
+  await waitForSession(page);
   // Open the job's own page; on wide screens a plain click only selects it in the side panel.
   const href = await page.getByRole('link', { name: new RegExp(title) }).getAttribute('href');
   await page.goto(href!);
