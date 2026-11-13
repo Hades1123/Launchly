@@ -235,7 +235,13 @@ test.describe('approved recruiter', () => {
     }
 
     await page.goto('/recruiter/jobs?status=DRAFT');
+    // The search is debounced and its reload clears the selection, so let the filtered list load
+    // before ticking anything.
+    const filtered = page.waitForResponse(
+      (res) => res.url().includes('/recruiter/jobs') && res.url().includes('q=E2E+bulk'),
+    );
     await page.getByRole('searchbox').fill('E2E bulk');
+    await filtered;
     for (const title of titles) {
       await page.getByRole('checkbox', { name: `Chọn ${title}` }).check();
     }
