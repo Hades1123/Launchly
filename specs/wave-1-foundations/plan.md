@@ -210,7 +210,7 @@ As the Launchly team, we want one AI provider interface with a mock driver, so t
 ### Files
 
 - Create: `apps/api/src/providers/ai/ai.interface.ts` (`AiProvider.generateJson<T>(input: { prompt: string; system?: string; schema: z.ZodType<T> }): Promise<T>`), `mock-ai.provider.ts` (deterministic canned output built from the schema), `gemini-ai.provider.ts` (REST `generateContent` via injected `fetch`, `AbortSignal.timeout(30000)`, `responseMimeType: application/json`, schema from `z.toJSONSchema`), `index.ts` (`getAiProvider()`), `ai.provider.test.ts`
-- Modify: `apps/api/src/lib/env.ts` (`AI_DRIVER`, `AI_MODEL` default `gemini-3.5-flash` (my default, to verify), required-key refinement, export `envSchema`), `apps/api/.env.example`, `packages/shared/src/schemas/error.ts` and `apps/api/src/lib/app-error.ts` (`AI_UNAVAILABLE` → 503)
+- Modify: `apps/api/src/lib/env.ts` (`AI_DRIVER`, `AI_MODEL` default `gemini-3.5-flash-lite` (verified live with `ai:smoke`; the 2.5 models return 404, 3.5-flash timed out under load), required-key refinement, export `envSchema`), `apps/api/.env.example`, `packages/shared/src/schemas/error.ts` and `apps/api/src/lib/app-error.ts` (`AI_UNAVAILABLE` → 503)
 
 ### Test cases
 

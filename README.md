@@ -143,7 +143,7 @@ Business code calls the `AiProvider` interface (`apps/api/src/providers/ai/`); `
 To use the real model (Gemini):
 
 1. Create a key in Google AI Studio.
-2. In `apps/api/.env` set `AI_DRIVER=gemini`, `GEMINI_API_KEY=<key>` and, if needed, `AI_MODEL` (default `gemini-3.5-flash`; the 2.5 models return 404). Never commit the key.
+2. In `apps/api/.env` set `AI_DRIVER=gemini`, `GEMINI_API_KEY=<key>` and, if needed, `AI_MODEL` (default `gemini-3.5-flash-lite`; the 2.5 models return 404). Never commit the key.
 3. Check it with a live call: `pnpm --filter @launchly/api ai:smoke`. It must print three `PASS` lines. A `503` can be a short Google overload, so rerun once before suspecting the setup.
 4. Restart the API. A missing key with `AI_DRIVER=gemini` stops the API at startup.
 

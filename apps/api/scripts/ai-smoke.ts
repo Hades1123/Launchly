@@ -13,7 +13,7 @@ import { AppError } from '@/lib/app-error';
 import { GeminiAiProvider } from '@/providers/ai/gemini-ai.provider';
 
 const apiKey = process.env.GEMINI_API_KEY;
-const model = process.env.AI_MODEL || 'gemini-3.5-flash';
+const model = process.env.AI_MODEL || 'gemini-3.5-flash-lite';
 if (!apiKey) {
   console.error('GEMINI_API_KEY is not set (export it or put it in apps/api/.env).');
   process.exit(2);
