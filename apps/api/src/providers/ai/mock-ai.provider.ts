@@ -40,7 +40,9 @@ function sample(schema: JsonSchema): unknown {
     case 'boolean':
       return false;
     case 'array':
-      return schema.items && (schema.minItems ?? 0) > 0 ? [sample(schema.items)] : [];
+      return schema.items
+        ? Array.from({ length: schema.minItems ?? 0 }, () => sample(schema.items!))
+        : [];
     case 'object':
       return Object.fromEntries(
         (schema.required ?? []).map((key) => [key, sample(schema.properties?.[key] ?? {})]),

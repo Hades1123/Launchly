@@ -12,7 +12,11 @@ const base = {
   description: 'D',
   level: 'FRESHER',
   location: 'Hanoi',
-  company: { id: 'c1', name: 'Acme' },
+  industry: 'Technology',
+  requirements: ['TypeScript'],
+  benefits: ['Mentoring'],
+  createdAt: '2026-11-01T00:00:00.000Z',
+  company: { id: 'c1', name: 'Acme', website: 'https://acme.test', logoUrl: null },
   stages: [],
   notes: [],
 };
@@ -81,5 +85,25 @@ describe('public job schemas', () => {
     };
     expect(publicJobDetailSchema.safeParse(detail).success).toBe(true);
     expect(publicJobDetailSchema.safeParse({ ...detail, stages: undefined }).success).toBe(false);
+  });
+
+  it('publicJobDetailSchema accepts the extended detail', () => {
+    const detail = { ...base, salary: { negotiable: true, min: null, max: null } };
+    const parsed = publicJobDetailSchema.parse(detail);
+    expect(parsed.requirements).toEqual(['TypeScript']);
+    expect(parsed.company.website).toBe('https://acme.test');
+    expect(
+      publicJobDetailSchema.safeParse({
+        ...detail,
+        industry: null,
+        company: { id: 'c1', name: 'Acme', website: null, logoUrl: 'https://acme.test/l.png' },
+      }).success,
+    ).toBe(true);
+    expect(publicJobDetailSchema.safeParse({ ...detail, requirements: undefined }).success).toBe(
+      false,
+    );
+    expect(publicJobDetailSchema.safeParse({ ...detail, createdAt: undefined }).success).toBe(
+      false,
+    );
   });
 });

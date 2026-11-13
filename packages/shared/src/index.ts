@@ -11,3 +11,4 @@ export * from './schemas/job-round';
 export * from './constants/job-round-format';
 export * from './utils/process-timeline';
 export * from './schemas/application';
+export * from './schemas/assessment';

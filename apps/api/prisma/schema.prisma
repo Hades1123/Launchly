@@ -116,19 +116,20 @@ enum NotificationType {
 }
 
 model CandidateProfile {
-  id                 String        @id @default(uuid())
-  userId             String        @unique
-  headline           String?
-  bio                String?
-  location           String?
-  schoolMajor        String?
-  skills             String[]
-  projectsActivities String?
-  user               User          @relation(fields: [userId], references: [id], onDelete: Restrict)
-  resumes            Resume[]
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
-  applications       Application[]
+  id                  String        @id @default(uuid())
+  userId              String        @unique
+  headline            String?
+  bio                 String?
+  location            String?
+  schoolMajor         String?
+  skills              String[]
+  projectsActivities  String?
+  aiConsentAcceptedAt DateTime?
+  user                User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  resumes             Resume[]
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  applications        Application[]
 }
 
 model Resume {
@@ -279,6 +280,7 @@ model AiAssessment {
   missingSkills          String[]
   suggestions            String[]
   evidence               String?
+  result                 Json?
   advisoryLabel          String?
   failureReason          String?
   resume                 Resume           @relation(fields: [resumeId], references: [id], onDelete: Restrict)

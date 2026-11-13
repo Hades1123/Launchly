@@ -69,13 +69,23 @@ export const publicJobNoteSchema = z.object({
 });
 export type PublicJobNote = z.infer<typeof publicJobNoteSchema>;
 
+/** The company block on the job detail page. */
+export const publicJobCompanySchema = publicCompanySummarySchema.extend({
+  logoUrl: z.string().nullable(),
+});
+export type PublicJobCompany = z.infer<typeof publicJobCompanySchema>;
+
 export const publicJobDetailSchema = z.object({
   id: z.string(),
   title: z.string(),
   description: z.string(),
   level: jobLevelSchema,
   location: z.string(),
-  company: z.object({ id: z.string(), name: z.string() }),
+  industry: z.string().nullable(),
+  requirements: z.array(z.string()),
+  benefits: z.array(z.string()),
+  createdAt: z.string(),
+  company: publicJobCompanySchema,
   salary: publicSalarySchema,
   stages: z.array(publicJobStageSchema),
   notes: z.array(publicJobNoteSchema),

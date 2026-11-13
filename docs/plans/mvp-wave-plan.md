@@ -56,7 +56,6 @@ Delivered with the normal single-ticket flow, not by `implement-bunch-ticket`. S
 | SCRUM-54 | Candidate lists own applications with status history via API | api, shared | feature | 2 | SCRUM-48 |
 | SCRUM-55 | Recruiter lists applicants and changes their status via API (backend only; must document the endpoint contract for SCRUM-60) | api, shared | feature | 3 | SCRUM-48 |
 | SCRUM-56 | AI scores how well a CV matches a job description | api, shared | feature | 3 | SCRUM-49, SCRUM-50 |
-| SCRUM-57 | Recruiter sees own jobs with applicant counts | api, web | feature | 2 | SCRUM-26 |
 
 ## Wave 3 — User-facing flows
 
@@ -64,13 +63,16 @@ Delivered with the normal single-ticket flow, not by `implement-bunch-ticket`. S
 | --- | --- | --- | --- | --- | --- |
 | SCRUM-58 | Candidate applies from the job detail page | web | feature | 3 | SCRUM-48, SCRUM-53 |
 | SCRUM-59 | Replace mock My Applications page with real status tracking | web | feature | 3 | SCRUM-54 |
-| SCRUM-60 | Recruiter reviews applicants and updates their status (frontend only; consumes the SCRUM-55 API as-is, build after SCRUM-59 in this wave so its AC can check the candidate view) | web | feature | 3 | SCRUM-55, SCRUM-57 |
 | SCRUM-61 | CV fit check on the CV review page with AI consent | api, web, db | feature | 3 | SCRUM-56, SCRUM-53 |
 
 ## Wave 4 — Finish and demo
 
+SCRUM-57 (moved from Wave 2 on 2026-11-13: its dependency SCRUM-26 was still In Progress) and SCRUM-60 (moved from Wave 3 because it depends on SCRUM-57) are built first, in this order.
+
 | Key | Ticket | Area | Label | Pts | Depends on |
 | --- | --- | --- | --- | --- | --- |
+| SCRUM-57 | Recruiter sees own jobs with applicant counts | api, web | feature | 2 | SCRUM-26 |
+| SCRUM-60 | Recruiter reviews applicants and updates their status (frontend only; consumes the SCRUM-55 API as-is, SCRUM-59 is built in Wave 3, so its AC can check the candidate view) | web | feature | 3 | SCRUM-55, SCRUM-57 |
 | SCRUM-62 | Show CV fit results with score band, gaps and suggestions | web | feature | 3 | SCRUM-61 |
 
 After Wave 4: run the full demo loop as one Playwright scenario and fix what breaks (buffer hours).
