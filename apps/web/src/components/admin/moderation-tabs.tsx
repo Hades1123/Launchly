@@ -1,10 +1,11 @@
 import Link from 'next/link';
 import { cn } from '@/lib/cn';
 
-export type ModerationTab = 'companies';
+export type ModerationTab = 'companies' | 'jobs';
 
 const tabs: { id: ModerationTab; label: string; href: string }[] = [
   { id: 'companies', label: 'Công ty', href: '/admin/moderation' },
+  { id: 'jobs', label: 'Tin tuyển dụng', href: '/admin/moderation/jobs' },
 ];
 
 /** Links between the moderation queues (page navigation, so a nav, not an ARIA tab widget). */
