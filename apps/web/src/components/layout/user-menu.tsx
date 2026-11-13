@@ -2,7 +2,14 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState, type ComponentType } from 'react';
-import { BriefcaseBusiness, ChevronDown, FileText, LogOut, UserRound } from 'lucide-react';
+import {
+  BriefcaseBusiness,
+  ChevronDown,
+  FileText,
+  LogOut,
+  ShieldCheck,
+  UserRound,
+} from 'lucide-react';
 import type { UserDto } from '@launchly/shared';
 import { AuthFeedback } from '@/components/auth/auth-ui';
 import { useAuth } from '@/lib/auth-context';
@@ -14,6 +21,9 @@ type MenuLink = { label: string; href: string; icon: ComponentType<{ className?:
 function linksFor(role: UserDto['role']): MenuLink[] {
   if (role === 'RECRUITER') {
     return [{ label: 'Quản lý tuyển dụng', href: '/recruiter/jobs', icon: BriefcaseBusiness }];
+  }
+  if (role === 'ADMIN') {
+    return [{ label: 'Duyệt nội dung', href: '/admin/moderation', icon: ShieldCheck }];
   }
   if (role === 'CANDIDATE') {
     return [
