@@ -250,8 +250,7 @@ export function createRecruiterJobService(prisma: PrismaClient) {
           data: {
             ...toJobData(input),
             ...(rejected && input.action === 'DRAFT' && { publicationStatus: 'REJECTED' as const }),
-            // A resubmitted job starts a new review; the old reason no longer applies.
-            ...(input.action === 'SUBMIT' && { moderationReason: null }),
+            // The last rejection reason stays visible until an admin approves (SCRUM-26 AC).
           },
           select: recruiterJobSelect,
         });
