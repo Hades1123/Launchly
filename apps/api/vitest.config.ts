@@ -12,6 +12,8 @@ export default defineConfig({
         'src/**/*.test.ts',
         'src/**/__fixtures__/**',
         'src/test-setup.ts',
+        // Process entry point: starts the server and the cleanup, no logic of its own.
+        'src/server.ts',
       ],
       reporter: ['text-summary', 'json-summary', 'json'],
     },

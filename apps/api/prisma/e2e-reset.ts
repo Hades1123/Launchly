@@ -11,6 +11,8 @@ import { assertSeedAllowed } from './seed/run';
  *   consent <candidate email>               clear the AI consent
  *   application <candidate email> <title>   delete that candidate's application to the job
  *   moderation                              seeded companies and the pending job back to their moderation state
+ *   practice <candidate email>              delete the candidate's interview practice sessions
+ *   practice-expire <candidate email>       push the candidate's incomplete practice sessions past their deadline
  */
 async function main(): Promise<void> {
   assertSeedAllowed({ nodeEnv: env.NODE_ENV, databaseUrl: env.DATABASE_URL });
@@ -28,6 +30,26 @@ async function main(): Promise<void> {
     // History rows cascade with the application.
     await prisma.application.deleteMany({
       where: { candidate: { user: { email } }, job: { title: jobTitle } },
+    });
+    return;
+  }
+
+  if (command === 'practice' && email) {
+    // Rounds, questions and answers cascade with the session.
+    await prisma.interviewSession.deleteMany({
+      where: { candidate: { user: { email } }, expiresAt: { not: null } },
+    });
+    return;
+  }
+
+  if (command === 'practice-expire' && email) {
+    await prisma.interviewSession.updateMany({
+      where: {
+        candidate: { user: { email } },
+        status: { not: 'COMPLETED' },
+        expiresAt: { not: null },
+      },
+      data: { expiresAt: new Date(Date.now() - 60 * 60 * 1000) },
     });
     return;
   }
@@ -75,7 +97,7 @@ async function main(): Promise<void> {
   }
 
   throw new Error(
-    'Usage: e2e-reset.ts consent <email> | application <email> <job title> | moderation',
+    'Usage: e2e-reset.ts consent <email> | application <email> <job title> | moderation | practice <email> | practice-expire <email>',
   );
 }
 
