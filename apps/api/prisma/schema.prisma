@@ -112,14 +112,19 @@ enum InterviewSessionStatus {
   COMPLETED
 }
 
+enum PracticeScope {
+  FULL
+  ROUND
+}
+
 enum NotificationType {
   APPLICATION_STATUS
   MODERATION
 }
 
 model CandidateProfile {
-  id                  String        @id @default(uuid())
-  userId              String        @unique
+  id                  String             @id @default(uuid())
+  userId              String             @unique
   headline            String?
   bio                 String?
   location            String?
@@ -127,11 +132,12 @@ model CandidateProfile {
   skills              String[]
   projectsActivities  String?
   aiConsentAcceptedAt DateTime?
-  user                User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  user                User               @relation(fields: [userId], references: [id], onDelete: Restrict)
   resumes             Resume[]
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
   applications        Application[]
+  interviewSessions   InterviewSession[]
 }
 
 model Resume {
@@ -206,6 +212,7 @@ model Job {
   interviewQuestions InterviewQuestion[]
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
+  interviewSessions  InterviewSession[]
 
   @@index([companyId])
   @@index([createdById])
@@ -218,15 +225,16 @@ model Job {
 }
 
 model JobStage {
-  id                       String        @id @default(uuid())
+  id                       String                   @id @default(uuid())
   jobId                    String
   name                     String
   description              String?
   position                 Int
   format                   String?
   estimatedDurationMinutes Int?
-  job                      Job           @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  job                      Job                      @relation(fields: [jobId], references: [id], onDelete: Cascade)
   applications             Application[]
+  practiceRounds           InterviewPracticeRound[]
 
   @@unique([jobId, position])
   @@index([jobId])
@@ -318,17 +326,70 @@ model InterviewQuestion {
 }
 
 model InterviewSession {
-  id            String                 @id @default(uuid())
-  applicationId String
-  status        InterviewSessionStatus @default(NOT_STARTED)
-  startedAt     DateTime?
-  completedAt   DateTime?
-  application   Application            @relation(fields: [applicationId], references: [id], onDelete: Restrict)
-  answers       InterviewAnswer[]
-  createdAt     DateTime               @default(now())
-  updatedAt     DateTime               @updatedAt
+  id                 String                   @id @default(uuid())
+  applicationId      String?
+  candidateId        String
+  jobId              String
+  scope              PracticeScope            @default(FULL)
+  status             InterviewSessionStatus   @default(NOT_STARTED)
+  interviewConsentAt DateTime?
+  lastActivityAt     DateTime                 @default(now())
+  expiresAt          DateTime?
+  summary            String?
+  startedAt          DateTime?
+  completedAt        DateTime?
+  application        Application?             @relation(fields: [applicationId], references: [id], onDelete: Restrict)
+  candidate          CandidateProfile         @relation(fields: [candidateId], references: [id], onDelete: Restrict)
+  job                Job                      @relation(fields: [jobId], references: [id], onDelete: Restrict)
+  answers            InterviewAnswer[]
+  rounds             InterviewPracticeRound[]
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
 
   @@index([applicationId])
+  @@index([candidateId, createdAt])
+  @@index([jobId])
+  @@index([expiresAt])
+}
+
+/// A round of a practice session, copied from the job's stage so history survives recruiter edits.
+model InterviewPracticeRound {
+  id        String                      @id @default(uuid())
+  sessionId String
+  stageId   String?
+  name      String
+  position  Int
+  status    InterviewSessionStatus      @default(NOT_STARTED)
+  feedback  String?
+  session   InterviewSession            @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  stage     JobStage?                   @relation(fields: [stageId], references: [id], onDelete: SetNull)
+  questions InterviewPracticeQuestion[]
+
+  @@unique([sessionId, position])
+  @@index([stageId])
+}
+
+/// A generated question owned by one practice session; never part of the recruiter question bank.
+model InterviewPracticeQuestion {
+  id       String                   @id @default(uuid())
+  roundId  String
+  position Int
+  prompt   String
+  source   String
+  round    InterviewPracticeRound   @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  answer   InterviewPracticeAnswer?
+
+  @@unique([roundId, position])
+}
+
+model InterviewPracticeAnswer {
+  id         String                    @id @default(uuid())
+  questionId String                    @unique
+  answer     String
+  feedback   String?
+  score      Decimal?
+  question   InterviewPracticeQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  createdAt  DateTime                  @default(now())
 }
 
 model InterviewAnswer {
