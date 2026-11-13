@@ -6,8 +6,9 @@ import { buildProcessView } from '@launchly/shared';
 import { CompanyAvatar } from '@/components/jobs/company-avatar';
 import { CompanyNotes } from '@/components/jobs/company-notes';
 import { HiringProcessTimeline } from '@/components/jobs/hiring-process-timeline';
+import { JobActions } from '@/components/jobs/job-actions';
 import { Badge } from '@/components/ui/badge';
-import { Button, buttonClasses } from '@/components/ui/button';
+import { buttonClasses } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ApiError } from '@/lib/api/http';
 import { getJob } from '@/lib/api/jobs';
@@ -109,11 +110,8 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
           <span className="text-subtle-foreground">Posted {postedOn}</span>
         </div>
 
-        {/* The Apply action is wired by a later story. */}
         <div className="flex flex-wrap gap-3" data-slot="job-actions">
-          <Button disabled aria-disabled="true" className="opacity-60">
-            Apply
-          </Button>
+          <JobActions jobId={job.id} jobTitle={job.title} />
           <Link href={`/cv-review?jobId=${job.id}`} className={buttonClasses('soft')}>
             Check my CV fit
           </Link>

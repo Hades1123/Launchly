@@ -60,7 +60,7 @@ export function CvFitCheck({ jobId }: { jobId?: string }) {
     return (
       <Notice>
         <Link
-          href={`/login?returnTo=${encodeURIComponent(jobId ? `/cv-review?jobId=${jobId}` : '/cv-review')}`}
+          href={`/login?next=${encodeURIComponent(jobId ? `/cv-review?jobId=${jobId}` : '/cv-review')}`}
           className={buttonClasses('primary')}
         >
           Log in to check your CV
