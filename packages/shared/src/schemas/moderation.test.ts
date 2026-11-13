@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   adminCompanyListQuerySchema,
   adminCompanySchema,
+  adminJobListQuerySchema,
+  adminJobSchema,
   moderationRejectSchema,
 } from './moderation';
 
@@ -43,5 +45,41 @@ describe('adminCompanySchema', () => {
       createdAt: '2026-11-13T00:00:00.000Z',
     };
     expect(adminCompanySchema.parse(row)).toEqual(row);
+  });
+});
+
+describe('adminJobListQuerySchema', () => {
+  it('defaults status to PENDING', () => {
+    expect(adminJobListQuerySchema.parse({})).toEqual({ status: 'PENDING' });
+  });
+
+  it('rejects a status admins do not review', () => {
+    expect(adminJobListQuerySchema.safeParse({ status: 'DRAFT' }).success).toBe(false);
+  });
+});
+
+describe('adminJobSchema', () => {
+  it('parses a recruiter job with company, creator and review data, and empty lists', () => {
+    const job = {
+      id: '22222222-2222-4222-8222-222222222222',
+      title: 'Backend intern',
+      description: 'Build APIs',
+      level: 'INTERN',
+      location: 'HCMC',
+      industry: null,
+      requirements: [],
+      benefits: [],
+      salary: { hidden: false, min: null, max: null },
+      status: 'PENDING',
+      moderationReason: null,
+      rounds: [],
+      notes: [],
+      createdAt: '2026-11-13T00:00:00.000Z',
+      updatedAt: '2026-11-13T00:00:00.000Z',
+      companyName: 'Acme',
+      creatorEmail: 'hr@acme.test',
+      reviewedAt: null,
+    };
+    expect(adminJobSchema.parse(job)).toEqual(job);
   });
 });

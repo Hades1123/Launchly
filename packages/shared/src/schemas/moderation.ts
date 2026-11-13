@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { companyModerationStatusSchema } from './company';
+import { recruiterJobSchema } from './job-posting';
 
 export const MAX_MODERATION_REASON = 1000;
 
@@ -31,3 +32,17 @@ export const adminCompanySchema = z.object({
   createdAt: z.string(),
 });
 export type AdminCompany = z.infer<typeof adminCompanySchema>;
+
+/** Job statuses an admin reviews or looks back on; drafts and closed jobs are not theirs. */
+export const adminJobListQuerySchema = z.object({
+  status: z.enum(['PENDING', 'PUBLISHED', 'REJECTED']).default('PENDING'),
+});
+export type AdminJobListQuery = z.infer<typeof adminJobListQuerySchema>;
+
+/** A job as an admin sees it: everything the recruiter sees, plus who posted it and when it was reviewed. */
+export const adminJobSchema = recruiterJobSchema.extend({
+  companyName: z.string(),
+  creatorEmail: z.string(),
+  reviewedAt: z.string().nullable(),
+});
+export type AdminJob = z.infer<typeof adminJobSchema>;
