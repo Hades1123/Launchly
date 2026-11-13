@@ -156,6 +156,21 @@ function CompanyCard({ company }: { company: RecruiterCompany }) {
         <Badge tone={view.tone} shape="pill" className="mt-1">
           {view.label}
         </Badge>
+        {company.company.moderationStatus === 'REJECTED' && (
+          <>
+            {company.company.moderationReason && (
+              <p className="mt-2 text-xs break-words text-danger">
+                Lý do: {company.company.moderationReason}
+              </p>
+            )}
+            <Link
+              href="/company/register"
+              className="mt-1 block text-xs font-semibold text-primary hover:underline"
+            >
+              Đăng ký công ty khác
+            </Link>
+          </>
+        )}
       </div>
     </div>
   );
