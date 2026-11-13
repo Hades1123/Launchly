@@ -32,7 +32,7 @@ description: "Task list for SCRUM-71 admin company moderation"
 - [ ] T005 [US1] Write failing supertest cases in apps/api/src/modules/admin/admin-company.test.ts (pattern of company.routes.test.ts, fake `MailProvider`): list returns PENDING rows ordered `createdAt asc` with `ownerEmail` (FR-002); 401 without token and 403 for RECRUITER on every route (E3); GET unknown id → 404; approve → 200 APPROVED, `updateMany` called with `where { id, moderationStatus: 'PENDING' }` and data `{ moderationStatus: 'APPROVED', moderationReason: null, reviewedById, reviewedAt }`; reject with `{ reason: 'x' }` → 200 REJECTED with the reason; reject with `"   "` → 400 (E2); `updateMany` count 0 on an existing APPROVED row → 409 CONFLICT naming the current status (E1)
 - [ ] T006 [US1] Implement apps/api/src/modules/admin/admin-company.service.ts (`list`, `get`, `approve`, `reject` per research.md R1), apps/api/src/modules/admin/admin-company.controller.ts (parse responses with `adminCompanySchema`) and apps/api/src/modules/admin/admin-company.routes.ts (`authenticate` + `authorize('ADMIN')` on all routes, `validate({ params: companyIdParamsSchema, query, body })`)
 - [ ] T007 [US1] Mount `app.use('/admin/companies', createAdminCompanyRouter(authService, createAdminCompanyService(prisma, mail)))` in apps/api/src/app.ts with a new `mail = createMailProvider()` parameter on `createApp` (research.md R3)
-- [ ] T008 [US1] Write apps/api/src/modules/admin/admin-company.integration.test.ts behind `RUN_DB_TESTS=1`: seed one PENDING company, fire two approve calls with `Promise.all`, expect exactly one 200 and one 409, and the row `APPROVED` with `reviewedById` set (SC-003)
+- [ ] T008 [US1] Write apps/api/src/modules/admin/admin-company.integration.test.ts behind `RUN_DB_TESTS=1`: seed one PENDING company, fire two approve calls with `Promise.all`, expect exactly one 200 and one 409, and the row `APPROVED` with `reviewedById` set (SC-003); then public `GET /companies/:id` without a token returns 200 (FR-007)
 
 ## Phase 4: User Story 2 - Recruiter is told the outcome by email (P2)
 
@@ -51,7 +51,7 @@ description: "Task list for SCRUM-71 admin company moderation"
 
 **Independent Test**: supertest in company.routes.test.ts.
 
-- [ ] T013 [US3] Add failing cases to apps/api/src/modules/company/company.routes.test.ts: POST with an existing PENDING or APPROVED company → 409 (E4); with only REJECTED companies → 201 (E5), asserting `findFirst` is called with `moderationStatus: { in: ['PENDING', 'APPROVED'] }`; GET /me queries `orderBy: { createdAt: 'desc' }` and returns `moderationReason` (FR-010, FR-011)
+- [ ] T013 [US3] Add failing cases to apps/api/src/modules/company/company.routes.test.ts: POST with an existing PENDING or APPROVED company → 409 (E4); with only REJECTED companies → 201 (E5), asserting `findFirst` is called with `moderationStatus: { in: ['PENDING', 'APPROVED'] }`; GET /me queries `orderBy: { createdAt: 'desc' }` and returns `moderationReason` (FR-010, FR-011); public GET /companies/:id returns `moderationReason: null` and no `ownerEmail` field (FR-013)
 - [ ] T014 [US3] Change the `create` guard and `getMine` ordering in apps/api/src/modules/company/company.service.ts (research.md R5)
 
 ## Phase 6: Polish
