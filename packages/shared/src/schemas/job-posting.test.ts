@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_JOB_NOTES, isJobEditable, saveJobSchema } from './job-posting';
+import {
+  MAX_JOB_NOTES,
+  RECRUITER_JOBS_PAGE_SIZE,
+  bulkDeleteJobsSchema,
+  isJobDeletable,
+  isJobEditable,
+  recruiterJobListQuerySchema,
+  saveJobSchema,
+} from './job-posting';
 
 const round = { name: 'Phỏng vấn kỹ thuật', format: 'ONLINE', estimatedDurationMinutes: 45 };
 
@@ -96,9 +104,16 @@ describe('saveJobSchema: draft', () => {
     expect(saveJobSchema.safeParse(draft).success).toBe(true);
   });
 
-  it('still needs the four columns the database keeps NOT NULL', () => {
-    expect(issuePaths({ ...draft, title: '', description: '', level: '', location: '' })).toEqual(
-      expect.arrayContaining(['title', 'description', 'level', 'location']),
+  it('saves a blank draft: no title, description, level or location', () => {
+    const blank = { ...draft, title: ' ', description: '', level: null, location: '', rounds: [] };
+    const parsed = saveJobSchema.parse(blank);
+    expect(parsed).toMatchObject({ title: '', level: null, location: '' });
+  });
+
+  it('skips the salary range rule but keeps types and length caps', () => {
+    expect(issuePaths({ ...draft, salary: { hidden: false, min: 900, max: 100 } })).toEqual([]);
+    expect(issuePaths({ ...draft, title: 'x'.repeat(151), location: 'Mars' })).toEqual(
+      expect.arrayContaining(['title', 'location']),
     );
   });
 
@@ -107,11 +122,46 @@ describe('saveJobSchema: draft', () => {
   });
 });
 
-describe('isJobEditable', () => {
-  it('allows editing drafts only', () => {
+describe('isJobEditable / isJobDeletable', () => {
+  it('lets drafts and rejected jobs be edited, and only drafts be deleted', () => {
     expect(isJobEditable('DRAFT')).toBe(true);
-    for (const status of ['PENDING', 'PUBLISHED', 'CLOSED', 'REJECTED'] as const) {
+    expect(isJobEditable('REJECTED')).toBe(true);
+    for (const status of ['PENDING', 'PUBLISHED', 'CLOSED'] as const) {
       expect(isJobEditable(status)).toBe(false);
+    }
+    expect(isJobDeletable('DRAFT')).toBe(true);
+    for (const status of ['PENDING', 'PUBLISHED', 'CLOSED', 'REJECTED'] as const) {
+      expect(isJobDeletable(status)).toBe(false);
+    }
+  });
+});
+
+describe('bulkDeleteJobsSchema', () => {
+  const id = '11111111-1111-4111-8111-111111111111';
+  it('drops duplicate ids and rejects an empty list or a bad id', () => {
+    expect(bulkDeleteJobsSchema.parse({ ids: [id, id] })).toEqual({ ids: [id] });
+    expect(bulkDeleteJobsSchema.safeParse({ ids: [] }).success).toBe(false);
+    expect(bulkDeleteJobsSchema.safeParse({ ids: ['x'] }).success).toBe(false);
+  });
+});
+
+describe('recruiterJobListQuerySchema', () => {
+  it('defaults to the first page of every status', () => {
+    expect(recruiterJobListQuerySchema.parse({})).toEqual({
+      page: 1,
+      limit: RECRUITER_JOBS_PAGE_SIZE,
+    });
+  });
+
+  it('coerces query strings and trims the search text', () => {
+    expect(
+      recruiterJobListQuerySchema.parse({ status: 'DRAFT', q: '  backend ', page: '3' }),
+    ).toMatchObject({ status: 'DRAFT', q: 'backend', page: 3 });
+  });
+
+  it('rejects an unknown status, page 0 and an oversized page', () => {
+    for (const query of [{ status: 'ALL' }, { page: '0' }, { limit: '51' }]) {
+      expect(recruiterJobListQuerySchema.safeParse(query).success).toBe(false);
     }
   });
 });
