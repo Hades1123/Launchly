@@ -9,7 +9,11 @@ export type PanelJob = { kind: 'ok'; job: PublicJobDetail } | { kind: 'error'; j
 /** Right-hand panel of the jobs page (wide screens only): the selected job, or why it failed. */
 export function JobDetailPanel({ selected, retryHref }: { selected: PanelJob; retryHref: string }) {
   return (
-    <aside aria-label="Job details" className="hidden lg:panel-below-header lg:col-span-7 lg:block">
+    <aside
+      data-job-panel
+      aria-label="Job details"
+      className="hidden lg:panel-below-header lg:col-span-7 lg:block"
+    >
       {selected.kind === 'ok' ? (
         <JobDetail job={selected.job} variant="panel" />
       ) : (

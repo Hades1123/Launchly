@@ -12,6 +12,18 @@ import type { PublicJobItem } from '@launchly/shared';
 /** Matches the `lg` breakpoint, where the jobs page shows the detail panel beside the list. */
 const PANEL_QUERY = '(min-width: 64rem)';
 
+/**
+ * Near the end of a long list the sticky panel is pushed up with the list and its top hides under
+ * the fixed header; scroll back to the top so the newly selected job is read from its title.
+ */
+function revealPanelTop() {
+  const panel = document.querySelector('[data-job-panel]');
+  const headerBottom = document.querySelector('header')?.getBoundingClientRect().bottom ?? 0;
+  if (!panel || panel.getBoundingClientRect().top >= headerBottom) return;
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
+}
+
 type JobListCardProps = {
   job: PublicJobItem;
   /** The jobs-page address that selects this job in the side panel; without it the card only links to the job page. */
@@ -35,6 +47,7 @@ export function JobListCard({ job, panelHref, selected = false }: JobListCardPro
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     if (!window.matchMedia(PANEL_QUERY).matches) return;
     event.preventDefault();
+    revealPanelTop();
     startTransition(() => router.push(panelHref, { scroll: false }));
   }
 
