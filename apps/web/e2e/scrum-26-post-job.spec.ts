@@ -146,13 +146,51 @@ test.describe('approved recruiter', () => {
     await expect(page.getByLabel('Lương tối thiểu (USD/tháng)')).toHaveValue('');
   });
 
-  test('a submitted or approved job opens read-only', async () => {
+  test('a submitted or approved job opens read-only on its detail page', async () => {
     await page.goto(`/recruiter/jobs/${SEEDED_PUBLISHED}/edit`);
-    await expect(
-      page.getByText(/đang ở trạng thái Đã duyệt nên không\s+thể chỉnh sửa/),
-    ).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(`/recruiter/jobs/${SEEDED_PUBLISHED}$`));
+    await expect(page.getByText('Tin đang hiển thị cho ứng viên.')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Sửa quy trình' })).toBeVisible();
     await expect(page.getByRole('button', { name: SUBMIT })).toHaveCount(0);
   });
+
+  test('the avatar menu opens the recruiter workspace', async () => {
+    await page.goto('/jobs');
+    await page.getByRole('button', { name: /^Tài khoản/ }).click();
+    await page.getByRole('menuitem', { name: 'Quản lý tuyển dụng' }).click();
+
+    await expect(page).toHaveURL(/\/recruiter\/jobs$/);
+    await expect(page.getByRole('heading', { name: 'Tin tuyển dụng' })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Quản lý tuyển dụng' })).toBeVisible();
+  });
+
+  test('the status tabs filter the job list', async () => {
+    await page.goto('/recruiter/jobs');
+    const rows = page.getByRole('listitem');
+    await expect(rows.first()).toBeVisible();
+
+    await page.getByRole('button', { name: /^Bản nháp/ }).click();
+    await expect(page).toHaveURL(/\?status=DRAFT$/);
+    await expect(rows.first()).toBeVisible();
+    await expect(rows.filter({ hasNotText: 'Bản nháp' })).toHaveCount(0);
+
+    // The filter survives a reload through the URL.
+    await page.reload();
+    await expect(page.getByRole('button', { name: /^Bản nháp/ })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await expect(rows.filter({ hasNotText: 'Bản nháp' })).toHaveCount(0);
+  });
+});
+
+test('a candidate is kept out of the recruiter workspace', async ({ page }) => {
+  await signIn(page, 'candidate1@launchly.test');
+  await page.getByRole('button', { name: /^Tài khoản/ }).click();
+  await expect(page.getByRole('menuitem', { name: 'Quản lý tuyển dụng' })).toHaveCount(0);
+
+  await page.goto('/recruiter/jobs');
+  await expect(page.getByText('Khu vực dành cho nhà tuyển dụng')).toBeVisible();
 });
 
 test('AC3: a recruiter whose company is pending is blocked with an explanation', async ({

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, type FormEvent } from 'react';
-import { LoaderCircle, Plus, Trash2 } from 'lucide-react';
+import { CheckCircle2, Circle, LoaderCircle, Plus, Send, Trash2 } from 'lucide-react';
 import {
   JOB_INDUSTRIES,
   JOB_LEVELS,
@@ -15,7 +15,6 @@ import {
   MAX_JOB_TITLE_LENGTH,
   isJobEditable,
   saveJobSchema,
-  type CompanyDto,
   type ErrorDetail,
   type JobLevel,
   type RecruiterJob,
@@ -33,11 +32,10 @@ import {
   type RoundRow,
   type RoundRowErrors,
 } from '@/components/recruiter/round-rows-editor';
-import { JOB_LEVEL_LABELS, jobStatusLabel } from '@/components/recruiter/job-status-badge';
-import { getMyCompany } from '@/lib/api/company';
+import { JOB_LEVEL_LABELS, JobStatusBadge } from '@/components/recruiter/job-status-badge';
+import { useRecruiterCompany } from '@/components/recruiter/recruiter-shell';
 import { ApiError } from '@/lib/api/http';
 import { createJob, getMyJob, updateJob } from '@/lib/api/recruiter-jobs';
-import { useAuth } from '@/lib/auth-context';
 import { cn } from '@/lib/cn';
 
 type NoteRow = { key: string; content: string };
@@ -233,19 +231,40 @@ function saveErrorText(error: unknown): string {
   return 'Đã xảy ra lỗi. Vui lòng thử lại.';
 }
 
-type Loaded =
-  | { kind: 'loading' }
-  | { kind: 'error'; text: string }
-  | { kind: 'no-company' }
-  | { kind: 'company-not-approved'; company: CompanyDto }
-  | { kind: 'read-only'; job: RecruiterJob }
-  | { kind: 'ready' };
+/** What "Gửi duyệt" needs, shown as a checklist next to the form. */
+function submitChecklist(form: FormState): { label: string; done: boolean }[] {
+  return [
+    {
+      label: 'Vị trí và mô tả công việc',
+      done: Boolean(form.title.trim() && form.description.trim()),
+    },
+    {
+      label: 'Cấp bậc, địa điểm, ngành nghề',
+      done: Boolean(form.level && form.location && form.industry),
+    },
+    {
+      label: 'Mức lương hoặc lương thỏa thuận',
+      done: form.salaryHidden || Boolean(form.salaryMin.trim() && form.salaryMax.trim()),
+    },
+    {
+      label: 'Quy trình có vòng, mỗi vòng đủ thông tin',
+      done:
+        form.rounds.length > 0 &&
+        form.rounds.every((r) => r.name.trim() && r.format && r.duration.trim()),
+    },
+  ];
+}
 
-/** Job posting form for a new job (`jobId` omitted) or an existing draft. */
+type Loaded = { kind: 'loading' } | { kind: 'error'; text: string } | { kind: 'ready' };
+
+/**
+ * Job posting form for a new job (`jobId` omitted) or an existing draft. Rendered inside the
+ * recruiter shell, which has already checked the role and loaded the company.
+ */
 export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved?: boolean }) {
-  const { status } = useAuth();
   const router = useRouter();
-  const [loaded, setLoaded] = useState<Loaded>({ kind: 'loading' });
+  const company = useRecruiterCompany();
+  const [loaded, setLoaded] = useState<Loaded>(jobId ? { kind: 'loading' } : { kind: 'ready' });
   const [form, setForm] = useState<FormState>(emptyForm);
   const [errors, setErrors] = useState<FormErrors>({});
   const [saving, setSaving] = useState<SaveJobAction | null>(null);
@@ -254,24 +273,15 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
   );
 
   useEffect(() => {
-    if (status !== 'authenticated') return;
+    if (!jobId) return;
     let active = true;
-    async function load() {
+    async function load(id: string) {
       try {
-        const [company, job] = await Promise.all([
-          getMyCompany().catch((error: unknown) => {
-            if (error instanceof ApiError && error.status === 404) return null;
-            throw error;
-          }),
-          jobId ? getMyJob(jobId) : Promise.resolve(null),
-        ]);
+        const job = await getMyJob(id);
         if (!active) return;
-        if (job && !isJobEditable(job.status)) return setLoaded({ kind: 'read-only', job });
-        if (!company) return setLoaded({ kind: 'no-company' });
-        if (company.moderationStatus !== 'APPROVED') {
-          return setLoaded({ kind: 'company-not-approved', company });
-        }
-        if (job) setForm(formFrom(job));
+        // Submitted, approved or rejected jobs are read-only: show them on the detail page.
+        if (!isJobEditable(job.status)) return router.replace(`/recruiter/jobs/${id}`);
+        setForm(formFrom(job));
         setLoaded({ kind: 'ready' });
       } catch (error) {
         if (!active) return;
@@ -284,11 +294,11 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
         setLoaded({ kind: 'error', text });
       }
     }
-    void load();
+    void load(jobId);
     return () => {
       active = false;
     };
-  }, [jobId, status]);
+  }, [jobId, router]);
 
   function patch(next: Partial<FormState>) {
     setForm((current) => ({ ...current, ...next }));
@@ -341,22 +351,12 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
     void save('SUBMIT');
   }
 
-  if (status === 'loading' || (status === 'authenticated' && loaded.kind === 'loading')) {
-    return <p className="text-sm text-muted-foreground">Đang tải…</p>;
-  }
-  if (status !== 'authenticated') {
-    return (
-      <Notice>
-        Vui lòng{' '}
-        <Link href="/login" className="font-semibold text-primary hover:underline">
-          đăng nhập
-        </Link>{' '}
-        bằng tài khoản nhà tuyển dụng.
-      </Notice>
-    );
-  }
   if (loaded.kind === 'error') return <Notice tone="danger">{loaded.text}</Notice>;
-  if (loaded.kind === 'no-company') {
+  if (company.kind === 'error') return <Notice tone="danger">{company.text}</Notice>;
+  if (loaded.kind === 'loading' || company.kind === 'loading') {
+    return <div className="h-96 animate-pulse rounded-card bg-surface shadow-card" />;
+  }
+  if (company.kind === 'none') {
     return (
       <Notice>
         Bạn cần đăng ký thông tin công ty trước khi đăng tin tuyển dụng.{' '}
@@ -366,229 +366,270 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
       </Notice>
     );
   }
-  if (loaded.kind === 'company-not-approved') {
+  const { name, moderationStatus } = company.company;
+  if (moderationStatus !== 'APPROVED') {
     return (
       <Notice tone="warning">
-        {loaded.company.moderationStatus === 'PENDING'
-          ? `Công ty ${loaded.company.name} đang chờ quản trị viên duyệt. Bạn chỉ có thể đăng tin sau khi công ty được duyệt.`
-          : `Hồ sơ công ty ${loaded.company.name} đã bị từ chối. Bạn chỉ có thể đăng tin sau khi công ty được duyệt.`}
-      </Notice>
-    );
-  }
-  if (loaded.kind === 'read-only') {
-    return (
-      <Notice>
-        Tin “{loaded.job.title}” đang ở trạng thái {jobStatusLabel(loaded.job.status)} nên không thể
-        chỉnh sửa.{' '}
-        <Link href="/recruiter/jobs" className="font-semibold text-primary hover:underline">
-          Về danh sách tin
-        </Link>
+        {moderationStatus === 'PENDING'
+          ? `Công ty ${name} đang chờ quản trị viên duyệt. Bạn chỉ có thể đăng tin sau khi công ty được duyệt.`
+          : `Hồ sơ công ty ${name} đã bị từ chối. Bạn chỉ có thể đăng tin sau khi công ty được duyệt.`}
       </Notice>
     );
   }
 
   const roundErrors = form.rounds.map((r) => errors.roundRows?.[r.key] ?? {});
+  const checklist = submitChecklist(form);
 
   return (
-    <form onSubmit={onSubmit} noValidate className="space-y-6">
-      <Section title="Thông tin công việc">
-        <Field label={<Required>Vị trí tuyển dụng</Required>} error={errors.title}>
-          <input
-            className={fieldClass(errors.title)}
-            value={form.title}
-            maxLength={MAX_JOB_TITLE_LENGTH}
-            placeholder="Ví dụ: Thực tập sinh Backend Node.js"
-            onChange={(e) => patch({ title: e.target.value })}
-            aria-invalid={Boolean(errors.title)}
-          />
-        </Field>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Field label={<Required>Cấp bậc</Required>} error={errors.level}>
-            <select
-              className={fieldClass(errors.level)}
-              value={form.level}
-              onChange={(e) => patch({ level: e.target.value as JobLevel | '' })}
-              aria-invalid={Boolean(errors.level)}
-            >
-              <option value="">Chọn…</option>
-              {JOB_LEVELS.map((level) => (
-                <option key={level} value={level}>
-                  {JOB_LEVEL_LABELS[level]}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label={<Required>Địa điểm</Required>} error={errors.location}>
-            <select
-              className={fieldClass(errors.location)}
-              value={form.location}
-              onChange={(e) => patch({ location: e.target.value })}
-              aria-invalid={Boolean(errors.location)}
-            >
-              <option value="">Chọn…</option>
-              {JOB_LOCATIONS.map((location) => (
-                <option key={location} value={location}>
-                  {location}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label={<Required>Ngành nghề</Required>} error={errors.industry}>
-            <select
-              className={fieldClass(errors.industry)}
-              value={form.industry}
-              onChange={(e) => patch({ industry: e.target.value })}
-              aria-invalid={Boolean(errors.industry)}
-            >
-              <option value="">Chọn…</option>
-              {JOB_INDUSTRIES.map((industry) => (
-                <option key={industry} value={industry}>
-                  {industry}
-                </option>
-              ))}
-            </select>
-          </Field>
-        </div>
-        <Field label={<Required>Mô tả công việc</Required>} error={errors.description}>
-          <textarea
-            className={cn(fieldClass(errors.description), 'min-h-32 py-2')}
-            value={form.description}
-            maxLength={MAX_JOB_DESCRIPTION_LENGTH}
-            onChange={(e) => patch({ description: e.target.value })}
-            aria-invalid={Boolean(errors.description)}
-          />
-        </Field>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Yêu cầu" hint="Mỗi dòng là một yêu cầu." error={errors.requirements}>
-            <textarea
-              className={cn(fieldClass(errors.requirements), 'min-h-24 py-2')}
-              value={form.requirements}
-              onChange={(e) => patch({ requirements: e.target.value })}
+    <form onSubmit={onSubmit} noValidate className="grid gap-6 lg:grid-cols-12">
+      <div className="space-y-6 lg:col-span-8">
+        <Section title="Thông tin công việc">
+          <Field label={<Required>Vị trí tuyển dụng</Required>} error={errors.title}>
+            <input
+              className={fieldClass(errors.title)}
+              value={form.title}
+              maxLength={MAX_JOB_TITLE_LENGTH}
+              placeholder="Ví dụ: Thực tập sinh Backend Node.js"
+              onChange={(e) => patch({ title: e.target.value })}
+              aria-invalid={Boolean(errors.title)}
             />
           </Field>
-          <Field label="Quyền lợi" hint="Mỗi dòng là một quyền lợi." error={errors.benefits}>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Field label={<Required>Cấp bậc</Required>} error={errors.level}>
+              <select
+                className={fieldClass(errors.level)}
+                value={form.level}
+                onChange={(e) => patch({ level: e.target.value as JobLevel | '' })}
+                aria-invalid={Boolean(errors.level)}
+              >
+                <option value="">Chọn…</option>
+                {JOB_LEVELS.map((level) => (
+                  <option key={level} value={level}>
+                    {JOB_LEVEL_LABELS[level]}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label={<Required>Địa điểm</Required>} error={errors.location}>
+              <select
+                className={fieldClass(errors.location)}
+                value={form.location}
+                onChange={(e) => patch({ location: e.target.value })}
+                aria-invalid={Boolean(errors.location)}
+              >
+                <option value="">Chọn…</option>
+                {JOB_LOCATIONS.map((location) => (
+                  <option key={location} value={location}>
+                    {location}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label={<Required>Ngành nghề</Required>} error={errors.industry}>
+              <select
+                className={fieldClass(errors.industry)}
+                value={form.industry}
+                onChange={(e) => patch({ industry: e.target.value })}
+                aria-invalid={Boolean(errors.industry)}
+              >
+                <option value="">Chọn…</option>
+                {JOB_INDUSTRIES.map((industry) => (
+                  <option key={industry} value={industry}>
+                    {industry}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </div>
+          <Field label={<Required>Mô tả công việc</Required>} error={errors.description}>
             <textarea
-              className={cn(fieldClass(errors.benefits), 'min-h-24 py-2')}
-              value={form.benefits}
-              onChange={(e) => patch({ benefits: e.target.value })}
+              className={cn(fieldClass(errors.description), 'min-h-32 py-2')}
+              value={form.description}
+              maxLength={MAX_JOB_DESCRIPTION_LENGTH}
+              onChange={(e) => patch({ description: e.target.value })}
+              aria-invalid={Boolean(errors.description)}
             />
           </Field>
-        </div>
-      </Section>
-
-      <Section title="Mức lương">
-        <label className="flex items-center gap-2 text-sm font-semibold text-foreground">
-          <input
-            type="checkbox"
-            className="size-4 accent-primary"
-            checked={form.salaryHidden}
-            onChange={(e) => patch({ salaryHidden: e.target.checked })}
-          />
-          Lương thỏa thuận (ẩn mức lương với ứng viên)
-        </label>
-        {!form.salaryHidden && (
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Lương tối thiểu (USD/tháng)" error={errors.salaryMin}>
-              <input
-                className={fieldClass(errors.salaryMin)}
-                inputMode="numeric"
-                value={form.salaryMin}
-                onChange={(e) => patch({ salaryMin: e.target.value })}
-                aria-invalid={Boolean(errors.salaryMin)}
+            <Field label="Yêu cầu" hint="Mỗi dòng là một yêu cầu." error={errors.requirements}>
+              <textarea
+                className={cn(fieldClass(errors.requirements), 'min-h-24 py-2')}
+                value={form.requirements}
+                onChange={(e) => patch({ requirements: e.target.value })}
               />
             </Field>
-            <Field label="Lương tối đa (USD/tháng)" error={errors.salaryMax}>
-              <input
-                className={fieldClass(errors.salaryMax)}
-                inputMode="numeric"
-                value={form.salaryMax}
-                onChange={(e) => patch({ salaryMax: e.target.value })}
-                aria-invalid={Boolean(errors.salaryMax)}
+            <Field label="Quyền lợi" hint="Mỗi dòng là một quyền lợi." error={errors.benefits}>
+              <textarea
+                className={cn(fieldClass(errors.benefits), 'min-h-24 py-2')}
+                value={form.benefits}
+                onChange={(e) => patch({ benefits: e.target.value })}
               />
             </Field>
           </div>
-        )}
-      </Section>
+        </Section>
 
-      <Section
-        title="Quy trình tuyển dụng"
-        description="Thêm, sắp xếp và xóa các vòng. Ứng viên sẽ thấy các vòng theo đúng thứ tự này."
-      >
-        <RoundRowsEditor
-          rows={form.rounds}
-          errors={roundErrors}
-          onChange={(rounds) => patch({ rounds })}
-        />
-        {errors.rounds && <p className="text-sm text-danger">{errors.rounds}</p>}
-      </Section>
-
-      <Section
-        title={`Ghi chú cho ứng viên (${form.notes.length}/${MAX_JOB_NOTES})`}
-        description="Những điều ứng viên cần biết hoặc chuẩn bị trước khi ứng tuyển."
-      >
-        <ol className="space-y-3">
-          {form.notes.map((note, index) => (
-            <li key={note.key} className="flex items-start gap-2">
-              <Field label={`Ghi chú ${index + 1}`} className="flex-1">
+        <Section title="Mức lương">
+          <label className="flex items-center gap-2 text-sm font-semibold text-foreground">
+            <input
+              type="checkbox"
+              className="size-4 accent-primary"
+              checked={form.salaryHidden}
+              onChange={(e) => patch({ salaryHidden: e.target.checked })}
+            />
+            Lương thỏa thuận (ẩn mức lương với ứng viên)
+          </label>
+          {!form.salaryHidden && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Lương tối thiểu (USD/tháng)" error={errors.salaryMin}>
                 <input
-                  className={fieldClass()}
-                  value={note.content}
-                  maxLength={MAX_JOB_NOTE_LENGTH}
-                  onChange={(e) =>
-                    patch({
-                      notes: form.notes.map((n) =>
-                        n.key === note.key ? { ...n, content: e.target.value } : n,
-                      ),
-                    })
-                  }
+                  className={fieldClass(errors.salaryMin)}
+                  inputMode="numeric"
+                  value={form.salaryMin}
+                  onChange={(e) => patch({ salaryMin: e.target.value })}
+                  aria-invalid={Boolean(errors.salaryMin)}
                 />
               </Field>
-              <Button
-                variant="icon"
-                className="mt-7"
-                aria-label={`Xóa ghi chú ${index + 1}`}
-                onClick={() => patch({ notes: form.notes.filter((n) => n.key !== note.key) })}
-              >
-                <Trash2 className="size-4 text-danger" aria-hidden />
-              </Button>
-            </li>
-          ))}
-        </ol>
-        <Button variant="soft" onClick={addNote}>
-          <Plus className="size-4" aria-hidden /> Thêm ghi chú
-        </Button>
-        {errors.notes && (
-          <p role="alert" className="text-sm text-danger">
-            {errors.notes}
-          </p>
-        )}
-      </Section>
+              <Field label="Lương tối đa (USD/tháng)" error={errors.salaryMax}>
+                <input
+                  className={fieldClass(errors.salaryMax)}
+                  inputMode="numeric"
+                  value={form.salaryMax}
+                  onChange={(e) => patch({ salaryMax: e.target.value })}
+                  aria-invalid={Boolean(errors.salaryMax)}
+                />
+              </Field>
+            </div>
+          )}
+        </Section>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <Button type="submit" disabled={saving !== null}>
-          {saving === 'SUBMIT' && <LoaderCircle className="size-4 animate-spin" aria-hidden />} Gửi
-          duyệt
-        </Button>
-        <Button variant="soft" disabled={saving !== null} onClick={() => void save('DRAFT')}>
-          {saving === 'DRAFT' && <LoaderCircle className="size-4 animate-spin" aria-hidden />} Lưu
-          nháp
-        </Button>
-        <Link href="/recruiter/jobs" className={buttonClasses('ghost')}>
-          Hủy
-        </Link>
-        {message && (
-          <p
-            role="status"
-            className={message.tone === 'success' ? 'text-sm text-success' : 'text-sm text-danger'}
-          >
-            {message.text}
-          </p>
-        )}
+        <Section
+          title="Quy trình tuyển dụng"
+          description="Thêm, sắp xếp và xóa các vòng. Ứng viên sẽ thấy các vòng theo đúng thứ tự này."
+        >
+          <RoundRowsEditor
+            rows={form.rounds}
+            errors={roundErrors}
+            onChange={(rounds) => patch({ rounds })}
+          />
+          {errors.rounds && <p className="text-sm text-danger">{errors.rounds}</p>}
+        </Section>
+
+        <Section
+          title={`Ghi chú cho ứng viên (${form.notes.length}/${MAX_JOB_NOTES})`}
+          description="Những điều ứng viên cần biết hoặc chuẩn bị trước khi ứng tuyển."
+        >
+          <ol className="space-y-3">
+            {form.notes.map((note, index) => (
+              <li key={note.key} className="flex items-start gap-2">
+                <Field label={`Ghi chú ${index + 1}`} className="flex-1">
+                  <input
+                    className={fieldClass()}
+                    value={note.content}
+                    maxLength={MAX_JOB_NOTE_LENGTH}
+                    onChange={(e) =>
+                      patch({
+                        notes: form.notes.map((n) =>
+                          n.key === note.key ? { ...n, content: e.target.value } : n,
+                        ),
+                      })
+                    }
+                  />
+                </Field>
+                <Button
+                  variant="icon"
+                  className="mt-7"
+                  aria-label={`Xóa ghi chú ${index + 1}`}
+                  onClick={() => patch({ notes: form.notes.filter((n) => n.key !== note.key) })}
+                >
+                  <Trash2 className="size-4 text-danger" aria-hidden />
+                </Button>
+              </li>
+            ))}
+          </ol>
+          <Button variant="soft" onClick={addNote}>
+            <Plus className="size-4" aria-hidden /> Thêm ghi chú
+          </Button>
+          {errors.notes && (
+            <p role="alert" className="text-sm text-danger">
+              {errors.notes}
+            </p>
+          )}
+        </Section>
       </div>
-      <p className="text-xs text-subtle-foreground">
-        Bản nháp chỉ cần vị trí, cấp bậc, địa điểm và mô tả, và chỉ bạn nhìn thấy. Tin gửi duyệt sẽ
-        ở trạng thái Chờ duyệt cho đến khi quản trị viên duyệt.
-      </p>
+
+      <aside className="space-y-4 lg:sticky lg:top-8 lg:col-span-4 lg:self-start">
+        <Card className="space-y-4">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="font-display text-lg font-semibold text-foreground">Đăng tin</h2>
+            {jobId ? (
+              <JobStatusBadge status="DRAFT" />
+            ) : (
+              <span className="text-xs font-semibold text-subtle-foreground">Tin mới</span>
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground">Công ty: {name}</p>
+          <div>
+            <p className="mb-2 text-xs font-semibold tracking-wide text-subtle-foreground uppercase">
+              Cần có để gửi duyệt
+            </p>
+            <ul className="space-y-2 text-sm">
+              {checklist.map(({ label, done }) => (
+                <li
+                  key={label}
+                  className={cn(
+                    'flex items-center gap-2',
+                    done ? 'text-success' : 'text-muted-foreground',
+                  )}
+                >
+                  {done ? (
+                    <CheckCircle2 className="size-4 shrink-0" aria-hidden />
+                  ) : (
+                    <Circle className="size-4 shrink-0" aria-hidden />
+                  )}
+                  <span>
+                    {label}
+                    <span className="sr-only">{done ? ' (đã có)' : ' (còn thiếu)'}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="flex flex-col gap-2">
+            <Button type="submit" disabled={saving !== null}>
+              {saving === 'SUBMIT' ? (
+                <LoaderCircle className="size-4 animate-spin" aria-hidden />
+              ) : (
+                <Send className="size-4" aria-hidden />
+              )}{' '}
+              Gửi duyệt
+            </Button>
+            <Button variant="soft" disabled={saving !== null} onClick={() => void save('DRAFT')}>
+              {saving === 'DRAFT' && <LoaderCircle className="size-4 animate-spin" aria-hidden />}{' '}
+              Lưu nháp
+            </Button>
+            <Link href="/recruiter/jobs" className={buttonClasses('ghost')}>
+              Hủy
+            </Link>
+          </div>
+          {message && (
+            <p
+              role="status"
+              className={cn(
+                'rounded-control p-3 text-sm font-medium',
+                message.tone === 'success'
+                  ? 'bg-success-subtle text-success'
+                  : 'bg-danger-subtle text-danger',
+              )}
+            >
+              {message.text}
+            </p>
+          )}
+        </Card>
+        <p className="px-1 text-xs text-subtle-foreground">
+          Bản nháp chỉ cần vị trí, cấp bậc, địa điểm và mô tả, và chỉ bạn nhìn thấy. Tin gửi duyệt
+          sẽ ở trạng thái Chờ duyệt cho đến khi quản trị viên duyệt.
+        </p>
+      </aside>
     </form>
   );
 }

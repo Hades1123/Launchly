@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { RecruiterPageHeader } from '@/components/recruiter/recruiter-shell';
 import { JobPostingForm } from '@/components/recruiter/job-posting-form';
 
 export default async function EditJobPage({
@@ -10,16 +10,12 @@ export default async function EditJobPage({
 }) {
   const [{ id }, { saved }] = await Promise.all([params, searchParams]);
   return (
-    <main className="mx-auto max-w-3xl space-y-6 px-4 py-10">
-      <header>
-        <Link href="/recruiter/jobs" className="text-sm font-semibold text-primary hover:underline">
-          ← Tin tuyển dụng của tôi
-        </Link>
-        <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-foreground">
-          Chỉnh sửa bản nháp
-        </h1>
-      </header>
+    <>
+      <RecruiterPageHeader
+        back={{ href: '/recruiter/jobs', label: 'Tin tuyển dụng' }}
+        title="Chỉnh sửa bản nháp"
+      />
       <JobPostingForm key={id} jobId={id} justSaved={saved === '1'} />
-    </main>
+    </>
   );
 }
