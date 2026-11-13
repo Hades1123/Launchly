@@ -56,7 +56,7 @@ description: 'Task list for SCRUM-71 admin company moderation'
 ## Phase 6: Polish
 
 - [x] T015 Run `pnpm typecheck`, `pnpm lint`, `pnpm test`, the T008 DB test and `prisma migrate diff` (schema drift); record exit codes in the PR evidence table, with the coverage gate as "n/a: not available"
-- [ ] T016 Check the handwritten diff stays near 300 lines (`git diff --stat origin/main...HEAD`, excluding migration SQL, lockfile, `specs/**`); if far over, stop and propose a split
+- [x] T016 Check the handwritten diff stays near 300 lines (`git diff --stat origin/main...HEAD`, excluding migration SQL, lockfile, `specs/**`); if far over, stop and propose a split Result: +665 handwritten lines (source +247, tests +418); kept as one PR by decision of Dũng (2026-11-13) because tests are 63 % and the three stories share one service.
 
 ## Dependencies & Execution Order
 
