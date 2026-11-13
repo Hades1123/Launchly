@@ -49,6 +49,11 @@ async function main(): Promise<void> {
         name: { not: 'QuickCash Jobs' },
       },
     });
+    // Jobs the SCRUM-74 spec submitted ("E2E moderation …"); rounds and notes cascade, while
+    // applications would block the delete, so they go first.
+    const specJobs = { title: { startsWith: 'E2E moderation' } };
+    await prisma.application.deleteMany({ where: { job: specJobs } });
+    await prisma.job.deleteMany({ where: specJobs });
     // The seeded pending job ("Thực tập sinh Product Designer") as seeded: no rounds, no notes.
     const pendingJob = seedData.jobs.find((job) => job.publicationStatus === 'PENDING');
     if (pendingJob) {
