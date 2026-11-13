@@ -98,7 +98,7 @@ gate the label requires, yourself. Do not reuse the implementer's results:
 | Lint                  | `pnpm lint`                                   | all                           |
 | Unit tests            | `pnpm test`                                   | all                           |
 | Changed-file coverage | `pnpm test:coverage && pnpm coverage:changed` | `feature`                     |
-| e2e                   | `pnpm --filter @launchly/web test:e2e`        | `feature` touching `apps/web` |
+| e2e                   | `pnpm --filter @launchly/web test:e2e`        | any label touching `apps/web` |
 
 The e2e run needs the local database (`pnpm db:up`, port 5433) with the demo seed;
 it is local, not remote-only. Record each exact command, exit code, and the

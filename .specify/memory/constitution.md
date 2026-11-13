@@ -1,6 +1,17 @@
 <!--
 Sync Impact Report
 ==================
+Version change: 2.1.0 → 2.2.0
+Bump rationale: MINOR. The Playwright e2e gate (Principle IV, Local gates) now applies to every
+ticket whose diff touches `apps/web`, whatever its label, instead of `feature` tickets only; `bug`
+and `maintenance` stay exempt from the changed-file coverage gate. Rule set by the team.
+Templates and docs checked:
+  - AGENTS.md ✅ gates table and prerequisite note
+  - .claude/skills/implement-ticket, review-implementation, create-implementation-item ✅ e2e column
+  - .claude/skills/implement-bunch-ticket ✅ already keyed to the diff, not the label
+
+Previous entry
+--------------
 Version change: 2.0.0 → 2.1.0
 Bump rationale: MINOR. Adds the Wave delivery bullet (implement-bunch-ticket skill) and references
 it as an exception in Review, Human ownership and Remote writes. Rules defined by the team; no
@@ -129,16 +140,18 @@ Behaviour that carries business rules MUST ship with automated tests in the same
   and record the failure caused by the missing behaviour (a setup or compile error is not RED),
   implement the minimum that makes it pass, then refactor only while tests stay green. The RED and
   GREEN output is recorded in the PR or task evidence.
-- Pure UI layout and configuration-only changes are exempt but MUST still pass typecheck and lint.
+- Pure UI layout and configuration-only changes are exempt from the test-first rule but MUST still
+  pass typecheck and lint, and remain subject to the e2e gate below.
 - Tickets labelled `feature` MUST reach at least 80 % line coverage and 80 % branch coverage on
   every changed source file (`src/**`, excluding tests, generated code, and type declarations),
   checked with `pn test:coverage` followed by `pn coverage:changed`.
-- Tickets labelled `feature` whose diff touches `apps/web` MUST add Playwright end-to-end specs in
-  `apps/web/e2e/` covering each acceptance criterion and edge case the UI exposes, and
-  `pn --filter @launchly/web test:e2e` MUST pass. API-only features rely on supertest endpoint
-  tests.
-- Tickets labelled `bug` or `maintenance` are exempt from the coverage and e2e gates; a `bug` still
-  needs the failing-first test above.
+- Every ticket whose diff touches `apps/web` (any label: `feature`, `bug` or `maintenance`) MUST
+  add or update Playwright end-to-end specs in `apps/web/e2e/` covering each acceptance criterion
+  and edge case the UI exposes (for a `bug`, the failing flow; for `maintenance`, the flows the
+  change could affect), and `pn --filter @launchly/web test:e2e` MUST pass. API-only features rely
+  on supertest endpoint tests.
+- Tickets labelled `bug` or `maintenance` are exempt from the changed-file coverage gate, not from
+  the e2e gate above; a `bug` still needs the failing-first test above.
 
 **Rationale**: there is no CI, so these gates are enforced locally by the implementing agent and
 again by the reviewer; without them, regressions in auth and role checks surface only in demos.
@@ -231,8 +244,8 @@ requires a plan that states the reason and is reviewed like an architecture chan
   its acceptance criteria become the execution contract. If the scope grows to new or changed
   behaviour, work stops and enters the Spec Kit flow.
 - **Local gates**: before pushing, `pn typecheck`, `pn lint`, and `pn test` MUST pass; for `feature`
-  tickets also `pn test:coverage && pn coverage:changed`, and for `feature` tickets touching
-  `apps/web` also `pn --filter @launchly/web test:e2e` (Principle IV). A gate whose command does not
+  tickets also `pn test:coverage && pn coverage:changed`, and for every ticket touching
+  `apps/web`, whatever its label, also `pn --filter @launchly/web test:e2e` (Principle IV). A gate whose command does not
   exist yet blocks; it is never skipped. Commits stay small and each leaves the project buildable.
 - **Pre-review**: the implementing agent opens the PR as a Draft, runs an automated code review of
   the diff (Next.js/React best practices and `docs/Frontend-Conventions.md` for `apps/web`,
@@ -281,4 +294,4 @@ they disagree, this document wins and the other file is corrected.
   touched by the change. Unjustified violations are grounds for `REJECTED`. The team reviews the
   constitution at least once per milestone and amends it when practice has drifted.
 
-**Version**: 2.1.0 | **Ratified**: 2026-11-04 | **Last Amended**: 2026-11-12
+**Version**: 2.2.0 | **Ratified**: 2026-11-04 | **Last Amended**: 2026-11-14
