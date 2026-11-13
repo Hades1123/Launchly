@@ -43,6 +43,9 @@
   --color-info: var(--color-sky-700);
   --color-info-subtle: var(--color-sky-50);
 
+  /* Layout: max-w-page is the shared width of the header, footer and candidate pages */
+  --container-page: 90rem;
+
   /* Shape and elevation */
   --radius-control: var(--radius-lg);
   --radius-card: var(--radius-xl);

@@ -90,6 +90,7 @@ Values come from the "Career Launch Engine" design system in the Stitch project 
 | `--color-danger-subtle`              | `bg-danger-subtle`                     | `#ffdad6` (error-container)            | Error badge or alert background            |
 | `--color-info`                       | `text-info`                            | `sky-700`                              | Informational text and icons               |
 | `--color-info-subtle`                | `bg-info-subtle`                       | `sky-50`                               | Informational badge or alert background    |
+| `--container-page`                   | `max-w-page`                           | `90rem` (1440px)                       | Width of the header, footer, candidate pages |
 | `--radius-control`                   | `rounded-control`                      | `radius-lg` (0.5rem)                   | Buttons, inputs, chips                     |
 | `--radius-card`                      | `rounded-card`                         | `radius-xl` (0.75rem)                  | Cards, panels, tiles                       |
 | `--shadow-card`                      | `shadow-card`                          | `shadow-sm`                            | Card elevation                             |
