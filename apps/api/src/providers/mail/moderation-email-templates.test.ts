@@ -42,3 +42,40 @@ describe('createModerationEmail subject', () => {
     expect(email.subject).toContain('Acme Bcc: x');
   });
 });
+
+describe('createModerationEmail for jobs', () => {
+  it('names the job and the company in a published email', () => {
+    const email = createModerationEmail({
+      kind: 'job-published',
+      jobTitle: 'Backend intern',
+      companyName: 'Acme',
+    });
+    expect(email.subject).toContain('Backend intern');
+    expect(email.text).toContain('Backend intern');
+    expect(email.text).toContain('Acme');
+    expect(email.text).toContain('đã được duyệt');
+  });
+
+  it('includes the reason in a rejected email', () => {
+    const email = createModerationEmail({
+      kind: 'job-rejected',
+      jobTitle: 'Backend intern',
+      companyName: 'Acme',
+      reason: 'Not entry level',
+    });
+    expect(email.subject).toContain('Backend intern');
+    expect(email.text).toContain('Lý do: Not entry level');
+  });
+
+  it('escapes HTML and keeps line breaks out of the subject', () => {
+    const email = createModerationEmail({
+      kind: 'job-rejected',
+      jobTitle: 'Intern\r\n<script>',
+      companyName: 'Acme',
+      reason: '<b>x</b>',
+    });
+    expect(email.subject).not.toMatch(/[\r\n]/);
+    expect(email.html).not.toContain('<script>');
+    expect(email.html).not.toContain('<b>x');
+  });
+});

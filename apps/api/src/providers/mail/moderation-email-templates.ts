@@ -2,27 +2,57 @@ import { escapeHtml } from '@/providers/mail/auth-email-templates';
 
 export type ModerationEmailInput =
   | { kind: 'company-approved'; companyName: string }
-  | { kind: 'company-rejected'; companyName: string; reason: string };
+  | { kind: 'company-rejected'; companyName: string; reason: string }
+  | { kind: 'job-published'; jobTitle: string; companyName: string }
+  | { kind: 'job-rejected'; jobTitle: string; companyName: string; reason: string };
 
-/** The outcome email sent to a recruiter; it carries only the company name, outcome and reason. */
+/** A mail header must stay on one line, so line breaks in a name become spaces. */
+function oneLine(value: string): string {
+  return value.replace(/[\r\n]+/g, ' ');
+}
+
+function content(input: ModerationEmailInput): { subject: string; lines: string[] } {
+  switch (input.kind) {
+    case 'company-approved':
+      return {
+        subject: `Công ty ${oneLine(input.companyName)} đã được duyệt trên Launchly`,
+        lines: [`Công ty ${input.companyName} đã được duyệt. Bạn có thể đăng tin tuyển dụng ngay.`],
+      };
+    case 'company-rejected':
+      return {
+        subject: `Công ty ${oneLine(input.companyName)} chưa được duyệt trên Launchly`,
+        lines: [
+          `Công ty ${input.companyName} chưa được duyệt.`,
+          `Lý do: ${input.reason}`,
+          'Bạn có thể đăng ký một công ty khác trong khu vực nhà tuyển dụng.',
+        ],
+      };
+    case 'job-published':
+      return {
+        subject: `Tin "${oneLine(input.jobTitle)}" đã được duyệt trên Launchly`,
+        lines: [
+          `Tin tuyển dụng "${input.jobTitle}" của ${input.companyName} đã được duyệt và hiển thị cho ứng viên.`,
+        ],
+      };
+    case 'job-rejected':
+      return {
+        subject: `Tin "${oneLine(input.jobTitle)}" chưa được duyệt trên Launchly`,
+        lines: [
+          `Tin tuyển dụng "${input.jobTitle}" của ${input.companyName} chưa được duyệt.`,
+          `Lý do: ${input.reason}`,
+          'Bạn có thể chỉnh sửa tin và gửi duyệt lại trong khu vực nhà tuyển dụng.',
+        ],
+      };
+  }
+}
+
+/** The outcome email sent to a recruiter; it carries only the names, the outcome and the reason. */
 export function createModerationEmail(input: ModerationEmailInput): {
   subject: string;
   text: string;
   html: string;
 } {
-  const approved = input.kind === 'company-approved';
-  // A mail header must stay on one line, so line breaks in the name become spaces.
-  const name = input.companyName.replace(/[\r\n]+/g, ' ');
-  const subject = approved
-    ? `Công ty ${name} đã được duyệt trên Launchly`
-    : `Công ty ${name} chưa được duyệt trên Launchly`;
-  const lines = approved
-    ? [`Công ty ${input.companyName} đã được duyệt. Bạn có thể đăng tin tuyển dụng ngay.`]
-    : [
-        `Công ty ${input.companyName} chưa được duyệt.`,
-        `Lý do: ${input.reason}`,
-        'Bạn có thể đăng ký một công ty khác trong khu vực nhà tuyển dụng.',
-      ];
+  const { subject, lines } = content(input);
   const footer = 'Launchly | Nền tảng kết nối nhân tài và cơ hội nghề nghiệp';
   const text = [...lines, '', footer].join('\n');
   const html = `<!doctype html>
