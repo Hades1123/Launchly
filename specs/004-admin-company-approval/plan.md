@@ -30,16 +30,16 @@ Add an admin-only API to list, view, approve and reject companies. A decision is
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-| Principle | Check | Status |
-| --- | --- | --- |
-| I. Shared Contracts First | Request and response shapes are Zod schemas in `packages/shared/src/schemas/moderation.ts`; `companyDtoSchema` gains an optional-null field (additive, not breaking) | Pass |
-| II. Layered Modular Monolith | New `modules/admin/` with route → controller → service → Prisma; mail through the `MailProvider` abstraction | Pass |
-| III. Secure by Default | Every `/admin/*` route uses `authenticate` + `authorize('ADMIN')`; input validated with `validate()`; owner email only in admin responses (FR-013) | Pass |
-| IV. Tested Business Logic | TDD per behaviour; supertest for every E-id; DB test for E1. Coverage gate: **not available** (no `test:coverage` / `coverage:changed`), recorded as a gap by user override, as in PRs #21 to #24 | Pass with recorded gap |
-| V. Safe Data Evolution | Additive migration (nullable columns, `ON DELETE SET NULL`); no edits to committed migrations | Pass |
-| VI. Simplicity and Pinned Dependencies | No new dependencies; no audit table; no retries | Pass |
+| Principle                              | Check                                                                                                                                                                                             | Status                 |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| I. Shared Contracts First              | Request and response shapes are Zod schemas in `packages/shared/src/schemas/moderation.ts`; `companyDtoSchema` gains an optional-null field (additive, not breaking)                              | Pass                   |
+| II. Layered Modular Monolith           | New `modules/admin/` with route → controller → service → Prisma; mail through the `MailProvider` abstraction                                                                                      | Pass                   |
+| III. Secure by Default                 | Every `/admin/*` route uses `authenticate` + `authorize('ADMIN')`; input validated with `validate()`; owner email only in admin responses (FR-013)                                                | Pass                   |
+| IV. Tested Business Logic              | TDD per behaviour; supertest for every E-id; DB test for E1. Coverage gate: **not available** (no `test:coverage` / `coverage:changed`), recorded as a gap by user override, as in PRs #21 to #24 | Pass with recorded gap |
+| V. Safe Data Evolution                 | Additive migration (nullable columns, `ON DELETE SET NULL`); no edits to committed migrations                                                                                                     | Pass                   |
+| VI. Simplicity and Pinned Dependencies | No new dependencies; no audit table; no retries                                                                                                                                                   | Pass                   |
 
 Post-design re-check: unchanged, all pass (IV with the recorded coverage gap).
 

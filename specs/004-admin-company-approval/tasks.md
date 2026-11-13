@@ -1,6 +1,5 @@
 ---
-
-description: "Task list for SCRUM-71 admin company moderation"
+description: 'Task list for SCRUM-71 admin company moderation'
 ---
 
 # Tasks: Admin Approves or Rejects Companies

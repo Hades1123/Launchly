@@ -68,7 +68,8 @@ describe('admin company access (E3)', () => {
   });
 
   it.each(routes)('%s %s is 403 for a recruiter', async (method, path) => {
-    const res = await request(makeApp('RECRUITER').app)[method](path).set(auth).send({ reason: 'x' });
+    const agent = request(makeApp('RECRUITER').app);
+    const res = await agent[method](path).set(auth).send({ reason: 'x' });
     expect(res.status).toBe(403);
   });
 });
@@ -140,7 +141,10 @@ describe('POST /admin/companies/:id/approve and /reject', () => {
     expect(res.body.moderationReason).toBe('No licence');
     expect(ctx.prisma.company.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ moderationStatus: 'REJECTED', moderationReason: 'No licence' }),
+        data: expect.objectContaining({
+          moderationStatus: 'REJECTED',
+          moderationReason: 'No licence',
+        }),
       }),
     );
   });
@@ -199,7 +203,10 @@ describe('outcome email to the recruiter (US2)', () => {
       .expect(200);
     await vi.waitFor(() => expect(ctx.mail.send).toHaveBeenCalledTimes(1));
     expect(ctx.mail.send).toHaveBeenCalledWith(
-      expect.objectContaining({ to: 'owner@acme.test', text: expect.stringContaining('No licence') }),
+      expect.objectContaining({
+        to: 'owner@acme.test',
+        text: expect.stringContaining('No licence'),
+      }),
     );
   });
 

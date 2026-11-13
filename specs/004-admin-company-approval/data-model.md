@@ -2,13 +2,13 @@
 
 ## Company (changed)
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| `moderationStatus` | `CompanyModerationStatus` (`PENDING`, `APPROVED`, `REJECTED`) | existing, default `PENDING` |
-| `moderationReason` | `String?` | existing; set on reject, cleared on approve |
-| `reviewedById` | `String?` → `User.id`, `onDelete: SetNull` | **new** |
-| `reviewedAt` | `DateTime?` | **new** |
-| `reviewedBy` | relation `User` (`"CompanyReviewer"`) | **new** |
+| Field              | Type                                                          | Notes                                       |
+| ------------------ | ------------------------------------------------------------- | ------------------------------------------- |
+| `moderationStatus` | `CompanyModerationStatus` (`PENDING`, `APPROVED`, `REJECTED`) | existing, default `PENDING`                 |
+| `moderationReason` | `String?`                                                     | existing; set on reject, cleared on approve |
+| `reviewedById`     | `String?` → `User.id`, `onDelete: SetNull`                    | **new**                                     |
+| `reviewedAt`       | `DateTime?`                                                   | **new**                                     |
+| `reviewedBy`       | relation `User` (`"CompanyReviewer"`)                         | **new**                                     |
 
 State transitions (only these; anything else is a 409):
 
@@ -21,11 +21,11 @@ Re-registration rule: a recruiter may create a Company only if none of theirs is
 
 ## Job (changed, used by SCRUM-73)
 
-| Field | Type | Notes |
-| --- | --- | --- |
+| Field          | Type                                       | Notes                          |
+| -------------- | ------------------------------------------ | ------------------------------ |
 | `reviewedById` | `String?` → `User.id`, `onDelete: SetNull` | **new**, unused until SCRUM-73 |
-| `reviewedAt` | `DateTime?` | **new** |
-| `reviewedBy` | relation `User` (`"JobReviewer"`) | **new** |
+| `reviewedAt`   | `DateTime?`                                | **new**                        |
+| `reviewedBy`   | relation `User` (`"JobReviewer"`)          | **new**                        |
 
 ## User (changed)
 
