@@ -1,13 +1,11 @@
 import Link from 'next/link';
 import { ChevronRight, ChevronLeft, SearchX } from 'lucide-react';
-import { JobDetail } from '@/components/jobs/job-detail';
 import { JobFilters } from '@/components/jobs/job-filters';
 import { JobListCard } from '@/components/jobs/job-list-card';
-import { findJob, type Job } from '@/components/jobs/mock-jobs';
 import { Badge } from '@/components/ui/badge';
 import { searchJobs, type JobSearchFilters } from '@/lib/api/jobs';
 import { cn } from '@/lib/cn';
-import type { PublicJobItem, PublicJobListResponse, JobLevel } from '@launchly/shared';
+import type { PublicJobListResponse, JobLevel } from '@launchly/shared';
 
 export const metadata = { title: 'Discover Jobs | Launchly' };
 
@@ -17,7 +15,6 @@ type SearchParams = Promise<{
   level?: string;
   location?: string;
   page?: string;
-  job?: string;
 }>;
 
 type JobsPageProps = {
@@ -45,36 +42,9 @@ function buildPageHref(baseParams: Record<string, string | undefined>, page: num
   return `/jobs?${params.toString()}`;
 }
 
-function adaptToDetailJob(item: PublicJobItem): Job {
-  const fallback = findJob(item.id);
-  const salaryText =
-    !item.salary.negotiable && item.salary.min !== null && item.salary.max !== null
-      ? `${item.salary.min.toLocaleString()} - ${item.salary.max.toLocaleString()} USD`
-      : 'Negotiable';
-
-  return {
-    ...fallback,
-    id: item.id,
-    title: item.title,
-    shortTitle: item.title,
-    company: item.company.name,
-    companyInitials: item.company.name.slice(0, 2).toUpperCase(),
-    level: item.level === 'INTERN' ? 'Intern' : item.level === 'FRESHER' ? 'Fresher' : 'Junior',
-    district: item.location,
-    address: item.location,
-    salaryRange: salaryText,
-    salaryShort: salaryText,
-    requirements: item.requirements.length > 0 ? item.requirements : fallback.requirements,
-    benefits:
-      item.benefits.length > 0
-        ? item.benefits.map((b) => ({ title: b, body: '' }))
-        : fallback.benefits,
-  };
-}
-
 export default async function JobsPage({ searchParams }: JobsPageProps) {
   const resolvedParams = await searchParams;
-  const { keyword, industry, level, location, page, job } = resolvedParams;
+  const { keyword, industry, level, location, page } = resolvedParams;
 
   const validLevel = (
     level === 'INTERN' || level === 'FRESHER' || level === 'SENIOR' ? level : undefined
@@ -96,18 +66,6 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
     page: Number(page) > 0 ? Number(page) : undefined,
   });
   const { data: jobList, pagination } = response;
-
-  // Determine active selected job for detail preview
-  const selectedPublicJob = jobList.find((j) => j.id === job) ?? jobList[0] ?? null;
-  const detailJob = selectedPublicJob ? adaptToDetailJob(selectedPublicJob) : findJob(undefined);
-
-  const queryParams = new URLSearchParams();
-  if (keyword) queryParams.set('keyword', keyword);
-  if (industry) queryParams.set('industry', industry);
-  if (validLevel) queryParams.set('level', validLevel);
-  if (location) queryParams.set('location', location);
-  if (page) queryParams.set('page', page);
-  const queryString = queryParams.toString();
 
   const hasActiveFilters = Boolean(keyword || industry || level || location);
 
@@ -132,9 +90,8 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
         </nav>
       </div>
 
-      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
-        {/* Left column: Search, Filters, Job List */}
-        <aside className="flex flex-col gap-4 lg:col-span-5">
+      <div className="mx-auto w-full max-w-3xl">
+        <div className="flex flex-col gap-4">
           <JobFilters currentFilters={filterParams} />
 
           <div className="flex items-center justify-between px-1">
@@ -166,12 +123,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
           ) : (
             <div className="space-y-2">
               {jobList.map((item) => (
-                <JobListCard
-                  key={item.id}
-                  job={item}
-                  selected={selectedPublicJob?.id === item.id}
-                  queryString={queryString}
-                />
+                <JobListCard key={item.id} job={item} />
               ))}
 
               {/* Pagination */}
@@ -217,20 +169,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
               )}
             </div>
           )}
-        </aside>
-
-        {/* Right column: Job Detail Preview (SCRUM-29) */}
-        <section aria-label="Job details preview" className="lg:col-span-7">
-          {selectedPublicJob ? (
-            <JobDetail job={detailJob} />
-          ) : (
-            <div className="flex h-64 items-center justify-center rounded-card bg-surface p-8 text-center shadow-card">
-              <p className="text-xs text-muted-foreground">
-                Select a job from the list to preview details.
-              </p>
-            </div>
-          )}
-        </section>
+        </div>
       </div>
     </div>
   );
