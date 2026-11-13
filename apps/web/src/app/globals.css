@@ -66,15 +66,15 @@
 }
 
 /*
- * The jobs page detail panel: sticks under the fixed header (h-28 below xl, h-20 from xl) and
- * scrolls on its own. Use with a breakpoint, e.g. `lg:panel-below-header`.
+ * The jobs page detail panel: sticks under the fixed header (h-16 below xl, h-20 from xl) and
+ * scrolls on its own; at either end the wheel carries on to the page.
+ * Use with a breakpoint, e.g. `lg:panel-below-header`.
  */
 @utility panel-below-header {
   position: sticky;
-  top: 8rem;
-  max-height: calc(100dvh - 9rem);
+  top: 5rem;
+  max-height: calc(100dvh - 6rem);
   overflow-y: auto;
-  overscroll-behavior: contain;
 
   @variant xl {
     top: 6rem;
