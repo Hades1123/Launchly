@@ -15,8 +15,8 @@ candidate picks a published job → gives interview AI consent → starts or res
 | Wave | Tickets | State |
 | --- | --- | --- |
 | 5 | SCRUM-63, 64, 66 | **Delivered** and Done (PR #33, `a02e7bf`, 2026-11-13) |
-| 6 | SCRUM-65, 67 | To Do, no label, unassigned. Ready to run after the checks below. |
-| 7 | SCRUM-68, 69 | To Do, no label, unassigned. Starts after Wave 6 is merged. |
+| 6 | SCRUM-65, 67 | **Delivered** (PR #34, merged 2026-11-13) |
+| 7 | SCRUM-68, 69 | In Review (PR in this branch, `feat/wave-7-practice-ui-and-history`); plan in `specs/wave-7-practice-ui-and-history/plan.md` |
 
 ## Entry gate
 
