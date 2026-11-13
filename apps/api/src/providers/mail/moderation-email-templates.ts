@@ -1,4 +1,4 @@
-import { escapeHtml } from '@/providers/mail/auth-email-templates';
+import { escapeHtml } from '@/providers/mail/html';
 
 export type ModerationEmailInput =
   | { kind: 'company-approved'; companyName: string }
