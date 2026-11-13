@@ -1,9 +1,10 @@
 import { rateLimit } from 'express-rate-limit';
+import { env } from '@/lib/env';
 
 export function createLoginRateLimit() {
   return rateLimit({
     windowMs: 2 * 60 * 1000,
-    limit: 10,
+    limit: env.LOGIN_RATE_LIMIT,
     standardHeaders: 'draft-8',
     legacyHeaders: false,
     message: {

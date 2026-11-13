@@ -58,6 +58,7 @@ export class CandidateService {
       schoolMajor: profile.schoolMajor ?? null,
       skills: profile.skills,
       projectsActivities: profile.projectsActivities ?? null,
+      aiConsentAcceptedAt: profile.aiConsentAcceptedAt?.toISOString() ?? null,
       resumes: (profile.resumes || []).map((r) => ({
         id: r.id,
         candidateId: r.candidateId,
@@ -72,6 +73,20 @@ export class CandidateService {
       createdAt: profile.createdAt.toISOString(),
       updatedAt: profile.updatedAt.toISOString(),
     };
+  }
+
+  /**
+   * Records the candidate's agreement to AI processing of their CV. The first time wins:
+   * a repeat call changes nothing, and a concurrent one cannot overwrite the timestamp.
+   */
+  async acceptAiConsent(userId: string): Promise<CandidateProfile> {
+    const profile = await this.getProfile(userId);
+    if (profile.aiConsentAcceptedAt) return profile;
+    await prisma.candidateProfile.updateMany({
+      where: { userId, aiConsentAcceptedAt: null },
+      data: { aiConsentAcceptedAt: new Date() },
+    });
+    return this.getProfile(userId);
   }
 
   /**
@@ -130,6 +145,7 @@ export class CandidateService {
       schoolMajor: profile.schoolMajor ?? null,
       skills: profile.skills,
       projectsActivities: profile.projectsActivities ?? null,
+      aiConsentAcceptedAt: profile.aiConsentAcceptedAt?.toISOString() ?? null,
       resumes: (profile.resumes || []).map((r) => ({
         id: r.id,
         candidateId: r.candidateId,

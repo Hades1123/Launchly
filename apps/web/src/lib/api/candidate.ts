@@ -26,3 +26,8 @@ export function deleteCv() {
 export function downloadCv() {
   return requestBlob('/candidates/cv');
 }
+
+/** Records the candidate's agreement to AI processing of their CV; safe to repeat. */
+export function acceptAiConsent() {
+  return request('/candidates/me/ai-consent', candidateProfileSchema, { method: 'POST' });
+}

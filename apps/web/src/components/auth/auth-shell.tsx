@@ -25,7 +25,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
           </h1>
         </div>
 
-        <div aria-hidden className="pointer-events-none absolute -right-28 top-1/4 size-96">
+        <div aria-hidden className="pointer-events-none absolute top-1/4 -right-28 size-96">
           <div className="absolute inset-0 rounded-full border border-primary-foreground/10" />
           <div className="absolute inset-12 rounded-full border border-primary-foreground/10" />
           <div className="absolute inset-24 rounded-full border border-primary-foreground/10" />

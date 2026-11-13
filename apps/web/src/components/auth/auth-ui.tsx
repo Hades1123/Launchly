@@ -13,9 +13,7 @@ export function AuthHeading({
 }) {
   return (
     <div className="mb-7">
-      <p className="mb-2 text-xs font-semibold tracking-wider text-primary uppercase">
-        {eyebrow}
-      </p>
+      <p className="mb-2 text-xs font-semibold tracking-wider text-primary uppercase">{eyebrow}</p>
       <h2 className="font-display text-3xl leading-tight font-bold tracking-tight text-foreground">
         {title}
       </h2>
@@ -41,7 +39,7 @@ export function AuthField({
       <input
         id={inputId}
         className={cn(
-          'min-h-12 w-full rounded-control border bg-surface px-3.5 text-sm text-foreground outline-none transition',
+          'min-h-12 w-full rounded-control border bg-surface px-3.5 text-sm text-foreground transition outline-none',
           'placeholder:text-subtle-foreground focus:border-primary focus:ring-2 focus:ring-ring/20',
           'disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-subtle-foreground',
           error ? 'border-danger focus:border-danger focus:ring-danger/20' : 'border-input',
@@ -91,7 +89,7 @@ export function PasswordField({
           id={inputId}
           type={visible ? 'text' : 'password'}
           className={cn(
-            'min-h-12 w-full rounded-control border bg-surface px-3.5 pr-12 text-sm text-foreground outline-none transition',
+            'min-h-12 w-full rounded-control border bg-surface px-3.5 pr-12 text-sm text-foreground transition outline-none',
             'placeholder:text-subtle-foreground focus:border-primary focus:ring-2 focus:ring-ring/20',
             'disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-subtle-foreground',
             error ? 'border-danger focus:border-danger focus:ring-danger/20' : 'border-input',
