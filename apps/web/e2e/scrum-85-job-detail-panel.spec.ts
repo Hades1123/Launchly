@@ -81,3 +81,29 @@ test('AC5: on a phone, clicking a job still opens its own page', async ({ page }
   await expect(page).toHaveURL(/\/jobs\/[0-9a-f-]{36}$/);
   await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible();
 });
+
+test('picking a job at the bottom of the list scrolls back up to its details', async ({ page }) => {
+  await page.goto('/jobs');
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  const last = cards(page).last();
+  const title = (await last.locator('h3').textContent())!;
+
+  await last.click({ position: { x: 24, y: 24 } });
+
+  await expect(panel(page).getByRole('heading', { level: 2, name: title })).toBeInViewport();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+});
+
+test('scrolling past the end of the panel carries on to the page', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 600 });
+  await page.goto(`/jobs?keyword=${encodeURIComponent(APPLIED_JOB)}`);
+  const aside = panel(page);
+  const box = (await aside.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + 100);
+
+  for (let i = 0; i < 10; i++) await page.mouse.wheel(0, 400);
+
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+  const atEnd = await aside.evaluate((el) => el.scrollTop + el.clientHeight >= el.scrollHeight - 1);
+  expect(atEnd).toBe(true);
+});
