@@ -330,7 +330,7 @@ export const seedData = {
       title: 'Senior Frontend Engineer',
       titleNormalized: 'senior frontend engineer',
       description: 'Own the candidate-facing web app.',
-      level: 'SENIOR',
+      level: 'JUNIOR',
       location: 'Remote',
       industry: 'Technology',
       requirements: ['React', 'TypeScript'],

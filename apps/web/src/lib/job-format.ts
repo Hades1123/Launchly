@@ -4,7 +4,7 @@ import type { JobLevel, PublicSalary } from '@launchly/shared';
 export const levelConfig: Record<JobLevel, { label: string; tone: BadgeTone }> = {
   INTERN: { label: 'Intern', tone: 'neutral' },
   FRESHER: { label: 'Fresher', tone: 'success' },
-  SENIOR: { label: 'Senior', tone: 'primary' },
+  JUNIOR: { label: 'Junior', tone: 'primary' },
 };
 
 export function getInitials(name: string): string {

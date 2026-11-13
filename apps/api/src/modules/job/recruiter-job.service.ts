@@ -165,6 +165,7 @@ export function createRecruiterJobService(prisma: PrismaClient) {
             publicationStatus: true,
             moderationReason: true,
             updatedAt: true,
+            _count: { select: { applications: true } },
           },
         }),
         prisma.job.count({ where }),
@@ -184,10 +185,11 @@ export function createRecruiterJobService(prisma: PrismaClient) {
       }
 
       return {
-        jobs: rows.map(({ publicationStatus, updatedAt, ...row }) => ({
+        jobs: rows.map(({ publicationStatus, updatedAt, _count, ...row }) => ({
           ...row,
           status: publicationStatus,
           updatedAt: updatedAt.toISOString(),
+          applicantCount: _count.applications,
         })),
         pagination: {
           page: query.page,

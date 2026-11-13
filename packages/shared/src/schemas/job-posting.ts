@@ -167,15 +167,20 @@ export const recruiterJobSchema = z.object({
 });
 export type RecruiterJob = z.infer<typeof recruiterJobSchema>;
 
-export const recruiterJobListItemSchema = recruiterJobSchema.pick({
-  id: true,
-  title: true,
-  level: true,
-  location: true,
-  status: true,
-  moderationReason: true,
-  updatedAt: true,
-});
+export const recruiterJobListItemSchema = recruiterJobSchema
+  .pick({
+    id: true,
+    title: true,
+    level: true,
+    location: true,
+    status: true,
+    moderationReason: true,
+    updatedAt: true,
+  })
+  .extend({
+    /** Every application to the job, withdrawn ones included (the applicants table lists them all). */
+    applicantCount: z.number().int().nonnegative(),
+  });
 export type RecruiterJobListItem = z.infer<typeof recruiterJobListItemSchema>;
 
 export const RECRUITER_JOBS_PAGE_SIZE = 10;

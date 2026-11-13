@@ -1,4 +1,4 @@
-export const JOB_LEVELS = ['INTERN', 'FRESHER', 'SENIOR'] as const;
+export const JOB_LEVELS = ['INTERN', 'FRESHER', 'JUNIOR'] as const;
 export type JobLevel = (typeof JOB_LEVELS)[number];
 
 export const JOB_INDUSTRIES = [

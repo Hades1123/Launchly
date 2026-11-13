@@ -79,7 +79,7 @@ enum CompanyModerationStatus {
 enum JobLevel {
   INTERN
   FRESHER
-  SENIOR
+  JUNIOR
 }
 
 enum JobPublicationStatus {

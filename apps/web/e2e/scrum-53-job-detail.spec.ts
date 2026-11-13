@@ -30,7 +30,7 @@ test('AC2: the detail page shows the job fields and hiring process', async ({ pa
   await expect(page.getByText('Remote-first')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Hiring process' })).toBeVisible();
   await expect(page.getByText('Own the candidate-facing web app.')).toBeVisible();
-  await expect(page.getByText('Senior', { exact: true })).toBeVisible();
+  await expect(page.getByText('Junior', { exact: true })).toBeVisible();
   await expect(page.getByText('Remote', { exact: true })).toBeVisible();
   await expect(page.getByText('$2000 - $4000')).toBeVisible();
 });

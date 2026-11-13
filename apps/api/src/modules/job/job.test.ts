@@ -103,7 +103,7 @@ describe('Job Search and Filter Module', () => {
     );
   });
 
-  it('filters by level (INTERN, FRESHER, SENIOR)', async () => {
+  it('filters by level (INTERN, FRESHER, JUNIOR)', async () => {
     (prisma.job.findMany as any).mockResolvedValueOnce([mockApprovedJobs[1]]);
     (prisma.job.count as any).mockResolvedValueOnce(1);
 
@@ -120,6 +120,29 @@ describe('Job Search and Filter Module', () => {
         }),
       }),
     );
+  });
+
+  it('accepts level=JUNIOR', async () => {
+    (prisma.job.findMany as any).mockResolvedValueOnce([]);
+    (prisma.job.count as any).mockResolvedValueOnce(0);
+
+    const res = await request(app).get('/jobs?level=JUNIOR');
+
+    expect(res.status).toBe(200);
+    expect(prisma.job.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          AND: expect.arrayContaining([{ level: 'JUNIOR' }]),
+        }),
+      }),
+    );
+  });
+
+  it('returns 400 for the removed level SENIOR', async () => {
+    const res = await request(app).get('/jobs?level=SENIOR');
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
   });
 
   it('returns 400 when an invalid level is provided', async () => {

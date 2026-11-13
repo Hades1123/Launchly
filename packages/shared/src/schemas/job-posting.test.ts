@@ -5,6 +5,7 @@ import {
   bulkDeleteJobsSchema,
   isJobDeletable,
   isJobEditable,
+  recruiterJobListItemSchema,
   recruiterJobListQuerySchema,
   saveJobSchema,
 } from './job-posting';
@@ -162,6 +163,28 @@ describe('recruiterJobListQuerySchema', () => {
   it('rejects an unknown status, page 0 and an oversized page', () => {
     for (const query of [{ status: 'ALL' }, { page: '0' }, { limit: '51' }]) {
       expect(recruiterJobListQuerySchema.safeParse(query).success).toBe(false);
+    }
+  });
+});
+
+describe('recruiterJobListItemSchema', () => {
+  const item = {
+    id: '11111111-1111-4111-8111-111111111111',
+    title: 'Thực tập sinh Backend',
+    level: 'INTERN',
+    location: 'Remote',
+    status: 'PUBLISHED',
+    moderationReason: null,
+    updatedAt: '2026-11-13T00:00:00.000Z',
+  };
+
+  it('carries the applicant count of the job', () => {
+    expect(recruiterJobListItemSchema.parse({ ...item, applicantCount: 4 }).applicantCount).toBe(4);
+  });
+
+  it('rejects a missing, negative or fractional applicantCount', () => {
+    for (const applicantCount of [undefined, -1, 1.5, '3']) {
+      expect(recruiterJobListItemSchema.safeParse({ ...item, applicantCount }).success).toBe(false);
     }
   });
 });
