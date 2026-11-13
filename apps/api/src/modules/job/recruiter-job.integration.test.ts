@@ -144,6 +144,53 @@ describe.runIf(process.env.RUN_DB_TESTS === '1')('recruiter jobs (integration)',
     expect(drafts.counts).toMatchObject({ ALL: 2, DRAFT: 1, PENDING: 1 });
   });
 
+  it('counts every application of own jobs, withdrawn included, and never lists other recruiters jobs', async () => {
+    const service = createRecruiterJobService(prisma);
+    const own = await service.create(ownerId, { ...submit, title: `Có hồ sơ ${suffix}` });
+    const empty = await service.create(ownerId, { ...submit, title: `Chưa có hồ sơ ${suffix}` });
+    const foreign = await service.create(strangerId, {
+      ...submit,
+      title: `Của người khác ${suffix}`,
+    });
+    const candidateUserIds: string[] = [];
+    try {
+      for (const status of ['SUBMITTED', 'WITHDRAWN'] as const) {
+        const user = await prisma.user.create({
+          data: { email: `post-job-cand-${status}-${suffix}@example.com`, role: 'CANDIDATE' },
+        });
+        candidateUserIds.push(user.id);
+        const profile = await prisma.candidateProfile.create({ data: { userId: user.id } });
+        const resume = await prisma.resume.create({
+          data: {
+            candidateId: profile.id,
+            fileName: 'cv.pdf',
+            storageKey: `post-job-${status}-${suffix}`,
+            contentType: 'application/pdf',
+            sizeBytes: 1,
+          },
+        });
+        for (const jobId of [own.id, foreign.id]) {
+          await prisma.application.create({
+            data: { candidateId: profile.id, jobId, resumeId: resume.id, status },
+          });
+        }
+      }
+
+      const { jobs } = await service.list(ownerId, { page: 1, limit: 50 });
+      const byId = new Map(jobs.map((job) => [job.id, job.applicantCount]));
+      expect(byId.get(own.id)).toBe(2);
+      expect(byId.get(empty.id)).toBe(0);
+      expect(byId.has(foreign.id)).toBe(false);
+    } finally {
+      await prisma.application.deleteMany({ where: { jobId: { in: [own.id, foreign.id] } } });
+      await prisma.resume.deleteMany({
+        where: { candidate: { userId: { in: candidateUserIds } } },
+      });
+      await prisma.candidateProfile.deleteMany({ where: { userId: { in: candidateUserIds } } });
+      await prisma.user.deleteMany({ where: { id: { in: candidateUserIds } } });
+    }
+  });
+
   it('deletes a draft with its rounds and notes, but never a submitted job', async () => {
     const service = createRecruiterJobService(prisma);
     const saved = await service.create(ownerId, draft);

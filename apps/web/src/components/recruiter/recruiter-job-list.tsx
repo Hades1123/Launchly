@@ -337,10 +337,11 @@ export function RecruiterJobList({
             </div>
           )}
           <div className="hidden grid-cols-12 gap-4 bg-surface-muted px-5 py-3 text-xs font-semibold tracking-wide text-subtle-foreground uppercase md:grid">
-            <span className={cn('col-span-5', pageDrafts.length > 0 && 'pl-11')}>
+            <span className={cn('col-span-4', pageDrafts.length > 0 && 'pl-11')}>
               Vị trí tuyển dụng
             </span>
             <span className="col-span-2">Trạng thái</span>
+            <span className="col-span-1">Ứng viên</span>
             <span className="col-span-2">Cập nhật</span>
             <span className="col-span-3 text-right">Thao tác</span>
           </div>
@@ -388,6 +389,8 @@ function JobRow({
   const editable = isJobEditable(job.status);
   const deletable = isJobDeletable(job.status);
   const title = jobTitleText(job.title);
+  /** Only published or closed jobs can have applicants; other rows show a dash and no link. */
+  const hasApplicants = job.status === 'PUBLISHED' || job.status === 'CLOSED';
 
   /** A click on the empty part of a draft row toggles it, like a mail list; links keep working. */
   function onRowClick(event: MouseEvent<HTMLLIElement>) {
@@ -408,7 +411,7 @@ function JobRow({
         selected && 'bg-primary-subtle/50 hover:bg-primary-subtle/70',
       )}
     >
-      <div className="flex min-w-0 gap-1 md:col-span-5">
+      <div className="flex min-w-0 gap-1 md:col-span-4">
         {selectable &&
           (deletable ? (
             <Checkbox
@@ -439,10 +442,31 @@ function JobRow({
       <div className="md:col-span-2">
         <JobStatusBadge status={job.status} />
       </div>
+      <p className="text-sm text-muted-foreground md:col-span-1">
+        {hasApplicants ? (
+          <>
+            <span className="md:sr-only">Ứng viên: </span>
+            <span className="font-mono font-semibold text-foreground">{job.applicantCount}</span>
+          </>
+        ) : (
+          <>
+            <span className="md:sr-only">Ứng viên: </span>—
+          </>
+        )}
+      </p>
       <p className="text-sm text-muted-foreground md:col-span-2">
         {dateFormat.format(new Date(job.updatedAt))}
       </p>
       <div className="flex flex-wrap gap-2 md:col-span-3 md:justify-end">
+        {hasApplicants && (
+          <Link
+            href={`/recruiter/jobs/${job.id}/applicants`}
+            className={buttonClasses('soft')}
+            aria-label={`Xem ứng viên của ${title}`}
+          >
+            Xem ứng viên
+          </Link>
+        )}
         {editable ? (
           <>
             <Link

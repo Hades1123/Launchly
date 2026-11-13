@@ -98,6 +98,7 @@ function makeApp({
           publicationStatus: 'DRAFT',
           moderationReason: null,
           updatedAt: NOW,
+          _count: { applications: 3 },
         },
       ]),
       count: vi.fn(async () => 11),
@@ -364,6 +365,7 @@ describe('GET /recruiter/jobs', () => {
           status: 'DRAFT',
           moderationReason: null,
           updatedAt: NOW.toISOString(),
+          applicantCount: 3,
         },
       ],
       pagination: { page: 2, limit: 10, total: 11, totalPages: 2 },
@@ -371,6 +373,18 @@ describe('GET /recruiter/jobs', () => {
     });
     expect(prisma.job.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ skip: 10, take: 10 }),
+    );
+  });
+
+  it('counts the applications of each listed job', async () => {
+    const { app, prisma } = makeApp();
+    const res = await request(app).get('/recruiter/jobs').set(auth);
+    expect(res.status).toBe(200);
+    expect(res.body.jobs[0].applicantCount).toBe(3);
+    expect(prisma.job.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        select: expect.objectContaining({ _count: { select: { applications: true } } }),
+      }),
     );
   });
 
