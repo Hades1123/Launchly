@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Search, SlidersHorizontal, RotateCcw } from 'lucide-react';
 import { JOB_LEVELS, JOB_INDUSTRIES, JOB_LOCATIONS } from '@launchly/shared';
 import { Button } from '@/components/ui/button';
+import { levelConfig } from '@/lib/job-format';
 
 type JobFiltersProps = {
   currentFilters: {
@@ -85,7 +86,7 @@ export function JobFilters({ currentFilters }: JobFiltersProps) {
                 defaultChecked={level === lvl}
                 className="sr-only"
               />
-              {lvl === 'INTERN' ? 'Intern' : lvl === 'FRESHER' ? 'Fresher' : 'Senior'}
+              {levelConfig[lvl].label}
             </label>
           ))}
         </div>

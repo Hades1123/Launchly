@@ -4,7 +4,7 @@ import { Badge, type BadgeTone } from '@/components/ui/badge';
 export const JOB_LEVEL_LABELS: Record<JobLevel, string> = {
   INTERN: 'Intern',
   FRESHER: 'Fresher',
-  SENIOR: 'Senior',
+  JUNIOR: 'Junior',
 };
 
 /** What a draft saved without a title is called in lists, headings and labels. */

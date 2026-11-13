@@ -5,7 +5,7 @@ import { JobListCard } from '@/components/jobs/job-list-card';
 import { Badge } from '@/components/ui/badge';
 import { searchJobs, type JobSearchFilters } from '@/lib/api/jobs';
 import { cn } from '@/lib/cn';
-import type { PublicJobListResponse, JobLevel } from '@launchly/shared';
+import { JOB_LEVELS, type PublicJobListResponse, type JobLevel } from '@launchly/shared';
 
 export const metadata = { title: 'Discover Jobs | Launchly' };
 
@@ -46,9 +46,9 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
   const resolvedParams = await searchParams;
   const { keyword, industry, level, location, page } = resolvedParams;
 
-  const validLevel = (
-    level === 'INTERN' || level === 'FRESHER' || level === 'SENIOR' ? level : undefined
-  ) as JobLevel | undefined;
+  const validLevel = (JOB_LEVELS as readonly string[]).includes(level ?? '')
+    ? (level as JobLevel)
+    : undefined;
 
   const filterParams = {
     keyword,

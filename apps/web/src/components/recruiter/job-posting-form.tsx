@@ -95,7 +95,7 @@ const NOTES_LIMIT_TEXT = `Tối đa ${MAX_JOB_NOTES} ghi chú.`;
 const LEVEL_HINTS: Record<JobLevel, string> = {
   INTERN: 'Sinh viên, thực tập',
   FRESHER: 'Mới tốt nghiệp, dưới 1 năm',
-  SENIOR: 'Nhiều năm kinh nghiệm',
+  JUNIOR: 'Có kinh nghiệm thực tế, 1–2 năm',
 };
 
 const emptyForm = (): FormState => ({
