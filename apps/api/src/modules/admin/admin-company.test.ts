@@ -31,7 +31,7 @@ const row = (overrides: Record<string, unknown> = {}) => ({
 
 function makeApp(role: 'ADMIN' | 'RECRUITER' = 'ADMIN') {
   const prisma = {
-    company: { findMany: vi.fn(), findUnique: vi.fn(), updateMany: vi.fn() },
+    company: { findMany: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
   };
   const mail = { send: vi.fn(async () => undefined) } satisfies MailProvider;
   const authService = {
@@ -105,32 +105,35 @@ describe('GET /admin/companies/:id', () => {
   });
 });
 
+const notPending = Object.assign(new Error('No record found'), { code: 'P2025' });
+
 describe('POST /admin/companies/:id/approve and /reject', () => {
   let ctx: ReturnType<typeof makeApp>;
   beforeEach(() => {
     ctx = makeApp();
   });
 
-  it('approves a pending company and records the reviewer', async () => {
-    ctx.prisma.company.updateMany.mockResolvedValue({ count: 1 });
-    ctx.prisma.company.findUnique.mockResolvedValue(row({ moderationStatus: 'APPROVED' }));
+  it('approves a pending company in one conditional update and records the reviewer', async () => {
+    ctx.prisma.company.update.mockResolvedValue(row({ moderationStatus: 'APPROVED' }));
     const res = await request(ctx.app).post(`/admin/companies/${ID}/approve`).set(auth);
     expect(res.status).toBe(200);
     expect(res.body.moderationStatus).toBe('APPROVED');
-    expect(ctx.prisma.company.updateMany).toHaveBeenCalledWith({
-      where: { id: ID, moderationStatus: 'PENDING' },
-      data: {
-        moderationStatus: 'APPROVED',
-        moderationReason: null,
-        reviewedById: ADMIN_ID,
-        reviewedAt: expect.any(Date),
-      },
-    });
+    expect(ctx.prisma.company.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: ID, moderationStatus: 'PENDING' },
+        data: {
+          moderationStatus: 'APPROVED',
+          moderationReason: null,
+          reviewedById: ADMIN_ID,
+          reviewedAt: expect.any(Date),
+        },
+      }),
+    );
+    expect(ctx.prisma.company.findUnique).not.toHaveBeenCalled();
   });
 
   it('rejects a pending company with the reason', async () => {
-    ctx.prisma.company.updateMany.mockResolvedValue({ count: 1 });
-    ctx.prisma.company.findUnique.mockResolvedValue(
+    ctx.prisma.company.update.mockResolvedValue(
       row({ moderationStatus: 'REJECTED', moderationReason: 'No licence' }),
     );
     const res = await request(ctx.app)
@@ -139,7 +142,7 @@ describe('POST /admin/companies/:id/approve and /reject', () => {
       .send({ reason: ' No licence ' });
     expect(res.status).toBe(200);
     expect(res.body.moderationReason).toBe('No licence');
-    expect(ctx.prisma.company.updateMany).toHaveBeenCalledWith(
+    expect(ctx.prisma.company.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
           moderationStatus: 'REJECTED',
@@ -155,12 +158,12 @@ describe('POST /admin/companies/:id/approve and /reject', () => {
       .set(auth)
       .send({ reason: '   ' });
     expect(res.status).toBe(400);
-    expect(ctx.prisma.company.updateMany).not.toHaveBeenCalled();
+    expect(ctx.prisma.company.update).not.toHaveBeenCalled();
   });
 
   it('409 with the current status when the company was already decided (E1)', async () => {
-    ctx.prisma.company.updateMany.mockResolvedValue({ count: 0 });
-    ctx.prisma.company.findUnique.mockResolvedValue(row({ moderationStatus: 'APPROVED' }));
+    ctx.prisma.company.update.mockRejectedValue(notPending);
+    ctx.prisma.company.findUnique.mockResolvedValue({ moderationStatus: 'APPROVED' });
     const res = await request(ctx.app).post(`/admin/companies/${ID}/approve`).set(auth);
     expect(res.status).toBe(409);
     const body = apiErrorSchema.parse(res.body);
@@ -169,10 +172,18 @@ describe('POST /admin/companies/:id/approve and /reject', () => {
   });
 
   it('404 when deciding on an unknown company', async () => {
-    ctx.prisma.company.updateMany.mockResolvedValue({ count: 0 });
+    ctx.prisma.company.update.mockRejectedValue(notPending);
     ctx.prisma.company.findUnique.mockResolvedValue(null);
     const res = await request(ctx.app).post(`/admin/companies/${ID}/approve`).set(auth);
     expect(res.status).toBe(404);
+  });
+
+  it('passes other database errors through as 500', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    ctx.prisma.company.update.mockRejectedValue(new Error('connection lost'));
+    const res = await request(ctx.app).post(`/admin/companies/${ID}/approve`).set(auth);
+    expect(res.status).toBe(500);
+    vi.mocked(console.error).mockRestore();
   });
 });
 
@@ -180,11 +191,10 @@ describe('outcome email to the recruiter (US2)', () => {
   let ctx: ReturnType<typeof makeApp>;
   beforeEach(() => {
     ctx = makeApp();
-    ctx.prisma.company.updateMany.mockResolvedValue({ count: 1 });
   });
 
   it('emails the owner once when a company is approved (FR-008)', async () => {
-    ctx.prisma.company.findUnique.mockResolvedValue(row({ moderationStatus: 'APPROVED' }));
+    ctx.prisma.company.update.mockResolvedValue(row({ moderationStatus: 'APPROVED' }));
     await request(ctx.app).post(`/admin/companies/${ID}/approve`).set(auth).expect(200);
     await vi.waitFor(() => expect(ctx.mail.send).toHaveBeenCalledTimes(1));
     expect(ctx.mail.send).toHaveBeenCalledWith(
@@ -193,7 +203,7 @@ describe('outcome email to the recruiter (US2)', () => {
   });
 
   it('emails the owner the reason when a company is rejected (FR-008)', async () => {
-    ctx.prisma.company.findUnique.mockResolvedValue(
+    ctx.prisma.company.update.mockResolvedValue(
       row({ moderationStatus: 'REJECTED', moderationReason: 'No licence' }),
     );
     await request(ctx.app)
@@ -210,19 +220,19 @@ describe('outcome email to the recruiter (US2)', () => {
     );
   });
 
-  it('keeps the decision and logs when the email fails (FR-009, E7)', async () => {
+  it('keeps the decision and logs a fixed message without the error when the email fails (FR-009, E7)', async () => {
     const log = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-    ctx.mail.send.mockRejectedValueOnce(new Error('smtp down'));
-    ctx.prisma.company.findUnique.mockResolvedValue(row({ moderationStatus: 'APPROVED' }));
+    ctx.mail.send.mockRejectedValueOnce(new Error('550 owner@acme.test rejected'));
+    ctx.prisma.company.update.mockResolvedValue(row({ moderationStatus: 'APPROVED' }));
     const res = await request(ctx.app).post(`/admin/companies/${ID}/approve`).set(auth);
     expect(res.status).toBe(200);
-    await vi.waitFor(() => expect(log).toHaveBeenCalled());
+    await vi.waitFor(() => expect(log).toHaveBeenCalledWith('Company moderation email failed'));
     log.mockRestore();
   });
 
   it('sends no email when the decision is refused (FR-014)', async () => {
-    ctx.prisma.company.updateMany.mockResolvedValue({ count: 0 });
-    ctx.prisma.company.findUnique.mockResolvedValue(row({ moderationStatus: 'APPROVED' }));
+    ctx.prisma.company.update.mockRejectedValue(notPending);
+    ctx.prisma.company.findUnique.mockResolvedValue({ moderationStatus: 'APPROVED' });
     await request(ctx.app).post(`/admin/companies/${ID}/approve`).set(auth).expect(409);
     expect(ctx.mail.send).not.toHaveBeenCalled();
   });
