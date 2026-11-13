@@ -124,6 +124,15 @@ Run from the repository root. `pn` is the short alias for `pnpm` (available sinc
 
 Run a script in a single package with `pn --filter @launchly/api <script>`.
 
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every push to `main` and on every pull request (opened, new commits, reopened). Two jobs, each with its own PostgreSQL service:
+
+- **gates:** `pnpm typecheck`, `pnpm lint`, `pnpm test`, then `prisma migrate deploy`, a schema-drift check and the database-backed tests (`RUN_DB_TESTS=1`).
+- **e2e:** migrate, seed and `pnpm --filter @launchly/web test:e2e` (Chromium). The Playwright report is uploaded as an artifact when it fails.
+
+It uses `AI_DRIVER=mock`, so no secret is needed. The live Gemini check (`ai:smoke`) stays a manual step. The changed-file coverage gate does not exist yet, so CI does not run it.
+
 ## Running e2e tests locally
 
 End-to-end tests use Playwright (Chromium) against the local stack.
