@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { env } from '@/lib/env';
 import { prisma } from '@/lib/prisma';
+import { seedData } from './seed/data';
 import { assertSeedAllowed } from './seed/run';
 
 /**
@@ -9,7 +10,7 @@ import { assertSeedAllowed } from './seed/run';
  *
  *   consent <candidate email>               clear the AI consent
  *   application <candidate email> <title>   delete that candidate's application to the job
- *   moderation                              seeded companies back to their moderation state
+ *   moderation                              seeded companies and the pending job back to their moderation state
  */
 async function main(): Promise<void> {
   assertSeedAllowed({ nodeEnv: env.NODE_ENV, databaseUrl: env.DATABASE_URL });
@@ -48,6 +49,23 @@ async function main(): Promise<void> {
         name: { not: 'QuickCash Jobs' },
       },
     });
+    // The seeded pending job ("Thực tập sinh Product Designer") as seeded: no rounds, no notes.
+    const pendingJob = seedData.jobs.find((job) => job.publicationStatus === 'PENDING');
+    if (pendingJob) {
+      await prisma.jobStage.deleteMany({ where: { jobId: pendingJob.id } });
+      await prisma.jobNote.deleteMany({ where: { jobId: pendingJob.id } });
+      await prisma.job.update({
+        where: { id: pendingJob.id },
+        // Fields the seed leaves out must be cleared too, or a resubmit's salary would survive.
+        data: {
+          salaryMin: null,
+          salaryMax: null,
+          ...pendingJob,
+          reviewedById: null,
+          reviewedAt: null,
+        },
+      });
+    }
     return;
   }
 
