@@ -13,7 +13,12 @@ export function AuthHeaderActions() {
   const [pending, setPending] = useState(false);
 
   if (status === 'loading') {
-    return <span aria-label="Đang tải phiên đăng nhập" className="size-8 animate-pulse rounded-full bg-surface-muted" />;
+    return (
+      <span
+        aria-label="Đang tải phiên đăng nhập"
+        className="size-8 animate-pulse rounded-full bg-surface-muted"
+      />
+    );
   }
 
   if (status !== 'authenticated' || !user) {
@@ -67,7 +72,11 @@ export function AuthHeaderActions() {
           {displayName}
         </div>
         <div className="text-xs text-subtle-foreground">
-          {user.role === 'CANDIDATE' ? 'Ứng viên' : user.role === 'RECRUITER' ? 'Nhà tuyển dụng' : 'Quản trị viên'}
+          {user.role === 'CANDIDATE'
+            ? 'Ứng viên'
+            : user.role === 'RECRUITER'
+              ? 'Nhà tuyển dụng'
+              : 'Quản trị viên'}
         </div>
       </div>
       <span

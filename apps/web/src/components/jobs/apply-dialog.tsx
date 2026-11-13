@@ -25,7 +25,8 @@ type ApplyDialogProps = {
   /** Newest first, so the first one is preselected. */
   resumes: ResumeDto[];
   onClose: () => void;
-  onApplied: () => void;
+  /** `alreadyApplied` is true when the API said a duplicate: the page then shows Applied. */
+  onApplied: (alreadyApplied: boolean) => void;
 };
 
 /** Step 2 of applying: pick a CV, optionally add a cover letter, submit. */
@@ -48,7 +49,7 @@ export function ApplyDialog({ jobId, jobTitle, resumes, onClose, onApplied }: Ap
     try {
       const letter = coverLetter.trim();
       await createApplication({ jobId, resumeId, ...(letter ? { coverLetter: letter } : {}) });
-      onApplied();
+      onApplied(false);
     } catch (cause) {
       setError(applyErrorMessage(cause));
     } finally {

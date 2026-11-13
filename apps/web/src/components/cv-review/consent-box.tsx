@@ -4,11 +4,12 @@ import { ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import type { CandidateProfile } from '@launchly/shared';
 import { acceptAiConsent } from '@/lib/api/candidate';
 import { ApiError } from '@/lib/api/http';
 
 /** Explicit consent before a CV is sent to the AI (Decree 13/2023). */
-export function ConsentBox({ onAccepted }: { onAccepted: () => void }) {
+export function ConsentBox({ onAccepted }: { onAccepted: (profile: CandidateProfile) => void }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -16,8 +17,7 @@ export function ConsentBox({ onAccepted }: { onAccepted: () => void }) {
     setPending(true);
     setError(null);
     try {
-      await acceptAiConsent();
-      onAccepted();
+      onAccepted(await acceptAiConsent());
     } catch (cause) {
       setError(
         cause instanceof ApiError ? cause.message : 'Could not save your consent. Try again.',

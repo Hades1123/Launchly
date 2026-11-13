@@ -98,6 +98,9 @@ test('AC3: expanding a row shows the status stepper and the current round', asyn
 
   const history = item.getByRole('list', { name: 'Status history' });
   await expect(history.getByRole('listitem')).toHaveCount(3);
+  // The stepper marks where the application stands now: the last step is the current one.
+  await expect(history.getByRole('listitem').last()).toHaveAttribute('aria-current', 'step');
+  await expect(history.getByRole('listitem').first()).not.toHaveAttribute('aria-current', 'step');
   await expect(history.getByText('Submitted')).toBeVisible();
   await expect(history.getByText('Screening')).toBeVisible();
   await expect(history.getByText('Interview')).toBeVisible();

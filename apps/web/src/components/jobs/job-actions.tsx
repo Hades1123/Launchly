@@ -10,11 +10,12 @@ import { getCandidateProfile } from '@/lib/api/candidate';
 import { useAuth } from '@/lib/auth-context';
 
 type Candidate = { resumes: ResumeDto[]; applied: boolean };
+type Loaded = Candidate | 'error';
 
 /** The Apply action of the job page: what it shows depends on who is looking. */
 export function JobActions({ jobId, jobTitle }: { jobId: string; jobTitle: string }) {
   const { status, user } = useAuth();
-  const [candidate, setCandidate] = useState<Candidate | null>(null);
+  const [candidate, setCandidate] = useState<Loaded | null>(null);
   const [open, setOpen] = useState(false);
   const [justApplied, setJustApplied] = useState(false);
 
@@ -31,7 +32,7 @@ export function JobActions({ jobId, jobTitle }: { jobId: string; jobTitle: strin
           applied: applications.data.some((item) => item.jobId === jobId),
         });
       })
-      .catch(() => active && setCandidate({ resumes: [], applied: false }));
+      .catch(() => active && setCandidate('error'));
     return () => {
       active = false;
     };
@@ -55,6 +56,19 @@ export function JobActions({ jobId, jobTitle }: { jobId: string; jobTitle: strin
       <Button disabled aria-disabled="true">
         Apply
       </Button>
+    );
+  }
+
+  if (candidate === 'error') {
+    return (
+      <>
+        <Button disabled aria-disabled="true">
+          Apply
+        </Button>
+        <p role="alert" className="w-full text-sm text-danger">
+          Could not check your applications. Reload the page to try again.
+        </p>
+      </>
     );
   }
 
@@ -101,9 +115,9 @@ export function JobActions({ jobId, jobTitle }: { jobId: string; jobTitle: strin
           jobTitle={jobTitle}
           resumes={candidate.resumes}
           onClose={() => setOpen(false)}
-          onApplied={() => {
+          onApplied={(alreadyApplied) => {
             setOpen(false);
-            setJustApplied(true);
+            setJustApplied(!alreadyApplied);
             setCandidate({ ...candidate, applied: true });
           }}
         />

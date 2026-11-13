@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { AssessmentDto, CandidateProfile, CreateAssessmentInput } from '@launchly/shared';
 import { ConsentBox } from '@/components/cv-review/consent-box';
 import { FitCheckForm } from '@/components/cv-review/fit-check-form';
@@ -25,6 +25,8 @@ export function CvFitCheck({ jobId }: { jobId?: string }) {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<AssessmentDto | null>(null);
 
+  const controllerRef = useRef<AbortController | null>(null);
+
   const isCandidate = status === 'authenticated' && user?.role === 'CANDIDATE';
 
   useEffect(() => {
@@ -42,16 +44,24 @@ export function CvFitCheck({ jobId }: { jobId?: string }) {
     };
   }, [isCandidate]);
 
+  // Leaving the page cancels an analysis that is still running.
+  useEffect(() => () => controllerRef.current?.abort(), []);
+
   async function analyse(input: CreateAssessmentInput) {
+    controllerRef.current?.abort();
+    const controller = new AbortController();
+    controllerRef.current = controller;
     setPending(true);
     setError(null);
     setResult(null);
     try {
-      setResult(await createAssessment(input));
+      const assessment = await createAssessment(input, controller.signal);
+      if (!controller.signal.aborted) setResult(assessment);
     } catch (cause) {
+      if (controller.signal.aborted) return;
       setError(cause instanceof ApiError ? cause.message : 'The analysis failed. Try again.');
     } finally {
-      setPending(false);
+      if (!controller.signal.aborted) setPending(false);
     }
   }
 
@@ -73,11 +83,7 @@ export function CvFitCheck({ jobId }: { jobId?: string }) {
   if (!profile) return <Notice>Loading…</Notice>;
 
   if (!profile.aiConsentAcceptedAt) {
-    return (
-      <ConsentBox
-        onAccepted={() => setProfile({ ...profile, aiConsentAcceptedAt: new Date().toISOString() })}
-      />
-    );
+    return <ConsentBox onAccepted={setProfile} />;
   }
   if (profile.resumes.length === 0) {
     return (
