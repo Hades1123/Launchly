@@ -41,6 +41,7 @@ const id = {
   job13: '00000000-0000-4000-8000-00000000040d',
   job14: '00000000-0000-4000-8000-00000000040e',
   job15: '00000000-0000-4000-8000-00000000040f',
+  job16: '00000000-0000-4000-8000-000000000410',
   note1: '00000000-0000-4000-8000-000000000601',
   note2: '00000000-0000-4000-8000-000000000602',
   note3: '00000000-0000-4000-8000-000000000603',
@@ -589,6 +590,25 @@ export const seedData = {
       publicationStatus: 'PUBLISHED',
       moderationReason: null,
     },
+    {
+      // Published with no requirements and no benefits: the detail page must hide both sections.
+      id: id.job16,
+      companyId: id.companyLotus,
+      createdById: id.recruiterLotus,
+      title: 'Customer Support Intern',
+      titleNormalized: 'customer support intern',
+      description: 'Answer candidate questions by chat.',
+      level: 'INTERN',
+      location: 'Remote',
+      industry: null,
+      requirements: [],
+      benefits: [],
+      salaryMin: 200,
+      salaryMax: 300,
+      salaryHidden: false,
+      publicationStatus: 'PUBLISHED',
+      moderationReason: null,
+    },
   ] satisfies Prisma.JobUncheckedCreateInput[],
 
   // Rounds. `format` and `estimatedDurationMinutes` are set where the description gives minutes.
@@ -759,9 +779,24 @@ export const seedData = {
 
   // Notes the company left for applicants (SCRUM-29): job1 has two, job2 one.
   jobNotes: [
-    { id: id.note1, jobId: id.job1, content: 'Mang theo laptop cá nhân cho vòng kỹ thuật.', position: 1 },
-    { id: id.note2, jobId: id.job1, content: 'Chuẩn bị một dự án cá nhân để trình bày.', position: 2 },
-    { id: id.note3, jobId: id.job2, content: 'Ưu tiên ứng viên có dự án Node.js thực tế.', position: 1 },
+    {
+      id: id.note1,
+      jobId: id.job1,
+      content: 'Mang theo laptop cá nhân cho vòng kỹ thuật.',
+      position: 1,
+    },
+    {
+      id: id.note2,
+      jobId: id.job1,
+      content: 'Chuẩn bị một dự án cá nhân để trình bày.',
+      position: 2,
+    },
+    {
+      id: id.note3,
+      jobId: id.job2,
+      content: 'Ưu tiên ứng viên có dự án Node.js thực tế.',
+      position: 1,
+    },
   ] satisfies Prisma.JobNoteUncheckedCreateInput[],
 
   applications: [

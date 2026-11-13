@@ -4,9 +4,9 @@ import { expect, test, type Page } from '@playwright/test';
 const JOB_TITLE = 'Senior Frontend Engineer';
 
 /** Searches for the seeded job and opens it from its card. */
-async function openJobFromSearch(page: Page) {
-  await page.goto(`/jobs?keyword=${encodeURIComponent(JOB_TITLE)}`);
-  await page.getByRole('link', { name: new RegExp(JOB_TITLE) }).click();
+async function openJobFromSearch(page: Page, title = JOB_TITLE) {
+  await page.goto(`/jobs?keyword=${encodeURIComponent(title)}`);
+  await page.getByRole('link', { name: new RegExp(title) }).click();
 }
 
 test('AC1: clicking a job card opens its detail page', async ({ page }) => {
@@ -28,6 +28,28 @@ test('AC2: the detail page shows the job fields and hiring process', async ({ pa
   await expect(page.getByText('TypeScript')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Benefits' })).toBeVisible();
   await expect(page.getByText('Remote-first')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Hiring process' })).toBeVisible();
+  await expect(page.getByText('Own the candidate-facing web app.')).toBeVisible();
+  await expect(page.getByText('Senior', { exact: true })).toBeVisible();
+  await expect(page.getByText('Remote', { exact: true })).toBeVisible();
+  await expect(page.getByText('$2000 - $4000')).toBeVisible();
+});
+
+test('AC2: a hidden salary shows as negotiable, never the stored range', async ({ page }) => {
+  await openJobFromSearch(page, 'Thực tập sinh Frontend React');
+
+  await expect(page.getByText('Negotiable')).toBeVisible();
+  await expect(page.getByText(/\$300/)).toHaveCount(0);
+});
+
+test('AC2: empty requirements and benefits sections are hidden', async ({ page }) => {
+  await openJobFromSearch(page, 'Customer Support Intern');
+
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Customer Support Intern' }),
+  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Requirements' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Benefits' })).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'Hiring process' })).toBeVisible();
 });
 

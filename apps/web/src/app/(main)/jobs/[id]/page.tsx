@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ChevronRight, MapPin } from 'lucide-react';
@@ -14,10 +15,13 @@ import { formatSalary, getInitials, levelConfig } from '@/lib/job-format';
 
 type JobDetailPageProps = { params: Promise<{ id: string }> };
 
+/** One API call per request, shared by `generateMetadata` and the page. */
+const fetchJob = cache((id: string) => getJob(id, { cache: 'no-store' }));
+
 /** An unknown, malformed or non-public id is a 404; any other failure reaches the error boundary. */
 async function loadJob(id: string) {
   try {
-    return await getJob(id, { cache: 'no-store' });
+    return await fetchJob(id);
   } catch (err) {
     if (err instanceof ApiError && (err.status === 404 || err.status === 400)) notFound();
     throw err;
@@ -27,7 +31,7 @@ async function loadJob(id: string) {
 export async function generateMetadata({ params }: JobDetailPageProps) {
   const { id } = await params;
   try {
-    const job = await getJob(id, { cache: 'no-store' });
+    const job = await fetchJob(id);
     return { title: `${job.title} · ${job.company.name} | Launchly` };
   } catch {
     return { title: 'Job | Launchly' };
@@ -40,8 +44,8 @@ function BulletCard({ title, items }: { title: string; items: string[] }) {
     <Card className="space-y-3">
       <h2 className="font-display text-lg font-semibold text-foreground">{title}</h2>
       <ul className="list-disc space-y-1.5 pl-5 text-sm text-foreground marker:text-primary">
-        {items.map((item) => (
-          <li key={item}>{item}</li>
+        {items.map((item, index) => (
+          <li key={`${index}-${item}`}>{item}</li>
         ))}
       </ul>
     </Card>

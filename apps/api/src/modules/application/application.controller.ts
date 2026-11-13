@@ -55,6 +55,8 @@ export function createApplicationController(service: ApplicationService) {
       );
       res.setHeader('Content-Type', contentType);
       res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(fileName)}"`);
+      // A storage failure after the headers went out can only end the response.
+      stream.on('error', (error) => res.destroy(error));
       stream.pipe(res);
     }) satisfies RequestHandler,
   };
