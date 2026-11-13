@@ -1,23 +1,32 @@
-import { JOB_PUBLICATION_STATUSES, type JobPublicationStatus } from '@launchly/shared';
-import { RecruiterJobList, type StatusFilter } from '@/components/recruiter/recruiter-job-list';
+import { JOB_LEVELS, recruiterJobStatusFilterSchema, type JobLevel } from '@launchly/shared';
+import { RecruiterJobList, type JobListFilters } from '@/components/recruiter/recruiter-job-list';
 
-type SearchParams = Promise<{ status?: string | string[]; submitted?: string | string[] }>;
+type Param = string | string[] | undefined;
+type SearchParams = Promise<
+  Record<'status' | 'q' | 'level' | 'page' | 'submitted' | 'deleted', Param>
+>;
 
-const single = (value: string | string[] | undefined) =>
-  typeof value === 'string' ? value : undefined;
+const single = (value: Param) => (typeof value === 'string' ? value : undefined);
 
-function parseStatusFilter(value: string | undefined): StatusFilter {
-  return (JOB_PUBLICATION_STATUSES as readonly string[]).includes(value ?? '')
-    ? (value as JobPublicationStatus)
-    : 'ALL';
+/** Reads the list filters from the URL; anything invalid falls back to the default. */
+function parseFilters(params: Awaited<SearchParams>): JobListFilters {
+  const level = single(params.level);
+  const page = Number(single(params.page));
+  return {
+    status: recruiterJobStatusFilterSchema.catch('ALL').parse(single(params.status) ?? 'ALL'),
+    q: single(params.q)?.trim() ?? '',
+    level: (JOB_LEVELS as readonly string[]).includes(level ?? '') ? (level as JobLevel) : '',
+    page: Number.isInteger(page) && page > 0 ? page : 1,
+  };
 }
 
 export default async function RecruiterJobsPage({ searchParams }: { searchParams: SearchParams }) {
-  const { status, submitted } = await searchParams;
+  const params = await searchParams;
   return (
     <RecruiterJobList
-      initialStatus={parseStatusFilter(single(status))}
-      submittedId={single(submitted)}
+      initialFilters={parseFilters(params)}
+      submittedId={single(params.submitted)}
+      deleted={single(params.deleted) === '1'}
     />
   );
 }

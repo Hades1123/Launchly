@@ -13,7 +13,7 @@ export default async function EditJobPage({
     <>
       <RecruiterPageHeader
         back={{ href: '/recruiter/jobs', label: 'Tin tuyển dụng' }}
-        title="Chỉnh sửa bản nháp"
+        title="Chỉnh sửa tin tuyển dụng"
       />
       <JobPostingForm key={id} jobId={id} justSaved={saved === '1'} />
     </>

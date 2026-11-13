@@ -1,10 +1,18 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import { ExternalLink, ListOrdered, Pencil } from 'lucide-react';
 import type { RecruiterJob } from '@launchly/shared';
-import { JOB_LEVEL_LABELS, JobStatusBadge } from '@/components/recruiter/job-status-badge';
+import { DeleteDraftButton } from '@/components/recruiter/delete-draft-button';
+import {
+  JOB_LEVEL_LABELS,
+  JobStatusBadge,
+  jobMetaText,
+  jobTitleText,
+  salaryText,
+} from '@/components/recruiter/job-status-badge';
 import { RecruiterPageHeader } from '@/components/recruiter/recruiter-shell';
 import { ROUND_FORMAT_OPTIONS } from '@/components/recruiter/round-rows-editor';
 import { buttonClasses } from '@/components/ui/button';
@@ -15,16 +23,6 @@ import { cn } from '@/lib/cn';
 
 const dateFormat = new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' });
 
-const usd = (value: number) => `$${value.toLocaleString('en-US')}`;
-
-function salaryText({ hidden, min, max }: RecruiterJob['salary']): string {
-  if (hidden) return 'Thỏa thuận (ẩn với ứng viên)';
-  if (min !== null && max !== null) return `${usd(min)} – ${usd(max)} / tháng`;
-  if (min !== null) return `Từ ${usd(min)} / tháng`;
-  if (max !== null) return `Đến ${usd(max)} / tháng`;
-  return 'Chưa nhập';
-}
-
 function StatusPanel({ job }: { job: RecruiterJob }) {
   const view = {
     DRAFT: { tone: 'bg-surface-muted text-muted-foreground', text: 'Bản nháp chỉ bạn nhìn thấy.' },
@@ -33,7 +31,10 @@ function StatusPanel({ job }: { job: RecruiterJob }) {
       text: 'Tin đang chờ quản trị viên duyệt và sẽ hiển thị cho ứng viên sau khi được duyệt.',
     },
     PUBLISHED: { tone: 'bg-success-subtle text-success', text: 'Tin đang hiển thị cho ứng viên.' },
-    REJECTED: { tone: 'bg-danger-subtle text-danger', text: 'Tin đã bị quản trị viên từ chối.' },
+    REJECTED: {
+      tone: 'bg-danger-subtle text-danger',
+      text: 'Tin đã bị quản trị viên từ chối. Hãy sửa theo góp ý rồi gửi duyệt lại.',
+    },
     CLOSED: { tone: 'bg-surface-muted text-muted-foreground', text: 'Tin đã đóng.' },
   }[job.status];
   return (
@@ -68,6 +69,7 @@ function BulletList({ items, empty }: { items: string[]; empty: string }) {
 
 /** Read-only view of one of the recruiter's jobs, whatever its status. */
 export function RecruiterJobDetail({ jobId }: { jobId: string }) {
+  const router = useRouter();
   const [job, setJob] = useState<RecruiterJob | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -119,18 +121,31 @@ export function RecruiterJobDetail({ jobId }: { jobId: string }) {
     <>
       <RecruiterPageHeader
         back={back}
-        title={job.title}
+        title={jobTitleText(job.title)}
         description={
           <span className="flex flex-wrap items-center gap-2">
             <JobStatusBadge status={job.status} />
-            {JOB_LEVEL_LABELS[job.level]} · {job.location}
+            {jobMetaText(job)}
           </span>
         }
         actions={
           <>
             {job.status === 'DRAFT' && (
+              <>
+                <DeleteDraftButton
+                  jobId={job.id}
+                  title={jobTitleText(job.title)}
+                  label="Xóa bản nháp"
+                  onDeleted={() => router.push('/recruiter/jobs?deleted=1')}
+                />
+                <Link href={`/recruiter/jobs/${job.id}/edit`} className={buttonClasses('primary')}>
+                  <Pencil className="size-4" aria-hidden /> Chỉnh sửa
+                </Link>
+              </>
+            )}
+            {job.status === 'REJECTED' && (
               <Link href={`/recruiter/jobs/${job.id}/edit`} className={buttonClasses('primary')}>
-                <Pencil className="size-4" aria-hidden /> Chỉnh sửa
+                <Pencil className="size-4" aria-hidden /> Sửa và gửi lại
               </Link>
             )}
             {job.status === 'PUBLISHED' && (
@@ -150,7 +165,11 @@ export function RecruiterJobDetail({ jobId }: { jobId: string }) {
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           <Section title="Mô tả công việc">
-            <p className="text-sm whitespace-pre-line text-foreground">{job.description}</p>
+            {job.description ? (
+              <p className="text-sm whitespace-pre-line text-foreground">{job.description}</p>
+            ) : (
+              <p className="text-sm text-muted-foreground">Chưa có mô tả.</p>
+            )}
           </Section>
           <div className="grid gap-6 md:grid-cols-2">
             <Section title="Yêu cầu">
@@ -201,8 +220,8 @@ export function RecruiterJobDetail({ jobId }: { jobId: string }) {
             <h2 className="font-display text-lg font-semibold text-foreground">Thông tin</h2>
             <dl className="space-y-2">
               {[
-                ['Cấp bậc', JOB_LEVEL_LABELS[job.level]],
-                ['Địa điểm', job.location],
+                ['Cấp bậc', job.level ? JOB_LEVEL_LABELS[job.level] : 'Chưa chọn'],
+                ['Địa điểm', job.location || 'Chưa chọn'],
                 ['Ngành nghề', job.industry ?? 'Chưa chọn'],
                 ['Mức lương', salaryText(job.salary)],
                 ['Ngày tạo', dateFormat.format(new Date(job.createdAt))],

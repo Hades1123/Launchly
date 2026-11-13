@@ -4,6 +4,7 @@ import { signIn } from './helpers/auth';
 /** Seeded jobs of `recruiter@launchly.test` (Nimbus Labs, approved). */
 const SEEDED_DRAFT = '00000000-0000-4000-8000-000000000406';
 const SEEDED_PUBLISHED = '00000000-0000-4000-8000-000000000401';
+const SEEDED_REJECTED = '00000000-0000-4000-8000-000000000407';
 
 const SUBMIT = 'Gửi duyệt';
 const DRAFT = 'Lưu nháp';
@@ -12,7 +13,7 @@ const uniqueTitle = (label: string) => `E2E ${label} ${Date.now().toString(36)}`
 
 async function fillRequired(page: Page, title: string) {
   await page.getByLabel('Vị trí tuyển dụng').fill(title);
-  await page.getByLabel('Cấp bậc').selectOption('INTERN');
+  await page.getByRole('radio', { name: /^Intern/ }).check();
   await page.getByLabel('Địa điểm').selectOption('Ho Chi Minh City');
   await page.getByLabel('Mô tả công việc').fill('Xây dựng API cho sản phẩm cùng mentor.');
 }
@@ -54,12 +55,13 @@ test.describe('approved recruiter', () => {
     await noteBoxes(page).first().fill('Mang theo laptop cá nhân.');
     await page.getByRole('button', { name: SUBMIT }).click();
 
-    await expect(page).toHaveURL(/\/recruiter\/jobs\?submitted=/);
+    await expect(page).toHaveURL(/\/recruiter\/jobs$/);
     await expect(page.getByText(`Đã gửi tin “${title}”`)).toBeVisible();
     const card = page.getByRole('listitem').filter({ hasText: title });
-    await expect(card.getByText('Chờ duyệt')).toBeVisible();
+    await expect(card.getByText('Chờ duyệt', { exact: true })).toBeVisible();
     // Not public until an admin approves it.
-    const id = new URL(page.url()).searchParams.get('submitted');
+    const href = await card.getByRole('link', { name: title, exact: true }).getAttribute('href');
+    const id = href?.split('/').at(-1);
     expect((await page.request.get(`/api/jobs/${id}`)).status()).toBe(404);
   });
 
@@ -127,9 +129,26 @@ test.describe('approved recruiter', () => {
 
     await page.goto('/recruiter/jobs');
     const card = page.getByRole('listitem').filter({ hasText: title });
-    await expect(card.getByText('Bản nháp')).toBeVisible();
+    await expect(card.getByText('Bản nháp', { exact: true })).toBeVisible();
     await card.getByRole('link', { name: `Tiếp tục chỉnh sửa ${title}` }).click();
     await expect(page.getByLabel('Vị trí tuyển dụng')).toHaveValue(title);
+  });
+
+  test('a completely empty form can still be saved as a draft', async () => {
+    await page.goto('/recruiter/jobs/new');
+    await page.getByRole('button', { name: DRAFT }).click();
+
+    await expect(page).toHaveURL(/\/recruiter\/jobs\/[0-9a-f-]+\/edit\?saved=1$/);
+    await expect(page.getByText('Đã lưu bản nháp.')).toBeVisible();
+    await expect(page.getByLabel('Vị trí tuyển dụng')).toHaveValue('');
+
+    // Clean up: the untitled draft is deleted from its own edit page.
+    await page.getByRole('button', { name: 'Xóa bản nháp Bản nháp chưa đặt tên' }).click();
+    await page
+      .getByRole('dialog', { name: 'Xóa bản nháp?' })
+      .getByRole('button', { name: 'Xóa bản nháp', exact: true })
+      .click();
+    await expect(page).toHaveURL(/\/recruiter\/jobs\?deleted=1$|\/recruiter\/jobs$/);
   });
 
   test('AC8: the negotiable choice is kept and no salary figures are stored', async () => {
@@ -181,6 +200,106 @@ test.describe('approved recruiter', () => {
       'true',
     );
     await expect(rows.filter({ hasNotText: 'Bản nháp' })).toHaveCount(0);
+  });
+
+  test('a draft can be deleted after confirming', async () => {
+    const title = uniqueTitle('delete');
+    await page.goto('/recruiter/jobs/new');
+    await fillRequired(page, title);
+    await page.getByRole('button', { name: DRAFT }).click();
+    await expect(page).toHaveURL(/\/edit\?saved=1$/);
+
+    await page.goto('/recruiter/jobs?status=DRAFT');
+    await page.getByRole('searchbox').fill(title);
+    const row = page.getByRole('listitem').filter({ hasText: title });
+    await row.getByRole('button', { name: `Xóa bản nháp ${title}` }).click();
+    const dialog = page.getByRole('dialog', { name: 'Xóa bản nháp?' });
+    // Cancelling keeps the draft.
+    await dialog.getByRole('button', { name: 'Hủy' }).click();
+    await expect(row).toBeVisible();
+
+    await row.getByRole('button', { name: `Xóa bản nháp ${title}` }).click();
+    await dialog.getByRole('button', { name: 'Xóa bản nháp', exact: true }).click();
+    await expect(page.getByText(`Đã xóa bản nháp “${title}”.`)).toBeVisible();
+    await expect(row).toHaveCount(0);
+    await expect(page.getByText('Không có tin nào khớp với bộ lọc hiện tại.')).toBeVisible();
+  });
+
+  test('several drafts can be deleted at once', async () => {
+    const titles = [uniqueTitle('bulk a'), uniqueTitle('bulk b')];
+    for (const title of titles) {
+      await page.goto('/recruiter/jobs/new');
+      await fillRequired(page, title);
+      await page.getByRole('button', { name: DRAFT }).click();
+      await expect(page).toHaveURL(/\/edit\?saved=1$/);
+    }
+
+    await page.goto('/recruiter/jobs?status=DRAFT');
+    await page.getByRole('searchbox').fill('E2E bulk');
+    for (const title of titles) {
+      await page.getByRole('checkbox', { name: `Chọn ${title}` }).check();
+    }
+    await expect(page.getByText('Đã chọn 2 bản nháp')).toBeVisible();
+    await page.getByRole('button', { name: 'Xóa 2 bản nháp đã chọn' }).click();
+    await page
+      .getByRole('dialog', { name: 'Xóa 2 bản nháp?' })
+      .getByRole('button', { name: 'Xóa 2 bản nháp', exact: true })
+      .click();
+
+    await expect(page.getByText('Đã xóa 2 bản nháp.')).toBeVisible();
+    for (const title of titles) {
+      await expect(page.getByRole('listitem').filter({ hasText: title })).toHaveCount(0);
+    }
+  });
+
+  test('a rejected job opens for editing with its reason and can be resubmitted', async () => {
+    await page.goto(`/recruiter/jobs/${SEEDED_REJECTED}`);
+    await page.getByRole('link', { name: 'Sửa và gửi lại' }).click();
+
+    await expect(page).toHaveURL(new RegExp(`/recruiter/jobs/${SEEDED_REJECTED}/edit$`));
+    await expect(page.getByText('Tin đã bị quản trị viên từ chối.')).toBeVisible();
+    await expect(page.getByText(/^Lý do:/)).toBeVisible();
+    // Not submitted here, so the seeded job stays rejected for the next run.
+    await expect(page.getByRole('button', { name: 'Gửi duyệt lại' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Xóa bản nháp/ })).toHaveCount(0);
+  });
+
+  test('a submitted job offers no delete', async () => {
+    await page.goto('/recruiter/jobs?status=PUBLISHED');
+    await expect(page.getByRole('listitem').first()).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Xóa bản nháp/ })).toHaveCount(0);
+  });
+
+  test('the job list is paged ten at a time', async () => {
+    const summary = page.getByText(/^Hiển thị \d+–\d+ trong \d+ tin$/);
+    const total = async () => Number((await summary.textContent())?.match(/trong (\d+) tin/)?.[1]);
+
+    await page.goto('/recruiter/jobs');
+    await expect(summary).toBeVisible();
+    // A fresh database may hold ten jobs or fewer: add drafts until there is a second page.
+    for (let i = await total(); i <= 10; i += 1) {
+      await page.goto('/recruiter/jobs/new');
+      await fillRequired(page, uniqueTitle(`page ${i}`));
+      await page.getByRole('button', { name: DRAFT }).click();
+      await expect(page).toHaveURL(/\/edit\?saved=1$/);
+      await page.goto('/recruiter/jobs');
+      await expect(summary).toBeVisible();
+    }
+    const count = await total();
+
+    await expect(page.getByRole('listitem')).toHaveCount(10);
+    await expect(summary).toHaveText(`Hiển thị 1–10 trong ${count} tin`);
+    await page.getByRole('button', { name: 'Trang 2', exact: true }).click();
+    await expect(page).toHaveURL(/\?page=2$/);
+    await expect(summary).toHaveText(`Hiển thị 11–${Math.min(20, count)} trong ${count} tin`);
+    await expect(page.getByRole('listitem')).toHaveCount(Math.min(10, count - 10));
+
+    // The page survives a reload through the URL.
+    await page.reload();
+    await expect(page.getByRole('button', { name: 'Trang 2', exact: true })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
   });
 });
 

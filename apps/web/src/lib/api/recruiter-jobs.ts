@@ -1,13 +1,28 @@
 import {
   recruiterJobListResponseSchema,
   recruiterJobSchema,
+  type RecruiterJobListQuery,
   type SaveJobInput,
 } from '@launchly/shared';
-import { request } from '@/lib/api/http';
+import { request, requestVoid } from '@/lib/api/http';
 
-/** Recruiter: own jobs in every status, most recently changed first. */
-export function listMyJobs() {
-  return request('/recruiter/jobs', recruiterJobListResponseSchema, { cache: 'no-store' });
+/** Recruiter: one page of own jobs, most recently changed first, with counts per status. */
+export function listMyJobs(query: Partial<RecruiterJobListQuery> = {}, signal?: AbortSignal) {
+  return request('/recruiter/jobs', recruiterJobListResponseSchema, {
+    cache: 'no-store',
+    query,
+    signal,
+  });
+}
+
+/** Recruiter: deletes several own drafts, all or none. */
+export function deleteJobs(ids: string[]) {
+  return requestVoid('/recruiter/jobs/bulk-delete', { method: 'POST', body: { ids } });
+}
+
+/** Recruiter: deletes an own draft; submitted jobs cannot be deleted. */
+export function deleteJob(jobId: string) {
+  return requestVoid(`/recruiter/jobs/${jobId}`, { method: 'DELETE' });
 }
 
 /** Recruiter: one own job with its real salary, rounds and notes. */
