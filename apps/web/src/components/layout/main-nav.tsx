@@ -7,7 +7,7 @@ import { cn } from '@/lib/cn';
 type NavItem = { label: string; href: string };
 
 const items: NavItem[] = [
-  { label: 'Khám phá', href: '/jobs' },
+  { label: 'Việc làm', href: '/jobs' },
   { label: 'Đánh giá CV', href: '/cv-review' },
   { label: 'Luyện phỏng vấn AI', href: '/interview-practice' },
   { label: 'Việc đã ứng tuyển', href: '/applications' },
