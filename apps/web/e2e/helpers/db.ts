@@ -29,3 +29,13 @@ export function resetApplication(email: string, jobTitle: string) {
 export function resetModeration() {
   reset('moderation');
 }
+
+/** Deletes the candidate's interview practice sessions (the seeded legacy session is kept). */
+export function resetPractice(email: string) {
+  reset('practice', email);
+}
+
+/** Pushes the candidate's incomplete practice sessions past their 24 hour deadline. */
+export function expirePractice(email: string) {
+  reset('practice-expire', email);
+}

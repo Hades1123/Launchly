@@ -931,6 +931,8 @@ export const seedData = {
     {
       id: id.session1,
       applicationId: id.app1,
+      candidateId: id.profile1,
+      jobId: id.job1,
       status: 'COMPLETED',
       startedAt: '2026-11-01T09:00:00.000Z',
       completedAt: '2026-11-01T09:45:00.000Z',
