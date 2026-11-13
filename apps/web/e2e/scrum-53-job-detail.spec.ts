@@ -3,14 +3,20 @@ import { expect, test, type Page } from '@playwright/test';
 /** Seeded, published job of an approved company (`apps/api/prisma/seed/data.ts`). */
 const JOB_TITLE = 'Senior Frontend Engineer';
 
-/** Searches for the seeded job and opens it from its card. */
+/**
+ * Searches for the seeded job and opens its own page through the card's link (on wide screens a
+ * plain click selects the job in the side panel instead, SCRUM-85).
+ */
 async function openJobFromSearch(page: Page, title = JOB_TITLE) {
   await page.goto(`/jobs?keyword=${encodeURIComponent(title)}`);
-  await page.getByRole('link', { name: new RegExp(title) }).click();
+  const href = await page.getByRole('link', { name: new RegExp(title) }).getAttribute('href');
+  await page.goto(href!);
 }
 
-test('AC1: clicking a job card opens its detail page', async ({ page }) => {
-  await openJobFromSearch(page);
+test('AC1: on a phone, clicking a job card opens its detail page', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`/jobs?keyword=${encodeURIComponent(JOB_TITLE)}`);
+  await page.getByRole('link', { name: new RegExp(JOB_TITLE) }).click();
 
   await expect(page).toHaveURL(/\/jobs\/[0-9a-f-]{36}$/);
   await expect(page.getByRole('heading', { level: 1, name: JOB_TITLE })).toBeVisible();

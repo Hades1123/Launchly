@@ -30,7 +30,7 @@ const legalLinks = ['Chính sách bảo mật', 'Điều khoản dịch vụ', '
 export function SiteFooter() {
   return (
     <footer className="w-full bg-surface">
-      <div className="mx-auto max-w-7xl px-4 py-12 md:px-8">
+      <div className="mx-auto max-w-page px-4 py-12 md:px-8">
         <div className="mb-8 grid grid-cols-1 gap-8 md:grid-cols-4">
           <div className="space-y-4">
             <BrandLogo />

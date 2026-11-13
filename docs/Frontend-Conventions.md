@@ -90,11 +90,14 @@ Values come from the "Career Launch Engine" design system in the Stitch project 
 | `--color-danger-subtle`              | `bg-danger-subtle`                     | `#ffdad6` (error-container)            | Error badge or alert background            |
 | `--color-info`                       | `text-info`                            | `sky-700`                              | Informational text and icons               |
 | `--color-info-subtle`                | `bg-info-subtle`                       | `sky-50`                               | Informational badge or alert background    |
+| `--container-page`                   | `max-w-page`                           | `90rem` (1440px)                       | Width of the header, footer, candidate pages |
 | `--radius-control`                   | `rounded-control`                      | `radius-lg` (0.5rem)                   | Buttons, inputs, chips                     |
 | `--radius-card`                      | `rounded-card`                         | `radius-xl` (0.75rem)                  | Cards, panels, tiles                       |
 | `--shadow-card`                      | `shadow-card`                          | `shadow-sm`                            | Card elevation                             |
 | `--shadow-card-hover`                | `shadow-card-hover`                    | `shadow-md`                            | Hovered/selected cards, primary buttons    |
 | `--shadow-glow`                      | `shadow-glow`                          | indigo glow, 16px                      | AI accents (use sparingly)                 |
+| `--animate-enter`                    | `motion-safe:animate-enter`            | 0.6s fade and rise                     | One entrance on load (landing hero)        |
+| `--animate-enter-late`               | `motion-safe:animate-enter-late`       | same, 0.15s later                      | The block that follows the first entrance  |
 
 Stitch layouts follow a "no-line" rule: separate sections with surface shifts (`bg-background` → `bg-surface` → `bg-surface-muted`) rather than borders. Map Stitch's custom type styles to Tailwind defaults: `body-sm`/`label-*` → `text-xs`, `body-md`/`title-sm` → `text-sm`, `title-md` → `text-base`, `headline-sm` → `text-xl`, `headline-md` → `text-2xl`, `display-hero` → `text-5xl`. Icons use `lucide-react` with `strokeWidth={1.5}`–`1.75`.
 

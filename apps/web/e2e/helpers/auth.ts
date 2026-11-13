@@ -11,3 +11,12 @@ export async function signIn(page: Page, email: string) {
   await page.getByRole('button', { name: 'Đăng nhập' }).click();
   await expect(page).not.toHaveURL(/\/login/);
 }
+
+/**
+ * Waits until the header has restored the session (signed in or not). Every full page load rotates
+ * the refresh token; leaving a page before that request finishes drops the new cookie, and the next
+ * page load then signs the user out.
+ */
+export async function waitForSession(page: Page) {
+  await expect(page.getByLabel('Đang tải phiên đăng nhập')).toHaveCount(0);
+}

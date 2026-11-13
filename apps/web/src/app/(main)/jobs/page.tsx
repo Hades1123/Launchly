@@ -1,9 +1,10 @@
 import Link from 'next/link';
 import { ChevronRight, ChevronLeft, SearchX } from 'lucide-react';
+import { JobDetailPanel, type PanelJob } from '@/components/jobs/job-detail-panel';
 import { JobFilters } from '@/components/jobs/job-filters';
 import { JobListCard } from '@/components/jobs/job-list-card';
 import { Badge } from '@/components/ui/badge';
-import { searchJobs, type JobSearchFilters } from '@/lib/api/jobs';
+import { getJob, searchJobs, type JobSearchFilters } from '@/lib/api/jobs';
 import { cn } from '@/lib/cn';
 import { JOB_LEVELS, type PublicJobListResponse, type JobLevel } from '@launchly/shared';
 
@@ -15,6 +16,8 @@ type SearchParams = Promise<{
   level?: string;
   location?: string;
   page?: string;
+  /** Job shown in the side panel on wide screens. */
+  job?: string;
 }>;
 
 type JobsPageProps = {
@@ -31,20 +34,36 @@ async function loadJobs(filters: JobSearchFilters): Promise<PublicJobListRespons
   }
 }
 
-function buildPageHref(baseParams: Record<string, string | undefined>, page: number): string {
+type ListParams = Record<string, string | undefined>;
+
+/** `/jobs` with the list filters and page kept, plus the given overrides (an empty value drops a key). */
+function jobsHref(baseParams: ListParams, overrides: ListParams): string {
   const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(baseParams)) {
-    if (value && key !== 'page') {
-      params.set(key, value);
-    }
+  for (const [key, value] of Object.entries({ ...baseParams, ...overrides })) {
+    if (value) params.set(key, value);
   }
-  params.set('page', String(page));
-  return `/jobs?${params.toString()}`;
+  const query = params.toString();
+  return query ? `/jobs?${query}` : '/jobs';
+}
+
+/** A page change selects the first job of the new page, so the `job` key is dropped. */
+function buildPageHref(baseParams: ListParams, page: number): string {
+  return jobsHref(baseParams, { page: String(page) });
+}
+
+/** Details of the panel's job; a failure is shown in the panel while the list keeps working. */
+async function loadPanelJob(jobId: string): Promise<PanelJob> {
+  try {
+    return { kind: 'ok', job: await getJob(jobId, { cache: 'no-store' }) };
+  } catch (err) {
+    console.warn(`Job ${jobId} could not be loaded for the side panel:`, err);
+    return { kind: 'error', jobId };
+  }
 }
 
 export default async function JobsPage({ searchParams }: JobsPageProps) {
   const resolvedParams = await searchParams;
-  const { keyword, industry, level, location, page } = resolvedParams;
+  const { keyword, industry, level, location, page, job } = resolvedParams;
 
   const validLevel = (JOB_LEVELS as readonly string[]).includes(level ?? '')
     ? (level as JobLevel)
@@ -69,8 +88,12 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 
   const hasActiveFilters = Boolean(keyword || industry || level || location);
 
+  // The requested job when it is on this page of results, otherwise the first one.
+  const selectedId = jobList.find((item) => item.id === job)?.id ?? jobList[0]?.id;
+  const panelJob = selectedId ? await loadPanelJob(selectedId) : null;
+
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8">
+    <div className="mx-auto w-full max-w-page px-4 py-6 md:px-8">
       {/* Breadcrumb and Status */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <nav
@@ -90,8 +113,13 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
         </nav>
       </div>
 
-      <div className="mx-auto w-full max-w-3xl">
-        <div className="flex flex-col gap-4">
+      <div
+        className={cn(
+          'w-full',
+          panelJob ? 'lg:grid lg:grid-cols-12 lg:items-start lg:gap-6' : 'mx-auto max-w-3xl',
+        )}
+      >
+        <div className="flex flex-col gap-4 lg:col-span-5">
           <JobFilters currentFilters={filterParams} />
 
           <div className="flex items-center justify-between px-1">
@@ -123,7 +151,12 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
           ) : (
             <div className="space-y-2">
               {jobList.map((item) => (
-                <JobListCard key={item.id} job={item} />
+                <JobListCard
+                  key={item.id}
+                  job={item}
+                  panelHref={jobsHref(filterParams, { job: item.id })}
+                  selected={item.id === selectedId}
+                />
               ))}
 
               {/* Pagination */}
@@ -170,6 +203,14 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
             </div>
           )}
         </div>
+
+        {panelJob && selectedId && (
+          <JobDetailPanel
+            key={selectedId}
+            selected={panelJob}
+            retryHref={jobsHref(filterParams, { job: selectedId })}
+          />
+        )}
       </div>
     </div>
   );

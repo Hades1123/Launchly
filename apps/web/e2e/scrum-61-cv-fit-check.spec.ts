@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { resetAiConsent } from './helpers/db';
-import { signIn } from './helpers/auth';
+import { signIn, waitForSession } from './helpers/auth';
 
 const CANDIDATE = 'candidate1@launchly.test';
 /** Seeded, published job (`apps/api/prisma/seed/data.ts`). */
@@ -8,7 +8,10 @@ const JOB_TITLE = 'Senior Frontend Engineer';
 
 async function openJob(page: Page) {
   await page.goto(`/jobs?keyword=${encodeURIComponent(JOB_TITLE)}`);
-  await page.getByRole('link', { name: new RegExp(JOB_TITLE) }).click();
+  await waitForSession(page);
+  // Open the job's own page; on wide screens a plain click only selects it in the side panel.
+  const href = await page.getByRole('link', { name: new RegExp(JOB_TITLE) }).getAttribute('href');
+  await page.goto(href!);
   await expect(page.getByRole('heading', { level: 1, name: JOB_TITLE })).toBeVisible();
 }
 

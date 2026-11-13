@@ -43,10 +43,41 @@
   --color-info: var(--color-sky-700);
   --color-info-subtle: var(--color-sky-50);
 
+  /* Layout: max-w-page is the shared width of the header, footer and candidate pages */
+  --container-page: 90rem;
+
   /* Shape and elevation */
   --radius-control: var(--radius-lg);
   --radius-card: var(--radius-xl);
   --shadow-card: var(--shadow-sm);
   --shadow-card-hover: var(--shadow-md);
   --shadow-glow: 0 0 16px rgb(79 70 229 / 0.25);
+
+  /* Motion: one entrance on load (use with motion-safe:), the late one follows the first */
+  --animate-enter: enter 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-enter-late: enter 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) 0.15s both;
+
+  @keyframes enter {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+  }
+}
+
+/*
+ * The jobs page detail panel: sticks under the fixed header (h-16 below xl, h-20 from xl) and
+ * scrolls on its own; at either end the wheel carries on to the page.
+ * Use with a breakpoint, e.g. `lg:panel-below-header`.
+ */
+@utility panel-below-header {
+  position: sticky;
+  top: 5rem;
+  max-height: calc(100dvh - 6rem);
+  overflow-y: auto;
+
+  @variant xl {
+    top: 6rem;
+    max-height: calc(100dvh - 7rem);
+  }
 }

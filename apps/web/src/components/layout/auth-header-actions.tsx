@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { UserMenu } from '@/components/layout/user-menu';
+import { buttonClasses } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth-context';
 
 export function AuthHeaderActions() {
@@ -24,17 +25,8 @@ export function AuthHeaderActions() {
             {sessionError ?? 'Không thể khôi phục phiên đăng nhập.'}
           </span>
         )}
-        <Link
-          href="/login"
-          className="rounded-control px-3 py-2 text-sm font-semibold text-muted-foreground hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-        >
+        <Link href="/login" className={buttonClasses('primary', 'whitespace-nowrap')}>
           Đăng nhập
-        </Link>
-        <Link
-          href="/register"
-          className="rounded-control bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-        >
-          Tạo tài khoản
         </Link>
       </div>
     );
