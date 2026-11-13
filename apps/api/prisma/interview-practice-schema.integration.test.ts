@@ -204,7 +204,7 @@ describe.runIf(process.env.RUN_DB_TESTS === '1')('interview practice schema (int
                 prompt: 'Tell me about a project',
                 source: 'JOB_DESCRIPTION',
                 answer: {
-                  create: { answer: 'I built a table', feedback: 'Be specific', score: 80 },
+                  create: { answer: 'I built a table', feedback: 'Be specific' },
                 },
               },
             },
@@ -237,6 +237,16 @@ describe.runIf(process.env.RUN_DB_TESTS === '1')('interview practice schema (int
       source: 'JOB_DESCRIPTION',
     });
     expect(question.answer).toMatchObject({ answer: 'I built a table', feedback: 'Be specific' });
+  });
+
+  it('stores no score on practice answers; the legacy answer table keeps its own', async () => {
+    const rows = await prisma.$queryRaw<{ table_name: string }[]>`
+      SELECT table_name FROM information_schema.columns
+      WHERE column_name = 'score'
+        AND table_name IN ('InterviewPracticeAnswer', 'InterviewAnswer')
+        AND table_schema = current_schema()`;
+
+    expect(rows.map((row) => row.table_name)).toEqual(['InterviewAnswer']);
   });
 
   it('cascades rounds, questions and answers when the session is deleted', async () => {

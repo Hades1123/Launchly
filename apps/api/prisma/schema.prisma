@@ -387,7 +387,6 @@ model InterviewPracticeAnswer {
   questionId String                    @unique
   answer     String
   feedback   String?
-  score      Decimal?
   question   InterviewPracticeQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
   createdAt  DateTime                  @default(now())
 }
