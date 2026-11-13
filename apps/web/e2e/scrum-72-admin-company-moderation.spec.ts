@@ -2,6 +2,13 @@ import { expect, test, type APIRequestContext, type Page } from '@playwright/tes
 import { signIn, SEED_PASSWORD } from './helpers/auth';
 import { resetModeration } from './helpers/db';
 
+/** `E2E_DEMO=1` records a slowed-down video for the reviewer. */
+if (process.env.E2E_DEMO === '1') {
+  test.use({ video: 'on', launchOptions: { slowMo: 1000 } });
+  // slowMo makes each step slower than the default 30 s budget.
+  test.setTimeout(120_000);
+}
+
 const API = 'http://localhost:4100';
 const ADMIN = 'admin@launchly.test';
 const RECRUITER = 'recruiter@launchly.test';
