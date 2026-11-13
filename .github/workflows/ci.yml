@@ -22,6 +22,9 @@ env:
   JWT_SECRET: ci-jwt-secret-at-least-32-characters-long
   JWT_REFRESH_SECRET: ci-jwt-refresh-secret-at-least-32-chars
   AI_DRIVER: mock
+  # The API refuses to start without these when MAIL_DRIVER=smtp (the default); nothing is sent.
+  SMTP_HOST: localhost
+  SMTP_FROM: noreply@launchly.local
 
 jobs:
   gates:
