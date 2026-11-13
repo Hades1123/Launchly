@@ -178,7 +178,7 @@ model Job {
   title              String
   titleNormalized    String?
   description        String
-  level              JobLevel
+  level              JobLevel?
   location           String
   industry           String?
   requirements       String[]

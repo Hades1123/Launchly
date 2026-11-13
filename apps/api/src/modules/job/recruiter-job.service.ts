@@ -1,10 +1,13 @@
 import type { Prisma, PrismaClient } from '@/generated/prisma/client';
 import {
+  isJobDeletable,
   isJobEditable,
   normalizeVietnamese,
   roundFormatSchema,
+  JOB_PUBLICATION_STATUSES,
   type RecruiterJob,
-  type RecruiterJobListItem,
+  type RecruiterJobListQuery,
+  type RecruiterJobListResponse,
   type SaveJobInput,
 } from '@launchly/shared';
 import { AppError } from '@/lib/app-error';
@@ -129,25 +132,71 @@ export function createRecruiterJobService(prisma: PrismaClient) {
   }
 
   return {
-    async list(userId: string): Promise<RecruiterJobListItem[]> {
-      const rows = await prisma.job.findMany({
-        where: { OR: [{ createdById: userId }, { company: { ownerId: userId } }] },
-        orderBy: { updatedAt: 'desc' },
-        select: {
-          id: true,
-          title: true,
-          level: true,
-          location: true,
-          publicationStatus: true,
-          moderationReason: true,
-          updatedAt: true,
+    /** One page of the recruiter's jobs, newest change first, plus per-status counts. */
+    async list(userId: string, query: RecruiterJobListQuery): Promise<RecruiterJobListResponse> {
+      const filters: Prisma.JobWhereInput[] = [
+        { OR: [{ createdById: userId }, { company: { ownerId: userId } }] },
+      ];
+      if (query.level) filters.push({ level: query.level });
+      if (query.q) {
+        const normalized = normalizeVietnamese(query.q);
+        filters.push({
+          OR: [
+            { title: { contains: query.q, mode: 'insensitive' } },
+            ...(normalized ? [{ titleNormalized: { contains: normalized } }] : []),
+          ],
+        });
+      }
+      const where: Prisma.JobWhereInput = {
+        AND: query.status ? [...filters, { publicationStatus: query.status }] : filters,
+      };
+
+      const [rows, total, grouped] = await Promise.all([
+        prisma.job.findMany({
+          where,
+          orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }],
+          skip: (query.page - 1) * query.limit,
+          take: query.limit,
+          select: {
+            id: true,
+            title: true,
+            level: true,
+            location: true,
+            publicationStatus: true,
+            moderationReason: true,
+            updatedAt: true,
+          },
+        }),
+        prisma.job.count({ where }),
+        prisma.job.groupBy({
+          by: ['publicationStatus'],
+          where: { AND: filters },
+          _count: { _all: true },
+        }),
+      ]);
+
+      const counts = Object.fromEntries(
+        ['ALL', ...JOB_PUBLICATION_STATUSES].map((status) => [status, 0]),
+      ) as RecruiterJobListResponse['counts'];
+      for (const group of grouped) {
+        counts[group.publicationStatus] = group._count._all;
+        counts.ALL += group._count._all;
+      }
+
+      return {
+        jobs: rows.map(({ publicationStatus, updatedAt, ...row }) => ({
+          ...row,
+          status: publicationStatus,
+          updatedAt: updatedAt.toISOString(),
+        })),
+        pagination: {
+          page: query.page,
+          limit: query.limit,
+          total,
+          totalPages: Math.ceil(total / query.limit),
         },
-      });
-      return rows.map(({ publicationStatus, updatedAt, ...row }) => ({
-        ...row,
-        status: publicationStatus,
-        updatedAt: updatedAt.toISOString(),
-      }));
+        counts,
+      };
     },
 
     async get(jobId: string, userId: string): Promise<RecruiterJob> {
@@ -169,15 +218,18 @@ export function createRecruiterJobService(prisma: PrismaClient) {
       return toDto(row);
     },
 
-    /** Saves a draft again or submits it; rounds and notes are replaced in one transaction. */
+    /**
+     * Saves a draft or a rejected job again, or (re)submits it; rounds and notes are replaced in
+     * one transaction. Saving a rejected job without submitting keeps it rejected with its reason.
+     */
     async update(jobId: string, userId: string, input: SaveJobInput): Promise<RecruiterJob> {
       return prisma.$transaction(async (tx) => {
-        // Two saves of the same draft must not both pass the status check.
+        // Two saves of the same job must not both pass the status check.
         await tx.$queryRaw`SELECT id FROM "Job" WHERE id = ${jobId} FOR UPDATE`;
         const job = await tx.job.findUnique({ where: { id: jobId }, select: accessSelect });
         assertManages(job, userId);
         if (!isJobEditable(job.publicationStatus)) {
-          throw new AppError('CONFLICT', 'Only draft jobs can be edited');
+          throw new AppError('CONFLICT', 'Only draft or rejected jobs can be edited');
         }
         if (job.company.moderationStatus !== 'APPROVED') {
           throw new AppError(
@@ -185,15 +237,49 @@ export function createRecruiterJobService(prisma: PrismaClient) {
             'Your company must be approved before you can post a job',
           );
         }
-        // A draft was never public, so no application points at its rounds.
+        const rejected = job.publicationStatus === 'REJECTED';
+        // Drafts and jobs rejected at moderation were never public, so no application points at
+        // their rounds; refuse rather than detach applications if that ever stops being true.
+        if (rejected && (await tx.application.count({ where: { jobId } })) > 0) {
+          throw new AppError('CONFLICT', 'A job with applications cannot be edited');
+        }
         await tx.jobStage.deleteMany({ where: { jobId } });
         await tx.jobNote.deleteMany({ where: { jobId } });
         const row = await tx.job.update({
           where: { id: jobId },
-          data: toJobData(input),
+          data: {
+            ...toJobData(input),
+            ...(rejected && input.action === 'DRAFT' && { publicationStatus: 'REJECTED' as const }),
+            // A resubmitted job starts a new review; the old reason no longer applies.
+            ...(input.action === 'SUBMIT' && { moderationReason: null }),
+          },
           select: jobSelect,
         });
         return toDto(row);
+      });
+    },
+
+    /**
+     * Deletes drafts with their rounds and notes, all or none: one missing, foreign or submitted
+     * job fails the whole request.
+     */
+    async removeMany(jobIds: string[], userId: string): Promise<void> {
+      await prisma.$transaction(async (tx) => {
+        // A delete racing a submit of the same draft must see the submit's status.
+        await tx.$queryRaw`SELECT id FROM "Job" WHERE id = ANY(${jobIds}::text[]) FOR UPDATE`;
+        const jobs = await tx.job.findMany({
+          where: { id: { in: jobIds } },
+          select: accessSelect,
+        });
+        if (jobs.length !== jobIds.length) throw new AppError('NOT_FOUND', 'Job not found');
+        for (const job of jobs) {
+          assertManages(job, userId);
+          if (!isJobDeletable(job.publicationStatus)) {
+            throw new AppError('CONFLICT', 'Only draft jobs can be deleted');
+          }
+        }
+        // Rounds and notes cascade; a draft was never public, so no application points at it.
+        await tx.job.deleteMany({ where: { id: { in: jobIds } } });
       });
     },
   };

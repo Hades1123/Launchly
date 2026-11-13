@@ -1,5 +1,10 @@
 import { Router } from 'express';
-import { jobIdParamsSchema, saveJobSchema } from '@launchly/shared';
+import {
+  bulkDeleteJobsSchema,
+  jobIdParamsSchema,
+  recruiterJobListQuerySchema,
+  saveJobSchema,
+} from '@launchly/shared';
 import { authenticate } from '@/middlewares/authenticate';
 import { authorize } from '@/middlewares/authorize';
 import { validate } from '@/middlewares/validate';
@@ -16,14 +21,31 @@ export function createRecruiterJobRouter(authService: AuthService, service: Serv
   const controller = createRecruiterJobController(service);
   const recruiterOnly = [authenticate(authService), authorize('RECRUITER')];
 
-  router.get('/', ...recruiterOnly, controller.list);
+  router.get(
+    '/',
+    ...recruiterOnly,
+    validate({ query: recruiterJobListQuerySchema }),
+    controller.list,
+  );
   router.post('/', ...recruiterOnly, validate({ body: saveJobSchema }), controller.create);
+  router.post(
+    '/bulk-delete',
+    ...recruiterOnly,
+    validate({ body: bulkDeleteJobsSchema }),
+    controller.removeMany,
+  );
   router.get('/:id', ...recruiterOnly, validate({ params: jobIdParamsSchema }), controller.get);
   router.put(
     '/:id',
     ...recruiterOnly,
     validate({ params: jobIdParamsSchema, body: saveJobSchema }),
     controller.update,
+  );
+  router.delete(
+    '/:id',
+    ...recruiterOnly,
+    validate({ params: jobIdParamsSchema }),
+    controller.remove,
   );
 
   return router;

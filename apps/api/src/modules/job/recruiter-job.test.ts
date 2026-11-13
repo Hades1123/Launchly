@@ -77,8 +77,11 @@ function makeApp({
     $queryRaw: vi.fn(),
     job: {
       findUnique: vi.fn(async () => access),
+      findMany: vi.fn(async () => (access ? [access] : [])),
       update: vi.fn(async ({ data }: { data: Record<string, unknown> }) => rowFrom(data)),
+      deleteMany: vi.fn(),
     },
+    application: { count: vi.fn(async () => 0) },
     jobStage: { deleteMany: vi.fn() },
     jobNote: { deleteMany: vi.fn() },
   };
@@ -96,6 +99,11 @@ function makeApp({
           moderationReason: null,
           updatedAt: NOW,
         },
+      ]),
+      count: vi.fn(async () => 11),
+      groupBy: vi.fn(async () => [
+        { publicationStatus: 'DRAFT', _count: { _all: 7 } },
+        { publicationStatus: 'PUBLISHED', _count: { _all: 4 } },
       ]),
       findUnique: vi.fn(async () =>
         access
@@ -279,7 +287,7 @@ describe('PUT /recruiter/jobs/:id', () => {
     expect(tx.job.update).not.toHaveBeenCalled();
   });
 
-  it.each(['PENDING', 'PUBLISHED', 'REJECTED', 'CLOSED'])('409 for a %s job', async (status) => {
+  it.each(['PENDING', 'PUBLISHED', 'CLOSED'])('409 for a %s job', async (status) => {
     const access = {
       createdById: 'user-1',
       publicationStatus: status,
@@ -306,21 +314,84 @@ describe('PUT /recruiter/jobs/:id', () => {
   });
 });
 
-describe('GET /recruiter/jobs', () => {
-  it('lists own jobs', async () => {
-    const res = await request(makeApp().app).get('/recruiter/jobs').set(auth);
+describe('PUT /recruiter/jobs/:id on a rejected job', () => {
+  const rejected = {
+    createdById: 'user-1',
+    publicationStatus: 'REJECTED',
+    company: { ownerId: 'user-1', moderationStatus: 'APPROVED' },
+  };
+
+  it('resubmits it for review and clears the old reason', async () => {
+    const { app, tx } = makeApp({ access: rejected });
+    const res = await request(app).put(`/recruiter/jobs/${JOB}`).set(auth).send(submitBody);
     expect(res.status).toBe(200);
-    expect(res.body.jobs).toEqual([
-      {
-        id: JOB,
-        title: 'Draft',
-        level: 'FRESHER',
-        location: 'Remote',
-        status: 'DRAFT',
-        moderationReason: null,
-        updatedAt: NOW.toISOString(),
-      },
-    ]);
+    expect(tx.job.update.mock.calls[0]![0].data).toMatchObject({
+      publicationStatus: 'PENDING',
+      moderationReason: null,
+    });
+  });
+
+  it('keeps it rejected when only saved', async () => {
+    const { app, tx } = makeApp({ access: rejected });
+    const res = await request(app).put(`/recruiter/jobs/${JOB}`).set(auth).send(draftBody);
+    expect(res.status).toBe(200);
+    const data = tx.job.update.mock.calls[0]![0].data;
+    expect(data.publicationStatus).toBe('REJECTED');
+    expect(data).not.toHaveProperty('moderationReason');
+  });
+
+  it('409 when it already has applications', async () => {
+    const { app, tx } = makeApp({ access: rejected });
+    tx.application.count.mockResolvedValueOnce(2);
+    const res = await request(app).put(`/recruiter/jobs/${JOB}`).set(auth).send(submitBody);
+    expect(res.status).toBe(409);
+    expect(tx.job.update).not.toHaveBeenCalled();
+  });
+});
+
+describe('GET /recruiter/jobs', () => {
+  it('lists one page of own jobs with counts per status', async () => {
+    const { app, prisma } = makeApp();
+    const res = await request(app).get('/recruiter/jobs?status=DRAFT&page=2').set(auth);
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      jobs: [
+        {
+          id: JOB,
+          title: 'Draft',
+          level: 'FRESHER',
+          location: 'Remote',
+          status: 'DRAFT',
+          moderationReason: null,
+          updatedAt: NOW.toISOString(),
+        },
+      ],
+      pagination: { page: 2, limit: 10, total: 11, totalPages: 2 },
+      counts: { ALL: 11, DRAFT: 7, PENDING: 0, PUBLISHED: 4, REJECTED: 0, CLOSED: 0 },
+    });
+    expect(prisma.job.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ skip: 10, take: 10 }),
+    );
+  });
+
+  it('searches the title with and without accents', async () => {
+    const { app, prisma } = makeApp();
+    await request(app).get('/recruiter/jobs?q=Kỹ%20sư').set(auth);
+    const [{ where }] = prisma.job.findMany.mock.calls[0] as unknown as [
+      { where: { AND: unknown[] } },
+    ];
+    expect(where.AND).toContainEqual({
+      OR: [
+        { title: { contains: 'Kỹ sư', mode: 'insensitive' } },
+        { titleNormalized: { contains: 'ky su' } },
+      ],
+    });
+  });
+
+  it('400 for an unknown status filter', async () => {
+    const res = await request(makeApp().app).get('/recruiter/jobs?status=ARCHIVED').set(auth);
+    expect(res.status).toBe(400);
+    expect(errorCode(res)).toBe('VALIDATION_ERROR');
   });
 
   it('returns one job with its real salary to its owner', async () => {
@@ -341,5 +412,80 @@ describe('GET /recruiter/jobs', () => {
     };
     const res = await request(makeApp({ access }).app).get(`/recruiter/jobs/${JOB}`).set(auth);
     expect(res.status).toBe(403);
+  });
+});
+
+describe('DELETE /recruiter/jobs/:id', () => {
+  it('deletes an own draft', async () => {
+    const { app, tx } = makeApp();
+    const res = await request(app).delete(`/recruiter/jobs/${JOB}`).set(auth);
+    expect(res.status).toBe(204);
+    expect(tx.$queryRaw).toHaveBeenCalled();
+    expect(tx.job.deleteMany).toHaveBeenCalledWith({ where: { id: { in: [JOB] } } });
+  });
+
+  it('409 for a job that was already submitted', async () => {
+    const access = {
+      createdById: 'user-1',
+      publicationStatus: 'PENDING',
+      company: { ownerId: 'user-1', moderationStatus: 'APPROVED' },
+    };
+    const { app, tx } = makeApp({ access });
+    const res = await request(app).delete(`/recruiter/jobs/${JOB}`).set(auth);
+    expect(res.status).toBe(409);
+    expect(tx.job.deleteMany).not.toHaveBeenCalled();
+  });
+
+  it("403 for another recruiter's draft and 404 for a missing one", async () => {
+    const stranger = {
+      createdById: 'x',
+      publicationStatus: 'DRAFT',
+      company: { ownerId: 'x', moderationStatus: 'APPROVED' },
+    };
+    const forbidden = await request(makeApp({ access: stranger }).app)
+      .delete(`/recruiter/jobs/${JOB}`)
+      .set(auth);
+    expect(forbidden.status).toBe(403);
+    const missing = await request(makeApp({ access: null }).app)
+      .delete(`/recruiter/jobs/${JOB}`)
+      .set(auth);
+    expect(missing.status).toBe(404);
+  });
+
+  it('403 for a candidate', async () => {
+    const res = await request(makeApp({ role: 'CANDIDATE' }).app)
+      .delete(`/recruiter/jobs/${JOB}`)
+      .set(auth);
+    expect(res.status).toBe(403);
+  });
+});
+
+describe('POST /recruiter/jobs/bulk-delete', () => {
+  it('deletes the listed drafts in one go', async () => {
+    const { app, tx } = makeApp();
+    const res = await request(app)
+      .post('/recruiter/jobs/bulk-delete')
+      .set(auth)
+      .send({ ids: [JOB, JOB] });
+    expect(res.status).toBe(204);
+    expect(tx.job.deleteMany).toHaveBeenCalledWith({ where: { id: { in: [JOB] } } });
+  });
+
+  it('404 and nothing deleted when one id is unknown', async () => {
+    const { app, tx } = makeApp();
+    const res = await request(app)
+      .post('/recruiter/jobs/bulk-delete')
+      .set(auth)
+      .send({ ids: [JOB, COMPANY] });
+    expect(res.status).toBe(404);
+    expect(tx.job.deleteMany).not.toHaveBeenCalled();
+  });
+
+  it('400 for an empty list', async () => {
+    const res = await request(makeApp().app)
+      .post('/recruiter/jobs/bulk-delete')
+      .set(auth)
+      .send({ ids: [] });
+    expect(res.status).toBe(400);
   });
 });

@@ -4,7 +4,7 @@ import type { PrismaClient } from '@/generated/prisma/client';
 import { createRecruiterJobService } from '@/modules/job/recruiter-job.service';
 import { AppError } from '@/lib/app-error';
 
-const draft: SaveJobInput = {
+const draft = {
   action: 'DRAFT',
   title: 'Bản nháp tích hợp',
   description: 'Sẽ viết thêm.',
@@ -16,7 +16,7 @@ const draft: SaveJobInput = {
   salary: { hidden: false, min: null, max: null },
   rounds: [{ name: 'Sàng lọc', format: null, estimatedDurationMinutes: null }],
   notes: ['Ghi chú cũ'],
-};
+} satisfies SaveJobInput;
 
 const submit: SaveJobInput = {
   ...draft,
@@ -29,6 +29,8 @@ const submit: SaveJobInput = {
   ],
   notes: ['Mang laptop', 'Đến sớm 10 phút'],
 };
+
+const firstPage = { page: 1, limit: 10 };
 
 describe.runIf(process.env.RUN_DB_TESTS === '1')('recruiter jobs (integration)', () => {
   let prisma: PrismaClient;
@@ -72,7 +74,7 @@ describe.runIf(process.env.RUN_DB_TESTS === '1')('recruiter jobs (integration)',
 
     const saved = await service.create(ownerId, draft);
     expect(saved.status).toBe('DRAFT');
-    expect(await service.list(strangerId)).toEqual([]);
+    expect((await service.list(strangerId, firstPage)).jobs).toEqual([]);
 
     const submitted = await service.update(saved.id, ownerId, submit);
     expect(submitted.status).toBe('PENDING');
@@ -91,6 +93,23 @@ describe.runIf(process.env.RUN_DB_TESTS === '1')('recruiter jobs (integration)',
     expect(stored).toMatchObject({ salaryHidden: true, salaryMin: null, salaryMax: null });
   });
 
+  it('stores a blank draft with no level, then submits it once filled in', async () => {
+    const service = createRecruiterJobService(prisma);
+    const blank = await service.create(ownerId, {
+      ...draft,
+      title: '',
+      description: '',
+      level: null,
+      location: '',
+      rounds: [],
+      notes: [],
+    });
+    expect(blank).toMatchObject({ status: 'DRAFT', title: '', level: null, location: '' });
+
+    const submitted = await service.update(blank.id, ownerId, submit);
+    expect(submitted).toMatchObject({ status: 'PENDING', level: 'FRESHER' });
+  });
+
   it('refuses to edit a submitted job or a job of another recruiter', async () => {
     const service = createRecruiterJobService(prisma);
     const job = await service.create(ownerId, submit);
@@ -101,6 +120,48 @@ describe.runIf(process.env.RUN_DB_TESTS === '1')('recruiter jobs (integration)',
     await expect(service.get(job.id, strangerId)).rejects.toBeInstanceOf(AppError);
     await expect(service.update(job.id, strangerId, draft)).rejects.toMatchObject({
       code: 'FORBIDDEN',
+    });
+  });
+
+  it('pages, filters and counts the recruiter jobs', async () => {
+    const service = createRecruiterJobService(prisma);
+    await service.create(ownerId, { ...draft, title: 'Kỹ sư dữ liệu nháp' });
+    await service.create(ownerId, { ...submit, title: 'Kỹ sư dữ liệu chờ duyệt' });
+
+    const all = await service.list(ownerId, { page: 1, limit: 2 });
+    expect(all.jobs).toHaveLength(2);
+    expect(all.pagination.total).toBe(all.counts.ALL);
+    expect(all.pagination.totalPages).toBe(Math.ceil(all.counts.ALL / 2));
+    expect(all.counts.ALL).toBe(all.counts.DRAFT + all.counts.PENDING);
+
+    // Accent-free search matches the Vietnamese title; the status narrows the page, not the counts.
+    const drafts = await service.list(ownerId, {
+      ...firstPage,
+      q: 'ky su du lieu',
+      status: 'DRAFT',
+    });
+    expect(drafts.jobs.map((job) => job.title)).toEqual(['Kỹ sư dữ liệu nháp']);
+    expect(drafts.counts).toMatchObject({ ALL: 2, DRAFT: 1, PENDING: 1 });
+  });
+
+  it('deletes a draft with its rounds and notes, but never a submitted job', async () => {
+    const service = createRecruiterJobService(prisma);
+    const saved = await service.create(ownerId, draft);
+    const pending = await service.create(ownerId, submit);
+
+    await expect(service.removeMany([saved.id], strangerId)).rejects.toMatchObject({
+      code: 'FORBIDDEN',
+    });
+    await service.removeMany([saved.id], ownerId);
+    expect(await prisma.job.count({ where: { id: saved.id } })).toBe(0);
+    expect(await prisma.jobStage.count({ where: { jobId: saved.id } })).toBe(0);
+    expect(await prisma.jobNote.count({ where: { jobId: saved.id } })).toBe(0);
+
+    await expect(service.removeMany([pending.id], ownerId)).rejects.toMatchObject({
+      code: 'CONFLICT',
+    });
+    await expect(service.removeMany([saved.id], ownerId)).rejects.toMatchObject({
+      code: 'NOT_FOUND',
     });
   });
 });
