@@ -31,3 +31,14 @@ describe('createModerationEmail', () => {
     expect(email.html).toContain('&lt;script&gt;');
   });
 });
+
+describe('createModerationEmail subject', () => {
+  it('keeps line breaks in the company name out of the subject', () => {
+    const email = createModerationEmail({
+      kind: 'company-approved',
+      companyName: 'Acme\r\nBcc: x',
+    });
+    expect(email.subject).not.toMatch(/[\r\n]/);
+    expect(email.subject).toContain('Acme Bcc: x');
+  });
+});
