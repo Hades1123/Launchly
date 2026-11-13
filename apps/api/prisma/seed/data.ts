@@ -41,6 +41,9 @@ const id = {
   job13: '00000000-0000-4000-8000-00000000040d',
   job14: '00000000-0000-4000-8000-00000000040e',
   job15: '00000000-0000-4000-8000-00000000040f',
+  note1: '00000000-0000-4000-8000-000000000601',
+  note2: '00000000-0000-4000-8000-000000000602',
+  note3: '00000000-0000-4000-8000-000000000603',
   stage1: '00000000-0000-4000-8000-000000000501',
   stage2: '00000000-0000-4000-8000-000000000502',
   stage3: '00000000-0000-4000-8000-000000000503',
@@ -588,13 +591,14 @@ export const seedData = {
     },
   ] satisfies Prisma.JobUncheckedCreateInput[],
 
-  // JobStage has no format/duration columns yet, so the description carries them.
+  // Rounds. `format` and `estimatedDurationMinutes` are set where the description gives minutes.
   jobStages: [
     {
       id: id.stage1,
       jobId: id.job1,
       name: 'Sàng lọc CV',
       description: 'Online · 3-5 ngày',
+      format: 'ONLINE',
       position: 1,
     },
     {
@@ -602,14 +606,25 @@ export const seedData = {
       jobId: id.job1,
       name: 'Phỏng vấn kỹ thuật',
       description: 'Online · 60 phút',
+      format: 'ONLINE',
+      estimatedDurationMinutes: 60,
       position: 2,
     },
-    { id: id.stage3, jobId: id.job1, name: 'Offer', description: 'Online · 30 phút', position: 3 },
+    {
+      id: id.stage3,
+      jobId: id.job1,
+      name: 'Offer',
+      description: 'Online · 30 phút',
+      format: 'ONLINE',
+      estimatedDurationMinutes: 30,
+      position: 3,
+    },
     {
       id: id.stage4,
       jobId: id.job2,
       name: 'Sàng lọc CV',
       description: 'Online · 3 ngày',
+      format: 'ONLINE',
       position: 1,
     },
     {
@@ -617,6 +632,7 @@ export const seedData = {
       jobId: id.job2,
       name: 'Bài test Node.js',
       description: 'Làm tại nhà · 2 ngày',
+      format: 'ASSIGNMENT',
       position: 2,
     },
     {
@@ -624,6 +640,8 @@ export const seedData = {
       jobId: id.job2,
       name: 'Phỏng vấn kỹ thuật',
       description: 'Online · 45 phút',
+      format: 'ONLINE',
+      estimatedDurationMinutes: 45,
       position: 3,
     },
     {
@@ -631,6 +649,8 @@ export const seedData = {
       jobId: id.job2,
       name: 'Phỏng vấn văn hóa',
       description: 'Tại văn phòng · 30 phút',
+      format: 'ONSITE',
+      estimatedDurationMinutes: 30,
       position: 4,
     },
     {
@@ -638,6 +658,7 @@ export const seedData = {
       jobId: id.job4,
       name: 'Sàng lọc CV',
       description: 'Online · 5 ngày',
+      format: 'ONLINE',
       position: 1,
     },
     {
@@ -645,6 +666,7 @@ export const seedData = {
       jobId: id.job4,
       name: 'Bài tập viết nội dung',
       description: 'Làm tại nhà · 1 ngày',
+      format: 'ASSIGNMENT',
       position: 2,
     },
     {
@@ -652,6 +674,8 @@ export const seedData = {
       jobId: id.job4,
       name: 'Phỏng vấn với trưởng nhóm',
       description: 'Tại văn phòng · 30 phút',
+      format: 'ONSITE',
+      estimatedDurationMinutes: 30,
       position: 3,
     },
     {
@@ -659,6 +683,7 @@ export const seedData = {
       jobId: id.job5,
       name: 'Sàng lọc CV',
       description: 'Online · 3 ngày',
+      format: 'ONLINE',
       position: 1,
     },
     {
@@ -666,6 +691,8 @@ export const seedData = {
       jobId: id.job5,
       name: 'Bài test SQL',
       description: 'Online · 60 phút',
+      format: 'ONLINE',
+      estimatedDurationMinutes: 60,
       position: 2,
     },
     {
@@ -673,6 +700,8 @@ export const seedData = {
       jobId: id.job5,
       name: 'Phỏng vấn chuyên môn',
       description: 'Online · 45 phút',
+      format: 'ONLINE',
+      estimatedDurationMinutes: 45,
       position: 3,
     },
     {
@@ -680,6 +709,7 @@ export const seedData = {
       jobId: id.job9,
       name: 'Sàng lọc CV',
       description: 'Online · 3 ngày',
+      format: 'ONLINE',
       position: 1,
     },
     {
@@ -687,6 +717,7 @@ export const seedData = {
       jobId: id.job9,
       name: 'Bài tập React',
       description: 'Làm tại nhà · 3 ngày',
+      format: 'ASSIGNMENT',
       position: 2,
     },
     {
@@ -694,6 +725,8 @@ export const seedData = {
       jobId: id.job9,
       name: 'Phỏng vấn với mentor',
       description: 'Online · 45 phút',
+      format: 'ONLINE',
+      estimatedDurationMinutes: 45,
       position: 3,
     },
     {
@@ -701,6 +734,7 @@ export const seedData = {
       jobId: id.job10,
       name: 'Sàng lọc CV',
       description: 'Online · 5 ngày',
+      format: 'ONLINE',
       position: 1,
     },
     {
@@ -708,6 +742,8 @@ export const seedData = {
       jobId: id.job10,
       name: 'Bài test nghiệp vụ',
       description: 'Tại văn phòng · 60 phút',
+      format: 'ONSITE',
+      estimatedDurationMinutes: 60,
       position: 2,
     },
     {
@@ -715,9 +751,18 @@ export const seedData = {
       jobId: id.job10,
       name: 'Phỏng vấn trưởng phòng',
       description: 'Tại văn phòng · 30 phút',
+      format: 'ONSITE',
+      estimatedDurationMinutes: 30,
       position: 3,
     },
   ] satisfies Prisma.JobStageUncheckedCreateInput[],
+
+  // Notes the company left for applicants (SCRUM-29): job1 has two, job2 one.
+  jobNotes: [
+    { id: id.note1, jobId: id.job1, content: 'Mang theo laptop cá nhân cho vòng kỹ thuật.', position: 1 },
+    { id: id.note2, jobId: id.job1, content: 'Chuẩn bị một dự án cá nhân để trình bày.', position: 2 },
+    { id: id.note3, jobId: id.job2, content: 'Ưu tiên ứng viên có dự án Node.js thực tế.', position: 1 },
+  ] satisfies Prisma.JobNoteUncheckedCreateInput[],
 
   applications: [
     {

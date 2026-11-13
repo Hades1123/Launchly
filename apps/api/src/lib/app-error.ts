@@ -20,6 +20,7 @@ export const errorStatus: Record<ErrorCode, number> = {
   GOOGLE_SIGN_IN_UNAVAILABLE: 503,
   INVALID_OR_EXPIRED_TOKEN: 400,
   EMAIL_DELIVERY_FAILED: 503,
+  AI_UNAVAILABLE: 503,
   INTERNAL_ERROR: 500,
 };
 

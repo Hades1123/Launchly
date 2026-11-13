@@ -29,6 +29,8 @@ const row = (salaryHidden: boolean) => ({
   salaryHidden,
   createdAt: new Date('2026-11-01T00:00:00Z'),
   company: { id: 'c1', name: 'Acme', website: null },
+  stages: [],
+  notes: [],
 });
 const FORBIDDEN = ['salaryMin', 'salaryMax', 'salaryHidden', 'publicationStatus', 'moderationReason', 'createdById'];
 

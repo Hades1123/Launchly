@@ -13,6 +13,10 @@ import { createCompanyService } from '@/modules/company/company.service';
 import { healthRouter } from '@/modules/health/health.routes';
 import { createCandidateRouter } from '@/modules/candidate/candidate.routes';
 import { jobRouter } from '@/modules/job/job.routes';
+import { createJobRoundsRouter } from '@/modules/job/job-rounds.routes';
+import { createJobRoundsService } from '@/modules/job/job-rounds.service';
+import { createApplicationRouter } from '@/modules/application/application.routes';
+import { createApplicationService } from '@/modules/application/application.service';
 import { notFound } from '@/middlewares/not-found';
 import { errorHandler } from '@/middlewares/error-handler';
 
@@ -30,6 +34,8 @@ export function createApp(
 
   app.use('/health', healthRouter);
   app.use('/jobs', jobRouter);
+  app.use('/jobs', createJobRoundsRouter(authService, createJobRoundsService(prisma)));
+  app.use('/applications', createApplicationRouter(authService, createApplicationService(prisma)));
   app.use('/auth', createAuthRouter(authService));
   app.use('/candidates', createCandidateRouter(authService));
   app.use('/companies', createCompanyRouter(authService, createCompanyService(prisma)));

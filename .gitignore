@@ -18,3 +18,7 @@ apps/api/src/generated
 .tmp/
 .claude/settings.local.json
 .vscode/mcp.json
+
+# Playwright
+playwright-report/
+test-results/

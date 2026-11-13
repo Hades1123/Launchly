@@ -19,6 +19,7 @@ export const errorCodeSchema = z.enum([
   'GOOGLE_SIGN_IN_UNAVAILABLE',
   'INVALID_OR_EXPIRED_TOKEN',
   'EMAIL_DELIVERY_FAILED',
+  'AI_UNAVAILABLE',
   'INTERNAL_ERROR',
 ]);
 export type ErrorCode = z.infer<typeof errorCodeSchema>;

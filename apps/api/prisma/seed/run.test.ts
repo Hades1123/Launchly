@@ -47,6 +47,7 @@ const expectedCounts: Record<string, number> = {
   companies: seedData.companies.length,
   jobs: seedData.jobs.length,
   jobStages: seedData.jobStages.length,
+  jobNotes: seedData.jobNotes.length,
   applications: seedData.applications.length,
   applicationStatusHistory: seedData.applicationStatusHistory.length,
   aiAssessments: seedData.aiAssessments.length,
