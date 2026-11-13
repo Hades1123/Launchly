@@ -48,7 +48,7 @@ const row = () => ({
   salaryMax: 4000,
   salaryHidden: false,
   createdAt: new Date('2026-11-01T00:00:00Z'),
-  company: { id: 'c1', name: 'Acme', website: null },
+  company: { id: 'c1', name: 'Acme', website: null, logoUrl: null },
   stages: STAGES,
   notes: NOTES,
 });

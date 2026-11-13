@@ -122,7 +122,11 @@ export class JobService {
         description: true,
         level: true,
         location: true,
-        company: { select: { id: true, name: true } },
+        industry: true,
+        requirements: true,
+        benefits: true,
+        createdAt: true,
+        company: { select: { id: true, name: true, website: true, logoUrl: true } },
         stages: {
           orderBy: { position: 'asc' },
           select: {
@@ -148,7 +152,16 @@ export class JobService {
       description: job.description,
       level: job.level,
       location: job.location,
-      company: { id: job.company.id, name: job.company.name },
+      industry: job.industry,
+      requirements: job.requirements,
+      benefits: job.benefits,
+      createdAt: job.createdAt.toISOString(),
+      company: {
+        id: job.company.id,
+        name: job.company.name,
+        website: job.company.website,
+        logoUrl: job.company.logoUrl,
+      },
       salary: toPublicSalary(job),
       // `format` is free text in the database; only known values reach candidates.
       stages: job.stages.map((stage) => ({
