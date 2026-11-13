@@ -218,7 +218,10 @@ export function createInterviewPracticeService(prisma: PrismaClient, options: Op
       if (!session || isPracticeExpired(session, at)) {
         throw new AppError('NOT_FOUND', 'Practice session not found');
       }
-      if (session.status === 'COMPLETED') return toDto(session as SessionRow);
+      // Completed sessions are history; legacy sessions have no expiry and must never get one.
+      if (session.status === 'COMPLETED' || session.expiresAt === null) {
+        return toDto(session as SessionRow);
+      }
       return toDto((await touch(session.id, at)) as SessionRow);
     },
 

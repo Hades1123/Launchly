@@ -23,9 +23,9 @@ export const envSchema = z
     AI_DRIVER: z.enum(['mock', 'gemini']).default('mock'),
     AI_MODEL: z.string().min(1).default('gemini-3.5-flash-lite'),
     // Sign-ins allowed per IP in 2 minutes; Playwright raises it because specs sign in often.
+    LOGIN_RATE_LIMIT: z.coerce.number().int().positive().default(10),
     // Deletes expired incomplete interview practice sessions at startup and hourly (SCRUM-66).
     PRACTICE_CLEANUP_ENABLED: z.stringbool().default(true),
-    LOGIN_RATE_LIMIT: z.coerce.number().int().positive().default(10),
   })
   .refine((e) => e.AI_DRIVER !== 'gemini' || Boolean(e.GEMINI_API_KEY), {
     path: ['GEMINI_API_KEY'],

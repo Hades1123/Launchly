@@ -317,6 +317,17 @@ describe('GET /candidates/me/interview-practice/:id', () => {
     expect(ctx.prisma.interviewSession.update).not.toHaveBeenCalled();
   });
 
+  it('does not give a legacy session without an expiry a deadline', async () => {
+    ctx.prisma.interviewSession.findFirst.mockResolvedValue(
+      sessionRow({ expiresAt: null, interviewConsentAt: null }),
+    );
+
+    const res = await request(ctx.app).get(`${BASE}/${SESSION}`).set(auth);
+
+    expect(res.status).toBe(200);
+    expect(ctx.prisma.interviewSession.update).not.toHaveBeenCalled();
+  });
+
   it('400 for an id that is not a uuid', async () => {
     const res = await request(ctx.app).get(`${BASE}/not-a-uuid`).set(auth);
 
