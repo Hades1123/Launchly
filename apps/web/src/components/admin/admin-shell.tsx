@@ -31,6 +31,15 @@ export function AdminShell({ children }: { children: ReactNode }) {
       </GuardCard>
     );
   }
+  if (status === 'unavailable') {
+    return (
+      <GuardCard>
+        <p className="text-sm text-muted-foreground">
+          Không kết nối được máy chủ. Vui lòng thử lại sau.
+        </p>
+      </GuardCard>
+    );
+  }
   if (status !== 'authenticated' || !user) {
     return (
       <GuardCard>

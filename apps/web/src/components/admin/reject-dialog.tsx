@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 
 /**
  * "Từ chối" button plus a modal that asks for the reason; confirm stays disabled until a
- * non-blank reason is typed. Generic so the job review reuses it.
+ * non-blank reason is typed. `onSubmit` throws an Error with a readable message to keep the
+ * dialog open with the typed reason. Generic so the job review reuses it.
  */
 export function RejectDialog({
   heading,
@@ -23,13 +24,17 @@ export function RejectDialog({
   const reasonId = useId();
   const [reason, setReason] = useState('');
   const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const trimmed = reason.trim();
 
   async function confirm() {
     setSending(true);
+    setError(null);
     try {
       await onSubmit(trimmed);
       dialog.current?.close();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Không thể từ chối. Vui lòng thử lại.');
     } finally {
       setSending(false);
     }
@@ -42,6 +47,7 @@ export function RejectDialog({
         disabled={disabled}
         onClick={() => {
           setReason('');
+          setError(null);
           dialog.current?.showModal();
         }}
       >
@@ -71,6 +77,11 @@ export function RejectDialog({
         <p className="mt-1 text-xs text-subtle-foreground">
           Lý do sẽ được gửi cho nhà tuyển dụng qua email.
         </p>
+        {error && (
+          <p role="alert" className="mt-3 text-sm text-danger">
+            {error}
+          </p>
+        )}
         <div className="mt-5 flex justify-end gap-2">
           <Button variant="ghost" disabled={sending} onClick={() => dialog.current?.close()}>
             Hủy

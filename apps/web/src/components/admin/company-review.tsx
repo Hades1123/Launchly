@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import type { AdminCompany, CompanyModerationStatus } from '@launchly/shared';
 import { moderationDate } from '@/components/admin/pending-company-list';
@@ -19,6 +19,19 @@ const statusView: Record<CompanyModerationStatus, { label: string; tone: BadgeTo
   REJECTED: { label: 'Bị từ chối', tone: 'danger' },
 };
 
+const DECIDED = 'Mục này đã được xử lý';
+
+/** Readable Vietnamese text for a failed admin call. */
+function moderationErrorText(error: unknown): string {
+  if (error instanceof ApiError) {
+    if (error.code === 'NOT_FOUND' || error.code === 'VALIDATION_ERROR') {
+      return 'Không tìm thấy công ty.';
+    }
+    if (error.code === 'FORBIDDEN') return 'Bạn không có quyền duyệt nội dung.';
+  }
+  return authErrorMessage(error);
+}
+
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
@@ -35,31 +48,52 @@ export function CompanyReview({ id }: { id: string }) {
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const load = useCallback(async () => {
-    try {
-      setCompany(await getAdminCompany(id));
-    } catch (cause) {
-      setError(authErrorMessage(cause));
+  useEffect(() => {
+    let active = true;
+    setCompany(null);
+    setError(null);
+    setNotice(null);
+    async function load() {
+      try {
+        const loaded = await getAdminCompany(id);
+        if (active) setCompany(loaded);
+      } catch (cause) {
+        if (active) setError(moderationErrorText(cause));
+      }
     }
+    void load();
+    return () => {
+      active = false;
+    };
   }, [id]);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  /** Another admin decided first (E1): show what they decided. */
+  async function showDecided() {
+    setNotice(DECIDED);
+    setCompany(await getAdminCompany(id));
+  }
 
-  async function decide(run: () => Promise<AdminCompany>) {
+  async function approve() {
     setBusy(true);
     setError(null);
     try {
-      setCompany(await run());
+      setCompany(await approveCompany(id));
     } catch (cause) {
-      if (cause instanceof ApiError && cause.code === 'CONFLICT') {
-        // Another admin decided first (E1): show what they decided.
-        setNotice('Mục này đã được xử lý');
-        await load();
-      } else {
-        setError(authErrorMessage(cause));
-      }
+      if (cause instanceof ApiError && cause.code === 'CONFLICT') await showDecided();
+      else setError(moderationErrorText(cause));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /** Throws a readable Error on failure so the dialog stays open with the reason. */
+  async function reject(reason: string) {
+    setBusy(true);
+    try {
+      setCompany(await rejectCompany(id, reason));
+    } catch (cause) {
+      if (cause instanceof ApiError && cause.code === 'CONFLICT') await showDecided();
+      else throw new Error(moderationErrorText(cause), { cause });
     } finally {
       setBusy(false);
     }
@@ -88,12 +122,19 @@ export function CompanyReview({ id }: { id: string }) {
   }
 
   const view = statusView[company.moderationStatus];
-  const pending = company.moderationStatus === 'PENDING';
 
   return (
     <>
       {back}
       <div className="flex flex-wrap items-center gap-3">
+        {company.logoUrl && (
+          // A plain <img>: the logo is a recruiter-supplied URL or data URI, as on the register page.
+          <img
+            src={company.logoUrl}
+            alt={`Logo ${company.name}`}
+            className="size-12 rounded-control object-cover shadow-card"
+          />
+        )}
         <h1 className="font-display text-2xl font-bold text-foreground">{company.name}</h1>
         <Badge tone={view.tone} shape="pill">
           {view.label}
@@ -127,14 +168,10 @@ export function CompanyReview({ id }: { id: string }) {
           {error}
         </p>
       )}
-      {pending && (
+      {company.moderationStatus === 'PENDING' && (
         <div className="flex justify-end gap-2">
-          <RejectDialog
-            heading="Từ chối công ty"
-            disabled={busy}
-            onSubmit={(reason) => decide(() => rejectCompany(company.id, reason))}
-          />
-          <Button disabled={busy} onClick={() => void decide(() => approveCompany(company.id))}>
+          <RejectDialog heading="Từ chối công ty" disabled={busy} onSubmit={reject} />
+          <Button disabled={busy} onClick={() => void approve()}>
             <CheckCircle2 className="size-4" aria-hidden />
             Duyệt
           </Button>

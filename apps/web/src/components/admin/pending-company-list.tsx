@@ -24,11 +24,15 @@ export function PendingCompanyList() {
 
   useEffect(() => {
     let active = true;
-    listAdminCompanies('PENDING')
-      .then((companies) => active && setState({ kind: 'ready', companies }))
-      .catch(
-        (error: unknown) => active && setState({ kind: 'error', text: authErrorMessage(error) }),
-      );
+    async function load() {
+      try {
+        const companies = await listAdminCompanies('PENDING');
+        if (active) setState({ kind: 'ready', companies });
+      } catch (error) {
+        if (active) setState({ kind: 'error', text: authErrorMessage(error) });
+      }
+    }
+    void load();
     return () => {
       active = false;
     };
@@ -67,7 +71,7 @@ export function PendingCompanyList() {
               <div className="min-w-0 flex-1">
                 <Link
                   href={`/admin/moderation/companies/${company.id}`}
-                  className="font-semibold text-foreground hover:text-primary"
+                  className="rounded-control font-semibold text-foreground hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 >
                   {company.name}
                 </Link>
