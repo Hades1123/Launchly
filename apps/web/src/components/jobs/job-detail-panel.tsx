@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { CircleAlert } from 'lucide-react';
 import type { PublicJobDetail } from '@launchly/shared';
 import { JobDetail } from '@/components/jobs/job-detail';
+import { RevealPanelTop } from '@/components/jobs/reveal-panel-top';
 import { buttonClasses } from '@/components/ui/button';
 
 export type PanelJob = { kind: 'ok'; job: PublicJobDetail } | { kind: 'error'; jobId: string };
@@ -14,6 +15,7 @@ export function JobDetailPanel({ selected, retryHref }: { selected: PanelJob; re
       aria-label="Job details"
       className="hidden lg:panel-below-header lg:col-span-7 lg:block"
     >
+      <RevealPanelTop />
       {selected.kind === 'ok' ? (
         <JobDetail job={selected.job} variant="panel" />
       ) : (
