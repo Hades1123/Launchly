@@ -12,6 +12,7 @@ const companySelect = {
   logoUrl: true,
   description: true,
   moderationStatus: true,
+  moderationReason: true,
   createdAt: true,
 } as const;
 
@@ -25,6 +26,7 @@ type CompanyRow = {
   logoUrl: string | null;
   description: string | null;
   moderationStatus: CompanyDto['moderationStatus'];
+  moderationReason: string | null;
   createdAt: Date;
 };
 
@@ -35,23 +37,27 @@ function toDto(row: CompanyRow): CompanyDto {
 export function createCompanyService(prisma: PrismaClient) {
   return {
     async create(ownerId: string, input: CreateCompanyInput): Promise<CompanyDto> {
-      const existing = await prisma.company.findFirst({
-        where: { ownerId },
-        select: { id: true },
+      return prisma.$transaction(async (tx) => {
+        // Serialise registrations per owner so two requests cannot both pass the check (FR-016).
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${ownerId}))`;
+        // A rejected company stays on record; only a pending or approved one blocks a new one.
+        const existing = await tx.company.findFirst({
+          where: { ownerId, moderationStatus: { in: ['PENDING', 'APPROVED'] } },
+          select: { id: true },
+        });
+        if (existing) {
+          throw new AppError('CONFLICT', 'You already have a pending or approved company');
+        }
+        return toDto(
+          await tx.company.create({ data: { ownerId, ...input }, select: companySelect }),
+        );
       });
-      if (existing) {
-        throw new AppError('CONFLICT', 'You already have a registered company');
-      }
-      const company = await prisma.company.create({
-        data: { ownerId, ...input },
-        select: companySelect,
-      });
-      return toDto(company);
     },
 
     async getMine(ownerId: string): Promise<CompanyDto> {
       const company = await prisma.company.findFirst({
         where: { ownerId },
+        orderBy: { createdAt: 'desc' },
         select: companySelect,
       });
       if (!company) throw new AppError('NOT_FOUND', 'Company profile not found');
@@ -64,7 +70,8 @@ export function createCompanyService(prisma: PrismaClient) {
         select: companySelect,
       });
       if (!company) throw new AppError('NOT_FOUND', 'Company not found');
-      return toDto(company);
+      // The rejection reason is internal; the public page never shows it (FR-013).
+      return { ...toDto(company), moderationReason: null };
     },
   };
 }

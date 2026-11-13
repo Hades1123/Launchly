@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { env } from '@/lib/env';
 import { prisma } from '@/lib/prisma';
+import { seedData } from './seed/data';
 import { assertSeedAllowed } from './seed/run';
 
 /**
@@ -9,6 +10,7 @@ import { assertSeedAllowed } from './seed/run';
  *
  *   consent <candidate email>               clear the AI consent
  *   application <candidate email> <title>   delete that candidate's application to the job
+ *   moderation                              seeded companies and the pending job back to their moderation state
  */
 async function main(): Promise<void> {
   assertSeedAllowed({ nodeEnv: env.NODE_ENV, databaseUrl: env.DATABASE_URL });
@@ -30,7 +32,51 @@ async function main(): Promise<void> {
     return;
   }
 
-  throw new Error('Usage: e2e-reset.ts consent <email> | application <email> <job title>');
+  if (command === 'moderation') {
+    // "Draft Ventures" waits for review again; the rejected recruiter keeps only "QuickCash Jobs".
+    await prisma.company.updateMany({
+      where: { name: 'Draft Ventures' },
+      data: {
+        moderationStatus: 'PENDING',
+        moderationReason: null,
+        reviewedById: null,
+        reviewedAt: null,
+      },
+    });
+    await prisma.company.deleteMany({
+      where: {
+        owner: { email: 'recruiter.rejected@launchly.test' },
+        name: { not: 'QuickCash Jobs' },
+      },
+    });
+    // Jobs the SCRUM-74 spec submitted ("E2E moderation …"); rounds and notes cascade, while
+    // applications would block the delete, so they go first.
+    const specJobs = { title: { startsWith: 'E2E moderation' } };
+    await prisma.application.deleteMany({ where: { job: specJobs } });
+    await prisma.job.deleteMany({ where: specJobs });
+    // The seeded pending job ("Thực tập sinh Product Designer") as seeded: no rounds, no notes.
+    const pendingJob = seedData.jobs.find((job) => job.publicationStatus === 'PENDING');
+    if (pendingJob) {
+      await prisma.jobStage.deleteMany({ where: { jobId: pendingJob.id } });
+      await prisma.jobNote.deleteMany({ where: { jobId: pendingJob.id } });
+      await prisma.job.update({
+        where: { id: pendingJob.id },
+        // Fields the seed leaves out must be cleared too, or a resubmit's salary would survive.
+        data: {
+          salaryMin: null,
+          salaryMax: null,
+          ...pendingJob,
+          reviewedById: null,
+          reviewedAt: null,
+        },
+      });
+    }
+    return;
+  }
+
+  throw new Error(
+    'Usage: e2e-reset.ts consent <email> | application <email> <job title> | moderation',
+  );
 }
 
 main()

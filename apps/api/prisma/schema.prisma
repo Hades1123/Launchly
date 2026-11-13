@@ -31,6 +31,8 @@ model User {
   candidateProfile   CandidateProfile?
   ownedCompanies     Company[]           @relation("CompanyOwner")
   createdJobs        Job[]               @relation("JobCreator")
+  reviewedCompanies  Company[]           @relation("CompanyReviewer")
+  reviewedJobs       Job[]               @relation("JobReviewer")
   interviewQuestions InterviewQuestion[] @relation("QuestionAuthor")
   notifications      Notification[]
   authTokens         AuthToken[]
@@ -161,12 +163,16 @@ model Company {
   logoUrl          String?
   moderationStatus CompanyModerationStatus @default(PENDING)
   moderationReason String?
+  reviewedById     String?
+  reviewedAt       DateTime?
   owner            User                    @relation("CompanyOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  reviewedBy       User?                   @relation("CompanyReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
   jobs             Job[]
   createdAt        DateTime                @default(now())
   updatedAt        DateTime                @updatedAt
 
   @@index([ownerId])
+  @@index([reviewedById])
   @@index([moderationStatus])
   @@index([nameNormalized])
 }
@@ -188,8 +194,11 @@ model Job {
   salaryHidden       Boolean              @default(false)
   publicationStatus  JobPublicationStatus @default(DRAFT)
   moderationReason   String?
+  reviewedById       String?
+  reviewedAt         DateTime?
   company            Company              @relation(fields: [companyId], references: [id], onDelete: Restrict)
   createdBy          User                 @relation("JobCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  reviewedBy         User?                @relation("JobReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
   stages             JobStage[]
   notes              JobNote[]
   applications       Application[]
@@ -200,6 +209,7 @@ model Job {
 
   @@index([companyId])
   @@index([createdById])
+  @@index([reviewedById])
   @@index([publicationStatus])
   @@index([industry])
   @@index([level])

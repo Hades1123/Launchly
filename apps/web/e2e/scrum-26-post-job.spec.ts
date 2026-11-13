@@ -235,13 +235,11 @@ test.describe('approved recruiter', () => {
     }
 
     await page.goto('/recruiter/jobs?status=DRAFT');
-    // The search is debounced and its reload clears the selection, so let the filtered list load
-    // before ticking anything.
-    const filtered = page.waitForResponse(
-      (res) => res.url().includes('/recruiter/jobs') && res.url().includes('q=E2E+bulk'),
-    );
     await page.getByRole('searchbox').fill('E2E bulk');
-    await filtered;
+    // The list searches 300 ms after typing and clears the selection when results arrive,
+    // so wait for that search to finish before ticking drafts.
+    await expect(page).toHaveURL(/[?&]q=E2E(\+|%20)bulk/);
+    await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
     for (const title of titles) {
       await page.getByRole('checkbox', { name: `Chọn ${title}` }).check();
     }

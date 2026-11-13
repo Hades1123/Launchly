@@ -4,6 +4,10 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { env } from '@/lib/env';
 import { prisma } from '@/lib/prisma';
+import { createAdminCompanyRouter } from '@/modules/admin/admin-company.routes';
+import { createAdminCompanyService } from '@/modules/admin/admin-company.service';
+import { createAdminJobRouter } from '@/modules/admin/admin-job.routes';
+import { createAdminJobService } from '@/modules/admin/admin-job.service';
 import { createAuthService } from '@/modules/auth/auth.service';
 import { createAuthRouter } from '@/modules/auth/auth.routes';
 import { createGoogleProvider } from '@/providers/google/google.provider';
@@ -26,8 +30,10 @@ import { notFound } from '@/middlewares/not-found';
 import { errorHandler } from '@/middlewares/error-handler';
 
 export function createApp(
-  authService = createAuthService(prisma, createMailProvider(), createGoogleProvider()),
+  authService?: ReturnType<typeof createAuthService>,
+  mail = createMailProvider(),
 ) {
+  authService ??= createAuthService(prisma, mail, createGoogleProvider());
   const app = express();
   if (env.TRUST_PROXY_HOPS > 0) {
     app.set('trust proxy', env.TRUST_PROXY_HOPS);
@@ -51,6 +57,11 @@ export function createApp(
   app.use('/auth', createAuthRouter(authService));
   app.use('/candidates', createCandidateRouter(authService));
   app.use('/companies', createCompanyRouter(authService, createCompanyService(prisma)));
+  app.use(
+    '/admin/companies',
+    createAdminCompanyRouter(authService, createAdminCompanyService(prisma, mail)),
+  );
+  app.use('/admin/jobs', createAdminJobRouter(authService, createAdminJobService(prisma, mail)));
   app.use(notFound);
   app.use(errorHandler);
   return app;

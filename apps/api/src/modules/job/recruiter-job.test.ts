@@ -322,14 +322,15 @@ describe('PUT /recruiter/jobs/:id on a rejected job', () => {
     company: { ownerId: 'user-1', moderationStatus: 'APPROVED' },
   };
 
-  it('resubmits it for review and clears the old reason', async () => {
+  it('resubmits it for review and keeps the old reason until an admin approves (E4)', async () => {
     const { app, tx } = makeApp({ access: rejected });
     const res = await request(app).put(`/recruiter/jobs/${JOB}`).set(auth).send(submitBody);
     expect(res.status).toBe(200);
-    expect(tx.job.update.mock.calls[0]![0].data).toMatchObject({
-      publicationStatus: 'PENDING',
-      moderationReason: null,
-    });
+    const data = tx.job.update.mock.calls[0]![0].data;
+    expect(data.publicationStatus).toBe('PENDING');
+    expect(data).not.toHaveProperty('moderationReason');
+    // The new submission has not been reviewed yet.
+    expect(data).toMatchObject({ reviewedById: null, reviewedAt: null });
   });
 
   it('keeps it rejected when only saved', async () => {

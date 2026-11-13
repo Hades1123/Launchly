@@ -156,7 +156,26 @@ function CompanyCard({ company }: { company: RecruiterCompany }) {
         <Badge tone={view.tone} shape="pill" className="mt-1">
           {view.label}
         </Badge>
+        <RejectedCompanyNotice company={company} />
       </div>
+    </div>
+  );
+}
+
+/** Rejection reason and the way forward, shown in the sidebar and in the mobile header. */
+function RejectedCompanyNotice({ company }: { company: RecruiterCompany }) {
+  if (company.kind !== 'ready' || company.company.moderationStatus !== 'REJECTED') return null;
+  return (
+    <div className="mt-2 space-y-1">
+      {company.company.moderationReason && (
+        <p className="text-xs break-words text-danger">Lý do: {company.company.moderationReason}</p>
+      )}
+      <Link
+        href="/company/register"
+        className="block rounded-control text-xs font-semibold text-primary hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      >
+        Đăng ký công ty khác
+      </Link>
     </div>
   );
 }
@@ -286,6 +305,14 @@ export function RecruiterShell({ children }: { children: ReactNode }) {
               <ChevronLeft className="size-4" aria-hidden /> Trang việc làm
             </Link>
           </div>
+          {company.kind === 'ready' && company.company.moderationStatus === 'REJECTED' && (
+            <div className="mx-4 mb-3 rounded-card bg-danger-subtle p-3">
+              <p className="text-xs font-semibold text-danger">
+                {company.company.name}: bị từ chối
+              </p>
+              <RejectedCompanyNotice company={company} />
+            </div>
+          )}
           <nav aria-label="Quản lý tuyển dụng" className="flex gap-1 overflow-x-auto px-4 pb-3">
             <NavLinks company={company} pathname={pathname} />
           </nav>
