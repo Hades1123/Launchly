@@ -1,8 +1,14 @@
+import type { z } from 'zod';
 import type { PrismaClient } from '@/generated/prisma/client';
 import {
   PRACTICE_EXPIRY_HOURS,
+  PRACTICE_FEEDBACK_DISCLAIMER,
+  PRACTICE_QUESTIONS_PER_ROUND,
   generatedPracticeQuestionsSchema,
+  generatedPracticeSummarySchema,
+  generatedRoundFeedbackSchema,
   isInteractiveRoundFormat,
+  practiceFeedbackBodySchema,
   type PracticeAnswerInput,
   type PracticeHistoryQuery,
   type PracticeHistoryResponse,
@@ -21,6 +27,58 @@ const QUESTIONS_SYSTEM_PROMPT = [
   'Tag each question with where it comes from: JOB_DESCRIPTION, JOB_REQUIREMENTS or ROUND_PROCESS.',
   'Do not ask about personal attributes such as age, gender or hometown.',
 ].join(' ');
+
+const FEEDBACK_SYSTEM_PROMPT = [
+  'You are a supportive interview coach giving advisory feedback on one practice round.',
+  'Judge only the answers you are given, against the job and round.',
+  'Give an overview, strengths, things to improve, and one short note per answer in the order given.',
+  'Never give a score, grade, ranking, percentile, pass or fail verdict, or hiring recommendation.',
+].join(' ');
+
+const SUMMARY_SYSTEM_PROMPT = [
+  'You are a supportive interview coach summarising a whole practice workflow from the round feedback you are given.',
+  'Give an overview, overall strengths, overall things to improve and concrete next steps.',
+  'Never give a score, grade, ranking, percentile, pass or fail verdict, or hiring recommendation.',
+].join(' ');
+
+function buildFeedbackPrompt(
+  jobTitle: string,
+  roundName: string,
+  questions: Array<{ prompt: string; answer: { answer: string } | null }>,
+): string {
+  const pairs = questions
+    .map((q, i) => `${i + 1}. Question: ${q.prompt}\n   Answer: ${q.answer?.answer ?? ''}`)
+    .join('\n');
+  return `## Job\n${jobTitle}\n\n## Round\n${roundName}\n\n## Questions and answers\n${pairs}`;
+}
+
+/** Reads a stored JSON text back through its schema; anything unreadable counts as absent. */
+function parseStored<T>(text: string | null, schema: z.ZodType<T>): T | null {
+  if (!text) return null;
+  try {
+    const parsed = schema.safeParse(JSON.parse(text));
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
+  }
+}
+
+function buildSummaryPrompt(
+  jobTitle: string,
+  rounds: Array<{ name: string; feedback: string | null }>,
+): string {
+  const parts = rounds.map((round) => {
+    const body = parseStored(round.feedback, practiceFeedbackBodySchema);
+    if (!body) return `### ${round.name}\n(no feedback)`;
+    return [
+      `### ${round.name}`,
+      body.overview,
+      `Strengths: ${body.strengths.join('; ')}`,
+      `To improve: ${body.improvements.join('; ')}`,
+    ].join('\n');
+  });
+  return `## Job\n${jobTitle}\n\n## Round feedback\n${parts.join('\n\n')}`;
+}
 
 function buildQuestionsPrompt(
   job: { title: string; description: string; requirements: string[] },
@@ -66,10 +124,14 @@ type SessionRow = {
       position: number;
       prompt: string;
       source: string;
-      answer: { answer: string; feedback: string | null; score: unknown } | null;
+      answer: { answer: string; feedback: string | null } | null;
     }>;
   }>;
 };
+
+function withDisclaimer<T extends object>(body: T | null) {
+  return body ? { ...body, disclaimer: PRACTICE_FEEDBACK_DISCLAIMER } : null;
+}
 
 function toDto(row: SessionRow): PracticeSessionDto {
   return {
@@ -82,7 +144,7 @@ function toDto(row: SessionRow): PracticeSessionDto {
     interviewConsentAt: row.interviewConsentAt?.toISOString() ?? null,
     lastActivityAt: row.lastActivityAt.toISOString(),
     expiresAt: row.expiresAt?.toISOString() ?? null,
-    summary: row.summary,
+    summary: withDisclaimer(parseStored(row.summary, generatedPracticeSummarySchema)),
     createdAt: row.createdAt.toISOString(),
     rounds: row.rounds.map((round) => ({
       id: round.id,
@@ -90,19 +152,13 @@ function toDto(row: SessionRow): PracticeSessionDto {
       name: round.name,
       position: round.position,
       status: round.status,
-      feedback: round.feedback,
+      feedback: withDisclaimer(parseStored(round.feedback, practiceFeedbackBodySchema)),
       questions: round.questions.map((q) => ({
         id: q.id,
         position: q.position,
         prompt: q.prompt,
         source: q.source,
-        answer: q.answer
-          ? {
-              answer: q.answer.answer,
-              feedback: q.answer.feedback,
-              score: q.answer.score === null ? null : Number(q.answer.score),
-            }
-          : null,
+        answer: q.answer ? { answer: q.answer.answer, feedback: q.answer.feedback } : null,
       })),
     })),
   };
@@ -141,6 +197,25 @@ export function createInterviewPracticeService(prisma: PrismaClient, options: Op
       data: { lastActivityAt: at, expiresAt: practiceExpiry(at) },
       include: sessionInclude,
     });
+  }
+
+  /** One AI call with the shared timeout; any failure is a `503 AI_UNAVAILABLE`, nothing leaks. */
+  async function ask<T>(
+    system: string,
+    prompt: string,
+    schema: z.ZodType<T>,
+    failure: string,
+  ): Promise<T> {
+    try {
+      return await withTimeout(
+        (options.ai ?? getAiProvider()).generateJson({ system, prompt, schema }),
+        timeoutMs,
+      );
+    } catch (error) {
+      throw error instanceof AppError && error.code === 'AI_UNAVAILABLE'
+        ? error
+        : new AppError('AI_UNAVAILABLE', failure);
+    }
   }
 
   /** The session must be live and the candidate must have given interview AI consent. */
@@ -304,21 +379,12 @@ export function createInterviewPracticeService(prisma: PrismaClient, options: Op
         throw new AppError('VALIDATION_ERROR', 'This job has no description to practice from');
       }
 
-      let generated;
-      try {
-        generated = await withTimeout(
-          (options.ai ?? getAiProvider()).generateJson({
-            system: QUESTIONS_SYSTEM_PROMPT,
-            prompt: buildQuestionsPrompt(job, { name: round.name, format }),
-            schema: generatedPracticeQuestionsSchema,
-          }),
-          timeoutMs,
-        );
-      } catch (error) {
-        throw error instanceof AppError && error.code === 'AI_UNAVAILABLE'
-          ? error
-          : new AppError('AI_UNAVAILABLE', 'The AI could not write questions. Try again later.');
-      }
+      const generated = await ask(
+        QUESTIONS_SYSTEM_PROMPT,
+        buildQuestionsPrompt(job, { name: round.name, format }),
+        generatedPracticeQuestionsSchema,
+        'The AI could not write questions. Try again later.',
+      );
 
       // The AI call is slow, so the lock is taken only to write: a request that lost the race
       // finds the set already there and leaves it, and its answers, untouched.
@@ -382,6 +448,113 @@ export function createInterviewPracticeService(prisma: PrismaClient, options: Op
         data: { status: 'IN_PROGRESS' },
       });
       return toDto((await touch(sessionId, at)) as SessionRow);
+    },
+
+    /**
+     * Completes a round with advisory feedback, and the whole session with an overall summary
+     * once every selected round is complete. Repeating the call returns what is stored; a failed
+     * summary leaves the round feedback in place so a retry writes only the summary.
+     */
+    async generateFeedback(
+      userId: string,
+      sessionId: string,
+      roundId: string,
+    ): Promise<{ session: PracticeSessionDto; created: boolean }> {
+      const candidateId = await candidateIdFor(userId);
+      const round = await prisma.interviewPracticeRound.findFirst({
+        where: { id: roundId, sessionId, session: { candidateId } },
+        select: {
+          id: true,
+          name: true,
+          status: true,
+          session: {
+            select: {
+              id: true,
+              status: true,
+              expiresAt: true,
+              interviewConsentAt: true,
+              job: { select: { title: true } },
+            },
+          },
+          questions: {
+            orderBy: { position: 'asc' },
+            select: {
+              id: true,
+              position: true,
+              prompt: true,
+              answer: { select: { answer: true } },
+            },
+          },
+        },
+      });
+      const at = now();
+      if (!round) throw new AppError('NOT_FOUND', 'Practice round not found');
+      assertUsable(round.session, at);
+
+      let created = false;
+      if (round.status !== 'COMPLETED') {
+        const answered =
+          round.questions.length === PRACTICE_QUESTIONS_PER_ROUND &&
+          round.questions.every((question) => question.answer);
+        if (!answered) {
+          throw new AppError('VALIDATION_ERROR', 'Answer all five questions to get feedback');
+        }
+        const result = await ask(
+          FEEDBACK_SYSTEM_PROMPT,
+          buildFeedbackPrompt(round.session.job.title, round.name, round.questions),
+          generatedRoundFeedbackSchema,
+          'The AI could not write feedback. Try again later.',
+        );
+        const { answers, ...body } = result;
+        created = await prisma.$transaction(async (tx) => {
+          await tx.$queryRaw`SELECT id FROM "InterviewPracticeRound" WHERE id = ${roundId} FOR UPDATE`;
+          const current = await tx.interviewPracticeRound.findUnique({
+            where: { id: roundId },
+            select: { status: true },
+          });
+          if (current?.status === 'COMPLETED') return false;
+          for (const [index, question] of round.questions.entries()) {
+            await tx.interviewPracticeAnswer.update({
+              where: { questionId: question.id },
+              data: { feedback: answers[index]! },
+            });
+          }
+          await tx.interviewPracticeRound.update({
+            where: { id: roundId },
+            data: { status: 'COMPLETED', feedback: JSON.stringify(body) },
+          });
+          return true;
+        });
+      }
+
+      let session = await prisma.interviewSession.findUnique({
+        where: { id: sessionId },
+        include: sessionInclude,
+      });
+      if (!session) throw new AppError('NOT_FOUND', 'Practice session not found');
+      if (session.status !== 'COMPLETED') {
+        if (session.rounds.every((r) => r.status === 'COMPLETED')) {
+          const summary = await ask(
+            SUMMARY_SYSTEM_PROMPT,
+            buildSummaryPrompt(round.session.job.title, session.rounds),
+            generatedPracticeSummarySchema,
+            'The AI could not write the summary. Try again later.',
+          );
+          const { count } = await prisma.interviewSession.updateMany({
+            where: { id: sessionId, status: { not: 'COMPLETED' } },
+            data: { status: 'COMPLETED', completedAt: at, summary: JSON.stringify(summary) },
+          });
+          if (count > 0) created = true;
+          session = await prisma.interviewSession.findUnique({
+            where: { id: sessionId },
+            include: sessionInclude,
+          });
+          if (!session) throw new AppError('NOT_FOUND', 'Practice session not found');
+        } else {
+          session = await touch(sessionId, at);
+        }
+      }
+      return { session: toDto(session as SessionRow), created };
     },
 
     async history(userId: string, query: PracticeHistoryQuery): Promise<PracticeHistoryResponse> {

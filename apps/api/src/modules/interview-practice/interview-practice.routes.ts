@@ -36,6 +36,12 @@ export function createInterviewPracticeRouter(authService: AuthService, service:
     validate({ params: practiceRoundParamsSchema }),
     controller.generateQuestions,
   );
+  router.post(
+    '/:id/rounds/:roundId/feedback',
+    aiRateLimit,
+    validate({ params: practiceRoundParamsSchema }),
+    controller.generateFeedback,
+  );
   router.put(
     '/:id/questions/:questionId/answer',
     validate({ params: practiceQuestionParamsSchema, body: practiceAnswerInputSchema }),

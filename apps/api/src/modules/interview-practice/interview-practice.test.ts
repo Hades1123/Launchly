@@ -8,6 +8,7 @@ import express from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  PRACTICE_FEEDBACK_DISCLAIMER,
   PRACTICE_QUESTIONS_PER_ROUND,
   apiErrorSchema,
   practiceHistoryResponseSchema,
@@ -74,7 +75,7 @@ function sessionRow(over: Record<string, unknown> = {}) {
             position: 1,
             prompt: 'Tell me about a project',
             source: 'JOB_DESCRIPTION',
-            answer: { answer: 'A table', feedback: null, score: null },
+            answer: { answer: 'A table', feedback: null },
           },
         ],
       },
@@ -95,6 +96,8 @@ function makeApp(
     job: { findFirst: vi.fn<(args: any) => Promise<any>>(async () => publishedJob()) },
     application: { findUnique: vi.fn<(args: any) => Promise<any>>(async () => null) },
     interviewSession: {
+      findUnique: vi.fn<(args: any) => Promise<any>>(async () => sessionRow()),
+      updateMany: vi.fn<(args: any) => Promise<any>>(async () => ({ count: 1 })),
       findFirst: vi.fn<(args: any) => Promise<any>>(async () => null),
       create: vi.fn<(args: any) => Promise<any>>(async () => sessionRow()),
       update: vi.fn<(args: any) => Promise<any>>(async () => sessionRow()),
@@ -103,6 +106,7 @@ function makeApp(
     },
     interviewPracticeRound: {
       findFirst: vi.fn<(args: any) => Promise<any>>(async () => null),
+      findUnique: vi.fn<(args: any) => Promise<any>>(async () => ({ status: 'IN_PROGRESS' })),
       update: vi.fn<(args: any) => Promise<any>>(async () => ({})),
       updateMany: vi.fn<(args: any) => Promise<any>>(async () => ({ count: 1 })),
     },
@@ -113,6 +117,7 @@ function makeApp(
     },
     interviewPracticeAnswer: {
       upsert: vi.fn<(args: any) => Promise<any>>(async () => ({})),
+      update: vi.fn<(args: any) => Promise<any>>(async () => ({})),
     },
     $queryRaw: vi.fn<(...args: any[]) => Promise<any>>(async () => []),
   };
@@ -763,5 +768,302 @@ describe('PUT /:id/questions/:questionId/answer', () => {
   it('rejects recruiters', async () => {
     const res = await saveAnswer(makeApp('RECRUITER'), { answer: 'a' });
     expect(res.status).toBe(403);
+  });
+});
+
+const feedbackBody = {
+  overview: 'A clear start.',
+  strengths: ['Structured answers'],
+  improvements: ['Add concrete examples'],
+};
+const roundFeedback = { ...feedbackBody, answers: ['n1', 'n2', 'n3', 'n4', 'n5'] };
+const summaryBody = { ...feedbackBody, nextSteps: ['Practice out loud'] };
+const qid = (i: number) => `66666666-6666-4666-8666-66666666666${i}`;
+
+const feedbackRound = (answered = 5, over: Record<string, unknown> = {}) =>
+  roundRow({
+    questions: Array.from({ length: 5 }, (_, i) => ({
+      id: qid(i + 1),
+      position: i + 1,
+      prompt: `Question ${i + 1}?`,
+      answer: i < answered ? { answer: `My answer ${i + 1}` } : null,
+    })),
+    ...over,
+  });
+
+const completedRound = (id: string, position: number) => ({
+  id,
+  stageId: position === 1 ? ONLINE : PHONE,
+  name: position === 1 ? 'Online test' : 'Phone screen',
+  position,
+  status: 'COMPLETED',
+  feedback: JSON.stringify(feedbackBody),
+  questions: [],
+});
+const openRound = (id: string, position: number) => ({
+  ...completedRound(id, position),
+  status: 'IN_PROGRESS',
+  feedback: null,
+});
+const ROUND2 = '55555555-5555-4555-8555-555555555552';
+
+const feedback = (ctx: ReturnType<typeof makeApp>, token = 'token') =>
+  request(ctx.app)
+    .post(`${BASE}/${SESSION}/rounds/${ROUND}/feedback`)
+    .set({ Authorization: `Bearer ${token}` });
+
+/** An AI that answers the round-feedback call and then the summary call. */
+function feedbackAi(
+  replies: unknown[] = [roundFeedback, summaryBody],
+  failAt?: { index: number; error: unknown },
+) {
+  let call = 0;
+  const generateJson = vi.fn<(input: any) => Promise<any>>(async (input) => {
+    const index = call++;
+    if (failAt?.index === index) throw failAt.error;
+    return input.schema.parse(replies[index]);
+  });
+  return { ai: { generateJson } as unknown as AiProvider, generateJson };
+}
+
+describe('POST /:id/rounds/:roundId/feedback', () => {
+  let ai: ReturnType<typeof feedbackAi>;
+  let ctx: ReturnType<typeof makeApp>;
+  const setup = (a: ReturnType<typeof feedbackAi> = feedbackAi()) => {
+    ai = a;
+    ctx = makeApp('CANDIDATE', ai.ai);
+    ctx.prisma.interviewPracticeRound.findFirst.mockResolvedValue(feedbackRound());
+    // After the round is stored, another round of the session is still open.
+    ctx.prisma.interviewSession.findUnique.mockResolvedValue(
+      sessionRow({ rounds: [completedRound(ROUND, 1), openRound(ROUND2, 2)] }),
+    );
+  };
+  beforeEach(() => setup());
+
+  it('stores per-answer and round feedback and completes the round (201)', async () => {
+    const res = await feedback(ctx);
+
+    expect(res.status).toBe(201);
+    expect(practiceSessionDtoSchema.safeParse(res.body).success).toBe(true);
+    expect(ai.generateJson).toHaveBeenCalledTimes(1);
+    const { prompt } = ai.generateJson.mock.calls[0]![0];
+    expect(prompt).toContain('Frontend Intern');
+    expect(prompt).toContain('Question 1?');
+    expect(prompt).toContain('My answer 5');
+
+    const updates = ctx.prisma.interviewPracticeAnswer.update.mock.calls.map((c) => c[0]);
+    expect(updates).toEqual(
+      [1, 2, 3, 4, 5].map((i) => ({ where: { questionId: qid(i) }, data: { feedback: `n${i}` } })),
+    );
+    expect(ctx.prisma.interviewPracticeRound.update.mock.calls[0]![0]).toEqual({
+      where: { id: ROUND },
+      data: { status: 'COMPLETED', feedback: JSON.stringify(feedbackBody) },
+    });
+  });
+
+  it('keeps the summary away while a selected round is still open', async () => {
+    const res = await feedback(ctx);
+
+    expect(res.status).toBe(201);
+    expect(ai.generateJson).toHaveBeenCalledTimes(1);
+    expect(ctx.prisma.interviewSession.updateMany).not.toHaveBeenCalled();
+    expect(res.body.summary).toBeNull();
+  });
+
+  it('writes the summary and completes the session when the last round completes', async () => {
+    const done = sessionRow({
+      status: 'COMPLETED',
+      summary: JSON.stringify(summaryBody),
+      rounds: [completedRound(ROUND, 1), completedRound(ROUND2, 2)],
+    });
+    ctx.prisma.interviewSession.findUnique
+      .mockResolvedValueOnce(
+        sessionRow({ rounds: [completedRound(ROUND, 1), completedRound(ROUND2, 2)] }),
+      )
+      .mockResolvedValueOnce(done);
+
+    const res = await feedback(ctx);
+
+    expect(res.status).toBe(201);
+    expect(ai.generateJson).toHaveBeenCalledTimes(2);
+    expect(ai.generateJson.mock.calls[1]![0].prompt).toContain('A clear start.');
+    expect(ctx.prisma.interviewSession.updateMany.mock.calls[0]![0]).toEqual({
+      where: { id: SESSION, status: { not: 'COMPLETED' } },
+      data: { status: 'COMPLETED', completedAt: NOW, summary: JSON.stringify(summaryBody) },
+    });
+    expect(res.body.status).toBe('COMPLETED');
+    expect(res.body.summary).toEqual({ ...summaryBody, disclaimer: PRACTICE_FEEDBACK_DISCLAIMER });
+    expect(res.body.rounds[0].feedback).toEqual({
+      ...feedbackBody,
+      disclaimer: PRACTICE_FEEDBACK_DISCLAIMER,
+    });
+  });
+
+  it('400 until all five answers are saved, with no AI call', async () => {
+    for (const answered of [0, 4]) {
+      ctx.prisma.interviewPracticeRound.findFirst.mockResolvedValueOnce(feedbackRound(answered));
+      const res = await feedback(ctx);
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    }
+    ctx.prisma.interviewPracticeRound.findFirst.mockResolvedValueOnce(
+      feedbackRound(5, { questions: [] }),
+    );
+    expect((await feedback(ctx)).status).toBe(400);
+    expect(ai.generateJson).not.toHaveBeenCalled();
+    expect(ctx.prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('a repeat of a finished workflow returns the stored result with no AI call (200)', async () => {
+    ctx.prisma.interviewPracticeRound.findFirst.mockResolvedValue(
+      feedbackRound(5, { status: 'COMPLETED' }),
+    );
+    ctx.prisma.interviewSession.findUnique.mockResolvedValue(
+      sessionRow({
+        status: 'COMPLETED',
+        summary: JSON.stringify(summaryBody),
+        rounds: [completedRound(ROUND, 1)],
+      }),
+    );
+
+    const res = await feedback(ctx);
+
+    expect(res.status).toBe(200);
+    expect(ai.generateJson).not.toHaveBeenCalled();
+    expect(ctx.prisma.$transaction).not.toHaveBeenCalled();
+    expect(ctx.prisma.interviewSession.updateMany).not.toHaveBeenCalled();
+    expect(res.body.summary.disclaimer).toBe(PRACTICE_FEEDBACK_DISCLAIMER);
+  });
+
+  it('a retry after a failed summary writes only the summary', async () => {
+    ctx.prisma.interviewPracticeRound.findFirst.mockResolvedValue(
+      feedbackRound(5, { status: 'COMPLETED' }),
+    );
+    ctx.prisma.interviewSession.findUnique.mockResolvedValue(
+      sessionRow({ rounds: [completedRound(ROUND, 1)] }),
+    );
+    setupAi([summaryBody]);
+
+    const res = await feedback(ctx);
+
+    expect(res.status).toBe(201);
+    expect(ai.generateJson).toHaveBeenCalledTimes(1);
+    expect(ctx.prisma.interviewPracticeAnswer.update).not.toHaveBeenCalled();
+    expect(ctx.prisma.interviewSession.updateMany).toHaveBeenCalledTimes(1);
+
+    function setupAi(replies: unknown[]) {
+      ai = feedbackAi(replies);
+      const next = makeApp('CANDIDATE', ai.ai);
+      next.prisma.interviewPracticeRound.findFirst.mockResolvedValue(
+        feedbackRound(5, { status: 'COMPLETED' }),
+      );
+      next.prisma.interviewSession.findUnique.mockResolvedValue(
+        sessionRow({ rounds: [completedRound(ROUND, 1)] }),
+      );
+      ctx = next;
+    }
+  });
+
+  it('a request that lost the race to complete the round changes nothing', async () => {
+    ctx.prisma.interviewPracticeRound.findUnique.mockResolvedValue({ status: 'COMPLETED' });
+
+    const res = await feedback(ctx);
+
+    expect(res.status).toBe(200);
+    expect(ctx.prisma.interviewPracticeAnswer.update).not.toHaveBeenCalled();
+    expect(ctx.prisma.interviewPracticeRound.update).not.toHaveBeenCalled();
+  });
+
+  it('503 and nothing stored when the AI feedback has the wrong shape', async () => {
+    const mock = new MockAiProvider({
+      respond: () => ({ ...roundFeedback, answers: ['only one'] }),
+    });
+    ctx = makeApp('CANDIDATE', mock);
+    ctx.prisma.interviewPracticeRound.findFirst.mockResolvedValue(feedbackRound());
+
+    const res = await feedback(ctx);
+
+    expect(res.status).toBe(503);
+    expect(res.body.error.code).toBe('AI_UNAVAILABLE');
+    expect(ctx.prisma.$transaction).not.toHaveBeenCalled();
+    expect(ctx.prisma.interviewPracticeRound.update).not.toHaveBeenCalled();
+  });
+
+  it('503 on a provider failure or timeout, nothing stored, retryable', async () => {
+    setup(feedbackAi(undefined, { index: 0, error: new Error('vendor secret') }));
+    const failed = await feedback(ctx);
+    expect(failed.status).toBe(503);
+    expect(JSON.stringify(failed.body)).not.toContain('vendor secret');
+    expect(ctx.prisma.$transaction).not.toHaveBeenCalled();
+
+    const slow = { generateJson: vi.fn(() => new Promise(() => {})) } as unknown as AiProvider;
+    ctx = makeApp('CANDIDATE', slow, 20);
+    ctx.prisma.interviewPracticeRound.findFirst.mockResolvedValue(feedbackRound());
+    const timedOut = await feedback(ctx);
+    expect(timedOut.status).toBe(503);
+    expect(ctx.prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('keeps the stored round feedback when the summary fails, and does not complete the session', async () => {
+    setup(feedbackAi(undefined, { index: 1, error: new AppError('AI_UNAVAILABLE', 'down') }));
+    ctx.prisma.interviewSession.findUnique.mockResolvedValue(
+      sessionRow({ rounds: [completedRound(ROUND, 1)] }),
+    );
+
+    const res = await feedback(ctx);
+
+    expect(res.status).toBe(503);
+    expect(ctx.prisma.interviewPracticeRound.update).toHaveBeenCalledTimes(1);
+    expect(ctx.prisma.interviewSession.updateMany).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['no interview consent', { session: sessionOf({ interviewConsentAt: null }) }, 403],
+    ['an expired session', { session: sessionOf({ expiresAt: NOW }) }, 404],
+  ])('%s: no AI call', async (_label, over, status) => {
+    ctx.prisma.interviewPracticeRound.findFirst.mockResolvedValue(feedbackRound(5, over));
+
+    const res = await feedback(ctx);
+
+    expect(res.status).toBe(status);
+    expect(ai.generateJson).not.toHaveBeenCalled();
+  });
+
+  it('only the owner can read it: other candidates 404, recruiters 403, anonymous 401', async () => {
+    ctx.prisma.interviewPracticeRound.findFirst.mockResolvedValue(null);
+    expect((await feedback(ctx)).status).toBe(404);
+    expect(ctx.prisma.interviewPracticeRound.findFirst.mock.calls[0]![0].where).toEqual({
+      id: ROUND,
+      sessionId: SESSION,
+      session: { candidateId: 'profile-1' },
+    });
+    expect((await feedback(makeApp('RECRUITER', ai.ai))).status).toBe(403);
+    expect(
+      (await request(ctx.app).post(`${BASE}/${SESSION}/rounds/${ROUND}/feedback`)).status,
+    ).toBe(401);
+    expect(ai.generateJson).not.toHaveBeenCalled();
+  });
+
+  it('never returns a score, rank, percentile or verdict', async () => {
+    const res = await feedback(ctx);
+
+    expect(JSON.stringify(res.body)).not.toMatch(/score|rank|percentile|verdict|recommend/i);
+  });
+
+  it('draws from the same 10-per-minute counter as question generation', async () => {
+    ctx.prisma.interviewPracticeRound.findFirst.mockResolvedValue(
+      roundRow({ _count: { questions: 5 }, status: 'COMPLETED', questions: [] }),
+    );
+    ctx.prisma.interviewSession.findUnique.mockResolvedValue(
+      sessionRow({ status: 'COMPLETED', summary: JSON.stringify(summaryBody) }),
+    );
+
+    for (let i = 0; i < 5; i++) expect((await generate(ctx)).status).toBe(200);
+    for (let i = 0; i < 5; i++) expect((await feedback(ctx)).status).toBe(200);
+    const limited = await feedback(ctx);
+
+    expect(limited.status).toBe(429);
+    expect(limited.body.error.code).toBe('RATE_LIMITED');
+    expect((await generate(ctx)).status).toBe(429);
   });
 });

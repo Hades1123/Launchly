@@ -116,3 +116,29 @@ Saving an answer creates or replaces it, starts a not-started round and moves th
 ### Shared AI limit
 
 Question and feedback generation share one quota per signed-in candidate: **10 requests per 60 seconds**. The 11th returns `429 RATE_LIMITED` in the standard error shape; wait a minute and retry. The counter is in this API process's memory, so with more than one API instance each has its own quota. Use a shared store (for example Redis) before running several instances.
+
+## Feedback and summary (SCRUM-67)
+
+| Route                                  | Purpose                                                                                                                         |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /:id/rounds/:roundId/feedback`   | Advisory feedback for a round, and the overall summary when it was the last selected round. `201` when written, `200` when stored. |
+
+Same rules as question generation: candidate-only, owner and interview-consent checked, expired or foreign session is a `404`, and the call draws from the shared **10 requests per 60 seconds** limit with the question route (the 11th is `429 RATE_LIMITED`).
+
+### When feedback and the summary are written
+
+- The round must have all five answers saved, otherwise `400 VALIDATION_ERROR` and no AI call.
+- The AI sees the job title, the round name, and the five questions with their answers.
+- The result is validated with `generatedRoundFeedbackSchema` before it is stored: an `overview`, `strengths`, `improvements` and one note per answer. The per-answer notes go to `InterviewPracticeAnswer.feedback`; the round body goes to `InterviewPracticeRound.feedback` as validated JSON text, and the round becomes `COMPLETED`.
+- When every selected round is `COMPLETED`, a second AI call writes the overall summary (`overview`, `strengths`, `improvements`, `nextSteps`) into `InterviewSession.summary` as validated JSON text, and the session becomes `COMPLETED` with `completedAt`. Until then `summary` is `null`.
+- Once a round is completed its answers are final (`PUT .../answer` returns `409`).
+
+### Idempotency and failures
+
+- Repeating the call returns what is stored and makes no AI call. If two requests race, only one completes the round (row lock); the other changes nothing.
+- A provider failure, malformed output or a timeout is a `503 AI_UNAVAILABLE` and stores nothing for that step. If the round feedback was stored but the summary failed, the round stays completed and the next call writes only the summary.
+- Prompts, answers and feedback are never logged.
+
+### What the candidate receives
+
+Every round `feedback` and the session `summary` carry the shared `PRACTICE_FEEDBACK_DISCLAIMER`: "AI-generated practice feedback is advisory and may be incorrect; it does not affect hiring decisions." There is no score, percentile, rank, pass/fail verdict or hiring recommendation anywhere: the answer `score` field was removed from the DTO and the `InterviewPracticeAnswer.score` column is dropped by the forward migration `20261114000000_drop_practice_answer_score` (the legacy `InterviewAnswer.score` is a different table and stays). Only the owning candidate can read results; there is no recruiter route.
