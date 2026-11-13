@@ -11,9 +11,11 @@ export function createModerationEmail(input: ModerationEmailInput): {
   html: string;
 } {
   const approved = input.kind === 'company-approved';
+  // A mail header must stay on one line, so line breaks in the name become spaces.
+  const name = input.companyName.replace(/[\r\n]+/g, ' ');
   const subject = approved
-    ? `Công ty ${input.companyName} đã được duyệt trên Launchly`
-    : `Công ty ${input.companyName} chưa được duyệt trên Launchly`;
+    ? `Công ty ${name} đã được duyệt trên Launchly`
+    : `Công ty ${name} chưa được duyệt trên Launchly`;
   const lines = approved
     ? [`Công ty ${input.companyName} đã được duyệt. Bạn có thể đăng tin tuyển dụng ngay.`]
     : [

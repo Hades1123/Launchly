@@ -70,7 +70,8 @@ export function createCompanyService(prisma: PrismaClient) {
         select: companySelect,
       });
       if (!company) throw new AppError('NOT_FOUND', 'Company not found');
-      return toDto(company);
+      // The rejection reason is internal; the public page never shows it (FR-013).
+      return { ...toDto(company), moderationReason: null };
     },
   };
 }

@@ -28,9 +28,10 @@ import { notFound } from '@/middlewares/not-found';
 import { errorHandler } from '@/middlewares/error-handler';
 
 export function createApp(
-  authService = createAuthService(prisma, createMailProvider(), createGoogleProvider()),
+  authService?: ReturnType<typeof createAuthService>,
   mail = createMailProvider(),
 ) {
+  authService ??= createAuthService(prisma, mail, createGoogleProvider());
   const app = express();
   if (env.TRUST_PROXY_HOPS > 0) {
     app.set('trust proxy', env.TRUST_PROXY_HOPS);

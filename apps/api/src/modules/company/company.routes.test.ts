@@ -178,3 +178,17 @@ describe('registering again after a rejection (US3)', () => {
     expect(res.body).not.toHaveProperty('ownerEmail');
   });
 });
+
+describe('public company privacy', () => {
+  it('never returns a stored rejection reason on the public page (FR-013)', async () => {
+    const { app, prisma } = makeApp();
+    prisma.company.findFirst.mockResolvedValue({
+      ...row,
+      moderationStatus: 'APPROVED',
+      moderationReason: 'Old internal note',
+    });
+    const res = await request(app).get(`/companies/${COMPANY_ID}`);
+    expect(res.status).toBe(200);
+    expect(res.body.moderationReason).toBeNull();
+  });
+});

@@ -1,5 +1,9 @@
 import type { RequestHandler } from 'express';
-import { adminCompanySchema, type AdminCompanyListQuery } from '@launchly/shared';
+import {
+  adminCompanySchema,
+  type AdminCompanyListQuery,
+  type ModerationRejectInput,
+} from '@launchly/shared';
 import { currentAuth } from '@/middlewares/authenticate';
 import type { createAdminCompanyService } from '@/modules/admin/admin-company.service';
 
@@ -23,7 +27,8 @@ export function createAdminCompanyController(service: AdminCompanyService) {
 
     reject: (async (req, res) => {
       const { userId } = currentAuth(res.locals);
-      const company = await service.reject(req.params.id as string, userId, req.body.reason);
+      const { reason } = req.body as ModerationRejectInput; // parsed by validate()
+      const company = await service.reject(req.params.id as string, userId, reason);
       res.json(adminCompanySchema.parse(company));
     }) satisfies RequestHandler,
   };
