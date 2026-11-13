@@ -10,7 +10,9 @@ const APPLIED_JOB = 'Senior Frontend Engineer';
 
 async function openJob(page: Page, title: string) {
   await page.goto(`/jobs?keyword=${encodeURIComponent(title)}`);
-  await page.getByRole('link', { name: new RegExp(title) }).click();
+  // Open the job's own page; on wide screens a plain click only selects it in the side panel.
+  const href = await page.getByRole('link', { name: new RegExp(title) }).getAttribute('href');
+  await page.goto(href!);
   await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible();
 }
 
