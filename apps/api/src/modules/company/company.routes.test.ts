@@ -129,3 +129,44 @@ describe('GET /companies/me and /companies/:id', () => {
     expect(res.status).toBe(200);
   });
 });
+
+describe('registering again after a rejection (US3)', () => {
+  it('blocks a second company while one is pending or approved (E4)', async () => {
+    const { app, prisma } = makeApp();
+    prisma.company.findFirst.mockResolvedValue({ id: COMPANY_ID });
+    const res = await request(app).post('/companies').set(auth).send({ name: 'B', address: 'C' });
+    expect(res.status).toBe(409);
+    expect(prisma.company.findFirst.mock.calls[0]![0].where).toEqual({
+      ownerId: 'user-1',
+      moderationStatus: { in: ['PENDING', 'APPROVED'] },
+    });
+  });
+
+  it('allows a new company when the earlier ones were rejected (E5)', async () => {
+    const { app, prisma } = makeApp();
+    prisma.company.findFirst.mockResolvedValue(null);
+    prisma.company.create.mockResolvedValue(row);
+    const res = await request(app).post('/companies').set(auth).send({ name: 'B', address: 'C' });
+    expect(res.status).toBe(201);
+  });
+
+  it('me returns the newest company with its rejection reason (FR-010, FR-011)', async () => {
+    const { app, prisma } = makeApp();
+    prisma.company.findFirst.mockResolvedValue({
+      ...row,
+      moderationStatus: 'REJECTED',
+      moderationReason: 'No licence',
+    });
+    const res = await request(app).get('/companies/me').set(auth);
+    expect(res.body.moderationReason).toBe('No licence');
+    expect(prisma.company.findFirst.mock.calls[0]![0].orderBy).toEqual({ createdAt: 'desc' });
+  });
+
+  it('public company shows no rejection reason and no owner contact (FR-013)', async () => {
+    const { app, prisma } = makeApp();
+    prisma.company.findFirst.mockResolvedValue({ ...row, moderationStatus: 'APPROVED' });
+    const res = await request(app).get(`/companies/${COMPANY_ID}`);
+    expect(res.body.moderationReason).toBeNull();
+    expect(res.body).not.toHaveProperty('ownerEmail');
+  });
+});

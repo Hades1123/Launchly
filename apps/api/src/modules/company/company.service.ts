@@ -37,12 +37,13 @@ function toDto(row: CompanyRow): CompanyDto {
 export function createCompanyService(prisma: PrismaClient) {
   return {
     async create(ownerId: string, input: CreateCompanyInput): Promise<CompanyDto> {
+      // A rejected company stays on record; only a pending or approved one blocks a new registration.
       const existing = await prisma.company.findFirst({
-        where: { ownerId },
+        where: { ownerId, moderationStatus: { in: ['PENDING', 'APPROVED'] } },
         select: { id: true },
       });
       if (existing) {
-        throw new AppError('CONFLICT', 'You already have a registered company');
+        throw new AppError('CONFLICT', 'You already have a pending or approved company');
       }
       const company = await prisma.company.create({
         data: { ownerId, ...input },
@@ -54,6 +55,7 @@ export function createCompanyService(prisma: PrismaClient) {
     async getMine(ownerId: string): Promise<CompanyDto> {
       const company = await prisma.company.findFirst({
         where: { ownerId },
+        orderBy: { createdAt: 'desc' },
         select: companySelect,
       });
       if (!company) throw new AppError('NOT_FOUND', 'Company profile not found');
