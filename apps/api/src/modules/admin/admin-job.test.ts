@@ -2,6 +2,7 @@ import express from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { adminJobSchema, apiErrorSchema } from '@launchly/shared';
+import { createApp } from '@/app';
 import type { PrismaClient } from '@/generated/prisma/client';
 import { errorHandler } from '@/middlewares/error-handler';
 import type { createAuthService } from '@/modules/auth/auth.service';
@@ -78,6 +79,13 @@ function makeApp(role: 'ADMIN' | 'RECRUITER' = 'ADMIN') {
 
 const auth = { Authorization: 'Bearer token' };
 
+describe('admin job routes in the app', () => {
+  it('are mounted at /admin/jobs behind authentication', async () => {
+    const res = await request(createApp()).get('/admin/jobs');
+    expect(res.status).toBe(401);
+  });
+});
+
 describe('admin job access (E3)', () => {
   const routes = [
     ['get', '/admin/jobs'],
@@ -108,7 +116,8 @@ describe('GET /admin/jobs', () => {
     expect(prisma.job.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { publicationStatus: 'PENDING' },
-        orderBy: { updatedAt: 'asc' },
+        // Same timestamp → id, so the queue order never jumps between calls.
+        orderBy: [{ updatedAt: 'asc' }, { id: 'asc' }],
       }),
     );
     const job = adminJobSchema.parse(res.body[0]);

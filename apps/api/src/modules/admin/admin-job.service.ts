@@ -80,7 +80,7 @@ export function createAdminJobService(prisma: PrismaClient, mail: MailProvider) 
     async list(status: AdminJobListQuery['status']): Promise<AdminJob[]> {
       const jobs = await prisma.job.findMany({
         where: { publicationStatus: status },
-        orderBy: { updatedAt: 'asc' },
+        orderBy: [{ updatedAt: 'asc' }, { id: 'asc' }],
         select: adminJobSelect,
       });
       return jobs.map(toDto);
