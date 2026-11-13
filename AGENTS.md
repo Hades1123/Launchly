@@ -87,10 +87,11 @@ Commands: `pn typecheck`, `pn lint`, `pn test`, `pn test:coverage && pn coverage
 
 ### Prerequisite tooling
 
-Two gate commands do not exist yet. Until their tickets are merged, `implement-ticket` stops at those gates for `feature` Stories:
+One gate command does not exist yet. Until its ticket is merged, `implement-ticket` stops at that gate for `feature` Stories:
 
-- `pn test:coverage` and `pn coverage:changed`: changed-file coverage tooling (ticket: not yet created).
-- `pn --filter @launchly/web test:e2e`: Playwright harness for `apps/web` (ticket: not yet created).
+- `pn test:coverage` and `pn coverage:changed`: changed-file coverage tooling (ticket: not yet created). Wave 5 and 6 read each package's `coverage/coverage-summary.json` instead and record the method.
+
+`pn --filter @launchly/web test:e2e` (the Playwright harness for `apps/web`) exists; a missing `test:e2e` script still blocks any Story, of any label, whose diff touches `apps/web`.
 
 Branches, commits, and PR titles carry the Jira key so the Jira–GitHub integration links them: branch `<type>/SCRUM-123-short-slug`, commit `<type>(<scope>): SCRUM-123 <summary>`, PR title `[SCRUM-123] <outcome>`.
 

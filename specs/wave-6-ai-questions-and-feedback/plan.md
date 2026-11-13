@@ -65,28 +65,27 @@ As a candidate, I want five job-specific written questions in each supported pra
 
 ### Test cases
 
-| ID  | Type        | File::test name                                                                                                                | Proves   |
-| --- | ----------- | ------------------------------------------------------------------------------------------------------------------------------ | -------- |
-| T1  | unit        | `packages/shared/src/schemas/interview-practice.test.ts::generated questions schema requires exactly five with a known source` | AC1      |
-| T2  | unit        | `apps/api/src/providers/ai/ai.provider.test.ts::withTimeout rejects with AI_UNAVAILABLE after the limit`                       | AC3      |
-| T3  | integration | `interview-practice.test.ts::POST questions stores five questions with source labels`                                          | AC1      |
-| T4  | integration | `interview-practice.test.ts::POST questions twice returns the same set and calls the AI once`                                  | AC2      |
-| T5  | integration | `interview-practice.test.ts::regenerating keeps saved answers`                                                                 | AC2      |
-| T6  | integration | `interview-practice.test.ts::PUT answer saves, updates and reloads via GET session`                                            | AC2      |
-| T7  | integration | `interview-practice.test.ts::provider failure stores nothing and a retry succeeds`                                             | AC2, AC3 |
-| T8  | integration | `interview-practice.test.ts::malformed AI output is 503 and not stored`                                                        | AC3      |
-| T9  | integration | `interview-practice.test.ts::provider timeout is AI_UNAVAILABLE`                                                               | AC3      |
-| T10 | integration | `interview-practice.test.ts::missing description or consent or non-interactive round makes no AI call`                         | AC3      |
-| T11 | integration | `interview-practice.test.ts::wrong owner, recruiter and unauthenticated callers are rejected`                                  | AC5      |
-| T12 | integration | `interview-practice.test.ts::11th AI request in a minute is 429 RATE_LIMITED`                                                  | AC4      |
-| T13 | integration | `interview-practice.test.ts::responses contain no score and only text fields`                                                  | AC5      |
-| T14 | gate        | `pnpm typecheck && pnpm lint && pnpm test && test:coverage`                                                                    | AC6      |
+| ID  | Type                | File::test name                                                                                                                   | Proves                         |
+| --- | ------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| T1  | unit                | `packages/shared/src/schemas/interview-practice.test.ts::generated questions schema requires exactly five with a known source`    | AC1                            |
+| T2  | unit                | `apps/api/src/providers/ai/ai.provider.test.ts::withTimeout rejects with AI_UNAVAILABLE after the limit`                          | AC3                            |
+| T3  | integration         | `interview-practice.test.ts::POST questions stores five questions with source labels`                                             | AC1                            |
+| T4  | integration         | `interview-practice.test.ts::POST questions twice returns the same set and calls the AI once`                                     | AC2                            |
+| T5  | integration         | `interview-practice.test.ts::regenerating keeps saved answers`                                                                    | AC2                            |
+| T6  | integration         | `interview-practice.test.ts::PUT answer saves, updates and reloads via GET session`                                               | AC2                            |
+| T7  | integration         | `interview-practice.test.ts::provider failure stores nothing and a retry succeeds`                                                | AC2, AC3                       |
+| T8  | integration         | `interview-practice.test.ts::malformed AI output is 503 and not stored`                                                           | AC3                            |
+| T9  | integration         | `interview-practice.test.ts::provider timeout is AI_UNAVAILABLE`                                                                  | AC3                            |
+| T10 | integration         | `interview-practice.test.ts::missing description or consent or non-interactive round makes no AI call`                            | AC3                            |
+| T11 | integration         | `interview-practice.test.ts::wrong owner, recruiter and unauthenticated callers are rejected`                                     | AC5                            |
+| T12 | integration         | `interview-practice.test.ts::11th AI request in a minute is 429 RATE_LIMITED`                                                     | AC4                            |
+| T13 | integration         | `interview-practice.test.ts::responses contain no score and only text fields`                                                     | AC5                            |
+| T14 | gate                | `pnpm typecheck && pnpm lint && pnpm test && test:coverage`                                                                       | AC6                            |
+| E1  | e2e (API over HTTP) | `apps/web/e2e/scrum-65-practice-questions.spec.ts::AC1: an interactive round gets five text questions, each with a source label`  | AC1, AC5                       |
+| E2  | e2e (API over HTTP) | `apps/web/e2e/scrum-65-practice-questions.spec.ts::AC2: a repeat returns the same questions and saved answers survive and reload` | AC2                            |
+| E3  | e2e (API over HTTP) | `apps/web/e2e/scrum-65-practice-questions.spec.ts::AC5: blank answers, unknown rounds and other candidates are refused`           | AC5 (owner-only, text answers) |
 
-| E1 | e2e (API over HTTP) | `apps/web/e2e/scrum-65-practice-questions.spec.ts::AC1: an interactive round gets five text questions, each with a source label` | AC1, AC5 |
-| E2 | e2e (API over HTTP) | `scrum-65-practice-questions.spec.ts::AC2: a repeat returns the same questions and saved answers survive and reload` | AC2 |
-| E3 | e2e (API over HTTP) | `scrum-65-practice-questions.spec.ts::AC3: blank answers, unknown rounds and other candidates are refused` | AC3 |
-
-e2e added after approval at the user's request: no `apps/web` change, so the gate does not require it, but the practice API has no UI until Wave 7. Specs drive the API over HTTP against the seed and the mock AI, like `scrum-64`.
+e2e added after approval at the user's request. SCRUM-65 AC3 failure paths (missing description, missing consent, informational round, malformed output, timeout) are unit-only (T7 to T10): the seed and the mock AI cannot reach them over HTTP. The AC1 test of SCRUM-67 holds steps for AC2 and AC3 on purpose, to stay inside the 10-per-minute limit. Context: no `apps/web` change, so the gate does not require it, but the practice API has no UI until Wave 7. Specs drive the API over HTTP against the seed and the mock AI, like `scrum-64`.
 
 ## SCRUM-67 — Generate round feedback and an overall practice summary
 
@@ -110,21 +109,20 @@ As a candidate, I want feedback after each completed practice round and an overa
 
 ### Test cases
 
-| ID  | Type        | File::test name                                                                                                                 | Proves   |
-| --- | ----------- | ------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| T15 | unit        | `packages/shared/src/schemas/interview-practice.test.ts::feedback and summary schemas carry the disclaimer and no score fields` | AC3, AC5 |
-| T16 | integration | `interview-practice.test.ts::POST feedback with five answers stores feedback and completes the round`                           | AC1      |
-| T17 | integration | `interview-practice.test.ts::last round feedback stores the summary and completes the session`                                  | AC1      |
-| T18 | integration | `interview-practice.test.ts::summary absent while a selected round is incomplete`                                               | AC1      |
-| T19 | integration | `interview-practice.test.ts::feedback with fewer than five answers is 400`                                                      | AC1      |
-| T20 | integration | `interview-practice.test.ts::repeat feedback returns stored result without an AI call`                                          | AC2      |
-| T21 | integration | `interview-practice.test.ts::malformed AI feedback is 503 and nothing is stored`                                                | AC2      |
-| T22 | integration | `interview-practice.test.ts::feedback and question calls share one limiter counter`                                             | AC4      |
-| T23 | integration | `interview-practice.test.ts::no score, rank or verdict in any response; other candidate and recruiter denied`                   | AC3, AC5 |
-| T24 | db (gated)  | `apps/api/prisma/interview-practice-schema.integration.test.ts::practice answer has no score column`                            | AC3      |
-| T25 | gate        | `pnpm typecheck && pnpm lint && pnpm test && test:coverage`; `pnpm db:migrate` clean                                            | AC6      |
-
-| E4 | e2e (API over HTTP) | `apps/web/e2e/scrum-67-practice-feedback.spec.ts::AC1: feedback needs all five answers, then completes the round and the session` (steps cover AC2, AC3 and final answers) | AC1, AC2, AC3 |
-| E5 | e2e (API over HTTP) | `scrum-67-practice-feedback.spec.ts::AC1: the overall summary waits for the last selected round` | AC1 |
-| E6 | e2e (API over HTTP) | `scrum-67-practice-feedback.spec.ts::AC5: only the owner can ask for feedback; recruiters cannot` | AC5 |
-| E7 | e2e (API over HTTP) | `scrum-67-practice-feedback.spec.ts::AC4: question and feedback requests share one 10-per-minute limit` | AC4 |
+| ID  | Type                | File::test name                                                                                                                                                            | Proves        |
+| --- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| T15 | unit                | `packages/shared/src/schemas/interview-practice.test.ts::feedback and summary schemas carry the disclaimer and no score fields`                                            | AC3, AC5      |
+| T16 | integration         | `interview-practice.test.ts::POST feedback with five answers stores feedback and completes the round`                                                                      | AC1           |
+| T17 | integration         | `interview-practice.test.ts::last round feedback stores the summary and completes the session`                                                                             | AC1           |
+| T18 | integration         | `interview-practice.test.ts::summary absent while a selected round is incomplete`                                                                                          | AC1           |
+| T19 | integration         | `interview-practice.test.ts::feedback with fewer than five answers is 400`                                                                                                 | AC1           |
+| T20 | integration         | `interview-practice.test.ts::repeat feedback returns stored result without an AI call`                                                                                     | AC2           |
+| T21 | integration         | `interview-practice.test.ts::malformed AI feedback is 503 and nothing is stored`                                                                                           | AC2           |
+| T22 | integration         | `interview-practice.test.ts::feedback and question calls share one limiter counter`                                                                                        | AC4           |
+| T23 | integration         | `interview-practice.test.ts::no score, rank or verdict in any response; other candidate and recruiter denied`                                                              | AC3, AC5      |
+| T24 | db (gated)          | `apps/api/prisma/interview-practice-schema.integration.test.ts::practice answer has no score column`                                                                       | AC3           |
+| T25 | gate                | `pnpm typecheck && pnpm lint && pnpm test && test:coverage`; `pnpm db:migrate` clean                                                                                       | AC6           |
+| E4  | e2e (API over HTTP) | `apps/web/e2e/scrum-67-practice-feedback.spec.ts::AC1: feedback needs all five answers, then completes the round and the session` (steps cover AC2, AC3 and final answers) | AC1, AC2, AC3 |
+| E5  | e2e (API over HTTP) | `apps/web/e2e/scrum-67-practice-feedback.spec.ts::AC1: the overall summary waits for the last selected round`                                                              | AC1           |
+| E6  | e2e (API over HTTP) | `apps/web/e2e/scrum-67-practice-feedback.spec.ts::AC5: only the owner can ask for feedback; other candidates and recruiters cannot`                                        | AC5           |
+| E7  | e2e (API over HTTP) | `apps/web/e2e/scrum-67-practice-feedback.spec.ts::AC4: question and feedback requests share one 10-per-minute limit`                                                       | AC4           |
