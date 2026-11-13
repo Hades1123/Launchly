@@ -131,7 +131,9 @@ test('AC1: the overall summary waits for the last selected round', async ({ requ
   expect(last.summary.disclaimer).toBe(DISCLAIMER);
 });
 
-test('AC5: only the owner can ask for feedback; recruiters cannot', async ({ request }) => {
+test('AC5: only the owner can ask for feedback; other candidates and recruiters cannot', async ({
+  request,
+}) => {
   const auth = await token(request, CANDIDATE);
   const { session, round } = await startRoundPractice(request, auth);
 
@@ -141,6 +143,12 @@ test('AC5: only the owner can ask for feedback; recruiters cannot', async ({ req
 
   const anonymous = await request.post(feedbackUrl(session.id, round.id));
   expect(anonymous.status()).toBe(401);
+
+  const other = await token(request, OTHER_CANDIDATE);
+  const foreignFeedback = await request.post(feedbackUrl(session.id, round.id), { headers: other });
+  expect(foreignFeedback.status()).toBe(404);
+  const foreignRead = await request.get(`${BASE}/${session.id}`, { headers: other });
+  expect(foreignRead.status()).toBe(404);
 });
 
 test('AC4: question and feedback requests share one 10-per-minute limit', async ({ request }) => {

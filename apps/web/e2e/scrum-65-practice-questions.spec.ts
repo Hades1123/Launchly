@@ -13,7 +13,9 @@ import {
 
 /**
  * SCRUM-65: AI practice questions and saved answers (this wave has no UI yet), driven over HTTP
- * against the seeded database and the deterministic mock AI. The API limits interview AI calls to
+ * against the seeded database and the deterministic mock AI. AC3's failure paths (missing description or
+ * consent, informational round, malformed AI output, timeout) are unit-tested: the seed and the mock
+ * AI cannot reach them over HTTP. The API limits interview AI calls to
  * 10 per minute per candidate, so each test makes as few question requests as it can.
  */
 const SOURCES = ['JOB_DESCRIPTION', 'JOB_REQUIREMENTS', 'ROUND_PROCESS'];
@@ -90,7 +92,7 @@ test('AC2: a repeat returns the same questions and saved answers survive and rel
   expect(reloaded.rounds[0].status).toBe('IN_PROGRESS');
 });
 
-test('AC3: blank answers, unknown rounds and other candidates are refused', async ({ request }) => {
+test('AC5: blank answers, unknown rounds and other candidates are refused', async ({ request }) => {
   const auth = await token(request, CANDIDATE);
   const { session, round } = await startRoundPractice(request, auth);
   const generated = await request.post(questionsUrl(session.id, round.id), { headers: auth });
