@@ -38,6 +38,8 @@ export default defineConfig({
         APP_URL: WEB_URL,
         // The CV fit check runs against the deterministic mock AI, never a live key.
         AI_DRIVER: 'mock',
+        // Specs sign in once per test; the default 10 per 2 minutes would throttle them.
+        LOGIN_RATE_LIMIT: '1000',
       },
       reuseExistingServer: false,
       gracefulShutdown: { signal: 'SIGTERM', timeout: 5_000 },
