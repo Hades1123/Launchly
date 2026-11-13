@@ -1,6 +1,6 @@
 # Interview practice
 
-Text-only, job-linked interview practice for candidates (C-07 Interview Demonstration). This page describes the data model (SCRUM-63). The API (SCRUM-64) and the expiry cleanup (SCRUM-66) extend it.
+Text-only, job-linked interview practice for candidates (C-07 Interview Demonstration). This page describes the data model (SCRUM-63). The API (SCRUM-64), the expiry cleanup (SCRUM-66), question generation and answers (SCRUM-65) and feedback (SCRUM-67) extend it.
 
 ## Data model
 
@@ -74,7 +74,7 @@ All routes are candidate-only (`authenticate` + `authorize('CANDIDATE')`), live 
 
 ### The inactivity clock
 
-An incomplete session expires 24 hours after its last activity. Start and resume set `expiresAt = now + 24 h` (`practiceExpiry`); a saved answer will do the same. Resume and history check the deadline themselves (`isPracticeExpired`), so an expired session is inaccessible immediately, before any row is deleted.
+An incomplete session expires 24 hours after its last activity. Start and resume set `expiresAt = now + 24 h` (`practiceExpiry`); a saved answer and a question or feedback request do the same. Resume and history check the deadline themselves (`isPracticeExpired`), so an expired session is inaccessible immediately, before any row is deleted.
 
 ### The cleanup runner
 
@@ -90,3 +90,29 @@ An incomplete session expires 24 hours after its last activity. Start and resume
 ### Limitation
 
 The one-hour guarantee holds only while the API process runs. If the process is down nothing is deleted; the sessions stay inaccessible to candidates but their rows remain until the next start sweeps them. There is no external scheduler.
+
+## Questions and answers (SCRUM-65)
+
+Both routes are candidate-only, owner-checked and interview-consent-checked on every call, and an expired or foreign session is a `404`. All text only: no voice, video, timer or score.
+
+| Route                                    | Purpose                                                                                                                                                  |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /:id/rounds/:roundId/questions`    | Generate the five questions of one round. `201` when written, `200` when the stored set is returned.                                                     |
+| `PUT /:id/questions/:questionId/answer`  | Save or replace one text answer. Body `{ answer }`, trimmed, 1 to 5000 characters. Returns the session. `409` once the round is completed.               |
+
+### Generation
+
+- The AI sees only the job title, description and requirements and the round name and format. Never the CV, profile or application.
+- Exactly five questions per round (`PRACTICE_QUESTIONS_PER_ROUND`), each with a source label: `JOB_DESCRIPTION`, `JOB_REQUIREMENTS` or `ROUND_PROCESS`. The AI output is validated with `generatedPracticeQuestionsSchema` before anything is stored.
+- Only an interactive round (stage format `ONLINE` or `PHONE`) can be generated. A job without a description, a round whose stage was deleted, an informational round and a session without interview consent are blocked with no AI call, and there is no generic fallback.
+- A round that already has questions returns them with no AI call, so repeating or retrying never duplicates the set or touches saved answers. Questions are written under a lock on the round row; if two requests race, both may call the AI, but only the first stores a set and the other leaves it as it is.
+- A provider failure, malformed output or a timeout (30 s, `AI_TIMEOUT_MS` in `providers/ai`) is a `503 AI_UNAVAILABLE`. Nothing is stored, so the same call can be repeated.
+- Prompts and answers are never logged.
+
+### Saving answers
+
+Saving an answer creates or replaces it, starts a not-started round and moves the 24 h clock. Reloading the session (`GET /:id`) returns every saved answer.
+
+### Shared AI limit
+
+Question and feedback generation share one quota per signed-in candidate: **10 requests per 60 seconds**. The 11th returns `429 RATE_LIMITED` in the standard error shape; wait a minute and retry. The counter is in this API process's memory, so with more than one API instance each has its own quota. Use a shared store (for example Redis) before running several instances.

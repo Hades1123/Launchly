@@ -8,6 +8,7 @@ import express from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  PRACTICE_QUESTIONS_PER_ROUND,
   apiErrorSchema,
   practiceHistoryResponseSchema,
   practiceSessionDtoSchema,
@@ -17,6 +18,8 @@ import type { createAuthService } from '@/modules/auth/auth.service';
 import { createInterviewPracticeRouter } from '@/modules/interview-practice/interview-practice.routes';
 import { createInterviewPracticeService } from '@/modules/interview-practice/interview-practice.service';
 import type { PrismaClient } from '@/generated/prisma/client';
+import { AppError } from '@/lib/app-error';
+import { MockAiProvider, type AiProvider } from '@/providers/ai';
 
 const NOW = new Date('2026-11-13T10:00:00.000Z');
 const IN_24H = new Date('2026-11-14T10:00:00.000Z');
@@ -80,7 +83,11 @@ function sessionRow(over: Record<string, unknown> = {}) {
   };
 }
 
-function makeApp(role: 'CANDIDATE' | 'RECRUITER' = 'CANDIDATE') {
+function makeApp(
+  role: 'CANDIDATE' | 'RECRUITER' = 'CANDIDATE',
+  ai?: AiProvider,
+  timeoutMs?: number,
+) {
   const prisma = {
     candidateProfile: {
       findUnique: vi.fn<(args: any) => Promise<any>>(async () => ({ id: 'profile-1' })),
@@ -94,19 +101,42 @@ function makeApp(role: 'CANDIDATE' | 'RECRUITER' = 'CANDIDATE') {
       findMany: vi.fn<(args: any) => Promise<any>>(async () => []),
       count: vi.fn<(args: any) => Promise<number>>(async () => 0),
     },
+    interviewPracticeRound: {
+      findFirst: vi.fn<(args: any) => Promise<any>>(async () => null),
+      update: vi.fn<(args: any) => Promise<any>>(async () => ({})),
+      updateMany: vi.fn<(args: any) => Promise<any>>(async () => ({ count: 1 })),
+    },
+    interviewPracticeQuestion: {
+      findFirst: vi.fn<(args: any) => Promise<any>>(async () => null),
+      count: vi.fn<(args: any) => Promise<number>>(async () => 0),
+      createMany: vi.fn<(args: any) => Promise<any>>(async () => ({ count: 5 })),
+    },
+    interviewPracticeAnswer: {
+      upsert: vi.fn<(args: any) => Promise<any>>(async () => ({})),
+    },
+    $queryRaw: vi.fn<(...args: any[]) => Promise<any>>(async () => []),
   };
+  const $transaction = vi.fn<(arg: any) => Promise<any>>(async (arg) =>
+    typeof arg === 'function' ? arg(prisma) : Promise.all(arg),
+  );
+  Object.assign(prisma, { $transaction });
   const authService = {
-    verifyAccessToken: vi.fn(() => ({ userId: 'user-1', sessionId: 's' })),
+    verifyAccessToken: vi.fn((token: string) => ({
+      userId: token === 'other' ? 'user-2' : 'user-1',
+      sessionId: 's',
+    })),
     getSessionUser: vi.fn(async () => ({ id: 'user-1', role })),
   } as unknown as ReturnType<typeof createAuthService>;
   const service = createInterviewPracticeService(prisma as unknown as PrismaClient, {
     now: () => NOW,
+    ...(ai && { ai }),
+    ...(timeoutMs && { timeoutMs }),
   });
   const app = express();
   app.use(express.json());
   app.use(BASE, createInterviewPracticeRouter(authService, service));
   app.use(errorHandler);
-  return { app, prisma };
+  return { app, prisma: Object.assign(prisma, { $transaction }) };
 }
 
 const start = (ctx: ReturnType<typeof makeApp>, body: unknown) =>
@@ -394,5 +424,344 @@ describe('GET /candidates/me/interview-practice (history)', () => {
 
     expect(res.status).toBe(400);
     expect(ctx.prisma.interviewSession.findMany).not.toHaveBeenCalled();
+  });
+});
+
+const ROUND = '55555555-5555-4555-8555-555555555551';
+const QUESTION = '66666666-6666-4666-8666-666666666661';
+const generated = {
+  questions: Array.from({ length: PRACTICE_QUESTIONS_PER_ROUND }, (_, i) => ({
+    prompt: `Question ${i + 1}?`,
+    source: i < 2 ? 'JOB_DESCRIPTION' : i < 4 ? 'JOB_REQUIREMENTS' : 'ROUND_PROCESS',
+  })),
+};
+
+function fakeAi(reply: unknown = generated) {
+  const generateJson = vi.fn<(input: any) => Promise<any>>(async (input) =>
+    input.schema.parse(reply),
+  );
+  return { ai: { generateJson } as unknown as AiProvider, generateJson };
+}
+
+function roundRow(over: Record<string, unknown> = {}) {
+  return {
+    id: ROUND,
+    name: 'Online test',
+    status: 'NOT_STARTED',
+    stage: { format: 'ONLINE' },
+    session: {
+      id: SESSION,
+      status: 'IN_PROGRESS',
+      expiresAt: IN_24H,
+      interviewConsentAt: NOW,
+      job: {
+        title: 'Frontend Intern',
+        description: 'Build UI with React.',
+        requirements: ['React'],
+      },
+    },
+    _count: { questions: 0 },
+    ...over,
+  };
+}
+
+const sessionOf = (over: Record<string, unknown> = {}) => ({
+  ...roundRow().session,
+  ...over,
+});
+
+const generate = (ctx: ReturnType<typeof makeApp>, token = 'token') =>
+  request(ctx.app)
+    .post(`${BASE}/${SESSION}/rounds/${ROUND}/questions`)
+    .set({ Authorization: `Bearer ${token}` });
+
+describe('POST /:id/rounds/:roundId/questions', () => {
+  let ai: ReturnType<typeof fakeAi>;
+  let ctx: ReturnType<typeof makeApp>;
+  beforeEach(() => {
+    ai = fakeAi();
+    ctx = makeApp('CANDIDATE', ai.ai);
+    ctx.prisma.interviewPracticeRound.findFirst.mockResolvedValue(roundRow());
+  });
+
+  it('stores five questions with a source label each (201)', async () => {
+    const res = await generate(ctx);
+
+    expect(res.status).toBe(201);
+    expect(practiceSessionDtoSchema.safeParse(res.body).success).toBe(true);
+    expect(ctx.prisma.interviewPracticeQuestion.createMany.mock.calls[0]![0].data).toEqual(
+      generated.questions.map((q, i) => ({
+        roundId: ROUND,
+        position: i + 1,
+        prompt: q.prompt,
+        source: q.source,
+      })),
+    );
+    expect(ctx.prisma.interviewPracticeRound.update.mock.calls[0]![0]).toMatchObject({
+      where: { id: ROUND },
+      data: { status: 'IN_PROGRESS' },
+    });
+    // The round lookup is scoped to the signed-in candidate's own session.
+    expect(ctx.prisma.interviewPracticeRound.findFirst.mock.calls[0]![0].where).toEqual({
+      id: ROUND,
+      sessionId: SESSION,
+      session: { candidateId: 'profile-1' },
+    });
+  });
+
+  it('builds the prompt from the job and the round only', async () => {
+    await generate(ctx);
+
+    const { prompt, system } = ai.generateJson.mock.calls[0]![0];
+    expect(prompt).toContain('Frontend Intern');
+    expect(prompt).toContain('Build UI with React.');
+    expect(prompt).toContain('- React');
+    expect(prompt).toContain('Online test');
+    expect(prompt).toContain('ONLINE');
+    expect(system).toMatch(/five/i);
+  });
+
+  it('a repeat returns the stored set with no AI call and no new rows (200)', async () => {
+    ctx.prisma.interviewPracticeRound.findFirst.mockResolvedValue(
+      roundRow({ _count: { questions: 5 } }),
+    );
+
+    const res = await generate(ctx);
+
+    expect(res.status).toBe(200);
+    expect(ai.generateJson).not.toHaveBeenCalled();
+    expect(ctx.prisma.interviewPracticeQuestion.createMany).not.toHaveBeenCalled();
+  });
+
+  it('two requests racing store one set and leave saved answers alone', async () => {
+    ctx.prisma.interviewPracticeQuestion.count.mockResolvedValue(5);
+
+    const res = await generate(ctx);
+
+    expect(res.status).toBe(200);
+    expect(ctx.prisma.$queryRaw).toHaveBeenCalledTimes(1);
+    expect(ctx.prisma.interviewPracticeQuestion.createMany).not.toHaveBeenCalled();
+    expect(ctx.prisma.interviewPracticeAnswer.upsert).not.toHaveBeenCalled();
+  });
+
+  it('stores nothing when the provider fails, and the retry succeeds', async () => {
+    ai.generateJson.mockRejectedValueOnce(new AppError('AI_UNAVAILABLE', 'down'));
+
+    const failed = await generate(ctx);
+
+    expect(failed.status).toBe(503);
+    expect(failed.body.error.code).toBe('AI_UNAVAILABLE');
+    expect(ctx.prisma.$transaction).not.toHaveBeenCalled();
+    expect(ctx.prisma.interviewPracticeQuestion.createMany).not.toHaveBeenCalled();
+
+    const retry = await generate(ctx);
+    expect(retry.status).toBe(201);
+    expect(ctx.prisma.interviewPracticeQuestion.createMany).toHaveBeenCalledTimes(1);
+  });
+
+  it('503 and nothing stored when the AI returns the wrong shape', async () => {
+    const mock = new MockAiProvider({
+      respond: () => ({ questions: generated.questions.slice(1) }),
+    });
+    ctx = makeApp('CANDIDATE', mock);
+    ctx.prisma.interviewPracticeRound.findFirst.mockResolvedValue(roundRow());
+
+    const res = await generate(ctx);
+
+    expect(res.status).toBe(503);
+    expect(res.body.error.code).toBe('AI_UNAVAILABLE');
+    expect(ctx.prisma.interviewPracticeQuestion.createMany).not.toHaveBeenCalled();
+  });
+
+  it('503 for an unexpected provider error, without leaking its message', async () => {
+    ai.generateJson.mockRejectedValueOnce(new Error('secret vendor detail'));
+
+    const res = await generate(ctx);
+
+    expect(res.status).toBe(503);
+    expect(JSON.stringify(res.body)).not.toContain('secret vendor detail');
+  });
+
+  it('503 when the provider is slower than the timeout', async () => {
+    const slow = { generateJson: vi.fn(() => new Promise(() => {})) } as unknown as AiProvider;
+    ctx = makeApp('CANDIDATE', slow, 20);
+    ctx.prisma.interviewPracticeRound.findFirst.mockResolvedValue(roundRow());
+
+    const res = await generate(ctx);
+
+    expect(res.status).toBe(503);
+    expect(res.body.error.code).toBe('AI_UNAVAILABLE');
+    expect(ctx.prisma.interviewPracticeQuestion.createMany).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [
+      'a job without a description',
+      { session: sessionOf({ job: { title: 'T', description: ' ', requirements: [] } }) },
+      400,
+    ],
+    ['no interview consent', { session: sessionOf({ interviewConsentAt: null }) }, 403],
+    ['an informational round', { stage: { format: 'ONSITE' } }, 400],
+    ['a round whose stage was deleted', { stage: null }, 400],
+    ['an expired session', { session: sessionOf({ expiresAt: NOW }) }, 404],
+  ])('%s: no AI call, nothing stored', async (_label, over, status) => {
+    ctx.prisma.interviewPracticeRound.findFirst.mockResolvedValue(roundRow(over));
+
+    const res = await generate(ctx);
+
+    expect(res.status).toBe(status);
+    expect(apiErrorSchema.safeParse(res.body).success).toBe(true);
+    expect(ai.generateJson).not.toHaveBeenCalled();
+    expect(ctx.prisma.interviewPracticeQuestion.createMany).not.toHaveBeenCalled();
+  });
+
+  it('404 for a round of another candidate or an unknown round', async () => {
+    ctx.prisma.interviewPracticeRound.findFirst.mockResolvedValue(null);
+
+    const res = await generate(ctx);
+
+    expect(res.status).toBe(404);
+    expect(ai.generateJson).not.toHaveBeenCalled();
+  });
+
+  it('rejects recruiters, anonymous callers and bad ids', async () => {
+    const recruiter = makeApp('RECRUITER', ai.ai);
+    expect((await generate(recruiter)).status).toBe(403);
+    expect(
+      (await request(ctx.app).post(`${BASE}/${SESSION}/rounds/${ROUND}/questions`)).status,
+    ).toBe(401);
+    const bad = await request(ctx.app).post(`${BASE}/nope/rounds/${ROUND}/questions`).set(auth);
+    expect(bad.status).toBe(400);
+    expect(ai.generateJson).not.toHaveBeenCalled();
+  });
+
+  it('returns text questions only', async () => {
+    const res = await generate(ctx);
+
+    for (const round of res.body.rounds) {
+      for (const question of round.questions) {
+        expect(Object.keys(question).sort()).toEqual([
+          'answer',
+          'id',
+          'position',
+          'prompt',
+          'source',
+        ]);
+      }
+    }
+  });
+
+  it('answers 429 RATE_LIMITED from the 11th request in a minute, per candidate', async () => {
+    ctx.prisma.interviewPracticeRound.findFirst.mockResolvedValue(
+      roundRow({ _count: { questions: 5 } }),
+    );
+
+    for (let i = 0; i < 10; i++) expect((await generate(ctx)).status).toBe(200);
+    const limited = await generate(ctx);
+
+    expect(limited.status).toBe(429);
+    expect(apiErrorSchema.safeParse(limited.body).success).toBe(true);
+    expect(limited.body.error.code).toBe('RATE_LIMITED');
+    // Another candidate has their own counter.
+    expect((await generate(ctx, 'other')).status).toBe(200);
+  });
+});
+
+const saveAnswer = (ctx: ReturnType<typeof makeApp>, body: unknown) =>
+  request(ctx.app)
+    .put(`${BASE}/${SESSION}/questions/${QUESTION}/answer`)
+    .set(auth)
+    .send(body as object);
+
+const questionRow = (over: Record<string, unknown> = {}) => ({
+  id: QUESTION,
+  round: { id: ROUND, status: 'IN_PROGRESS', session: sessionOf() },
+  ...over,
+});
+
+describe('PUT /:id/questions/:questionId/answer', () => {
+  let ctx: ReturnType<typeof makeApp>;
+  beforeEach(() => {
+    ctx = makeApp();
+    ctx.prisma.interviewPracticeQuestion.findFirst.mockResolvedValue(questionRow());
+  });
+
+  it('saves the trimmed answer, moves the 24 h clock and returns the session', async () => {
+    const res = await saveAnswer(ctx, { answer: '  My answer  ' });
+
+    expect(res.status).toBe(200);
+    expect(practiceSessionDtoSchema.safeParse(res.body).success).toBe(true);
+    expect(ctx.prisma.interviewPracticeAnswer.upsert.mock.calls[0]![0]).toEqual({
+      where: { questionId: QUESTION },
+      create: { questionId: QUESTION, answer: 'My answer' },
+      update: { answer: 'My answer' },
+    });
+    expect(ctx.prisma.interviewSession.update.mock.calls[0]![0]).toMatchObject({
+      where: { id: SESSION },
+      data: { lastActivityAt: NOW, expiresAt: IN_24H },
+    });
+    expect(ctx.prisma.interviewPracticeQuestion.findFirst.mock.calls[0]![0].where).toEqual({
+      id: QUESTION,
+      round: { sessionId: SESSION, session: { candidateId: 'profile-1' } },
+    });
+  });
+
+  it('starts a round that was not started yet', async () => {
+    await saveAnswer(ctx, { answer: 'Hi' });
+
+    expect(ctx.prisma.interviewPracticeRound.updateMany.mock.calls[0]![0]).toEqual({
+      where: { id: ROUND, status: 'NOT_STARTED' },
+      data: { status: 'IN_PROGRESS' },
+    });
+  });
+
+  it.each([{}, { answer: '   ' }, { answer: 'x'.repeat(5001) }, { answer: 7 }])(
+    '400 for the invalid body %j',
+    async (body) => {
+      const res = await saveAnswer(ctx, body);
+
+      expect(res.status).toBe(400);
+      expect(ctx.prisma.interviewPracticeAnswer.upsert).not.toHaveBeenCalled();
+    },
+  );
+
+  it('409 once the round is completed, so feedback never goes stale', async () => {
+    ctx.prisma.interviewPracticeQuestion.findFirst.mockResolvedValue(
+      questionRow({ round: { id: ROUND, status: 'COMPLETED', session: sessionOf() } }),
+    );
+
+    const res = await saveAnswer(ctx, { answer: 'Late edit' });
+
+    expect(res.status).toBe(409);
+    expect(ctx.prisma.interviewPracticeAnswer.upsert).not.toHaveBeenCalled();
+  });
+
+  it('404 for another candidate or an expired session, 403 without consent', async () => {
+    ctx.prisma.interviewPracticeQuestion.findFirst.mockResolvedValueOnce(null);
+    expect((await saveAnswer(ctx, { answer: 'a' })).status).toBe(404);
+
+    ctx.prisma.interviewPracticeQuestion.findFirst.mockResolvedValueOnce(
+      questionRow({
+        round: { id: ROUND, status: 'IN_PROGRESS', session: sessionOf({ expiresAt: NOW }) },
+      }),
+    );
+    expect((await saveAnswer(ctx, { answer: 'a' })).status).toBe(404);
+
+    ctx.prisma.interviewPracticeQuestion.findFirst.mockResolvedValueOnce(
+      questionRow({
+        round: {
+          id: ROUND,
+          status: 'IN_PROGRESS',
+          session: sessionOf({ interviewConsentAt: null }),
+        },
+      }),
+    );
+    expect((await saveAnswer(ctx, { answer: 'a' })).status).toBe(403);
+    expect(ctx.prisma.interviewPracticeAnswer.upsert).not.toHaveBeenCalled();
+  });
+
+  it('rejects recruiters', async () => {
+    const res = await saveAnswer(makeApp('RECRUITER'), { answer: 'a' });
+    expect(res.status).toBe(403);
   });
 });

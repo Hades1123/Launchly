@@ -1,15 +1,36 @@
 import type { PrismaClient } from '@/generated/prisma/client';
 import {
   PRACTICE_EXPIRY_HOURS,
+  generatedPracticeQuestionsSchema,
   isInteractiveRoundFormat,
+  type PracticeAnswerInput,
   type PracticeHistoryQuery,
   type PracticeHistoryResponse,
   type PracticeSessionDto,
   type StartPracticeInput,
 } from '@launchly/shared';
 import { AppError } from '@/lib/app-error';
+import { AI_TIMEOUT_MS, getAiProvider, withTimeout, type AiProvider } from '@/providers/ai';
 
-type Options = { now?: () => Date };
+type Options = { now?: () => Date; ai?: AiProvider; timeoutMs?: number };
+
+const QUESTIONS_SYSTEM_PROMPT = [
+  'You write interview practice questions for a candidate who is preparing for one round of a hiring process.',
+  'Use only the job title, job description, requirements and round you are given.',
+  'Write exactly five distinct questions, each answerable in writing, with no voice or video.',
+  'Tag each question with where it comes from: JOB_DESCRIPTION, JOB_REQUIREMENTS or ROUND_PROCESS.',
+  'Do not ask about personal attributes such as age, gender or hometown.',
+].join(' ');
+
+function buildQuestionsPrompt(
+  job: { title: string; description: string; requirements: string[] },
+  round: { name: string; format: string },
+): string {
+  const requirements = job.requirements.length
+    ? `\n\n## Requirements\n${job.requirements.map((r) => `- ${r}`).join('\n')}`
+    : '';
+  return `## Job\n${job.title}\n\n## Description\n${job.description}${requirements}\n\n## Round\n${round.name} (${round.format})`;
+}
 
 const sessionInclude = {
   job: { select: { title: true } },
@@ -102,6 +123,7 @@ export function isPracticeExpired(
 
 export function createInterviewPracticeService(prisma: PrismaClient, options: Options = {}) {
   const now = options.now ?? (() => new Date());
+  const timeoutMs = options.timeoutMs ?? AI_TIMEOUT_MS;
 
   async function candidateIdFor(userId: string): Promise<string> {
     const profile = await prisma.candidateProfile.findUnique({
@@ -119,6 +141,18 @@ export function createInterviewPracticeService(prisma: PrismaClient, options: Op
       data: { lastActivityAt: at, expiresAt: practiceExpiry(at) },
       include: sessionInclude,
     });
+  }
+
+  /** The session must be live and the candidate must have given interview AI consent. */
+  function assertUsable(
+    session: { expiresAt: Date | null; status: string; interviewConsentAt: Date | null },
+    at: Date,
+  ) {
+    if (isPracticeExpired(session, at))
+      throw new AppError('NOT_FOUND', 'Practice session not found');
+    if (!session.interviewConsentAt) {
+      throw new AppError('FORBIDDEN', 'Accept the interview AI consent to use practice');
+    }
   }
 
   return {
@@ -223,6 +257,131 @@ export function createInterviewPracticeService(prisma: PrismaClient, options: Op
         return toDto(session as SessionRow);
       }
       return toDto((await touch(session.id, at)) as SessionRow);
+    },
+
+    /**
+     * Writes the five questions of one round, once. A repeat returns the stored set and makes
+     * no AI call; a provider failure stores nothing so the same call can be retried.
+     */
+    async generateQuestions(
+      userId: string,
+      sessionId: string,
+      roundId: string,
+    ): Promise<{ session: PracticeSessionDto; created: boolean }> {
+      const candidateId = await candidateIdFor(userId);
+      const round = await prisma.interviewPracticeRound.findFirst({
+        where: { id: roundId, sessionId, session: { candidateId } },
+        select: {
+          id: true,
+          name: true,
+          stage: { select: { format: true } },
+          session: {
+            select: {
+              id: true,
+              status: true,
+              expiresAt: true,
+              interviewConsentAt: true,
+              job: { select: { title: true, description: true, requirements: true } },
+            },
+          },
+          _count: { select: { questions: true } },
+        },
+      });
+      const at = now();
+      if (!round) throw new AppError('NOT_FOUND', 'Practice round not found');
+      assertUsable(round.session, at);
+
+      if (round._count.questions > 0) {
+        return { session: toDto((await touch(sessionId, at)) as SessionRow), created: false };
+      }
+
+      const format = round.stage?.format ?? null;
+      if (!format || !isInteractiveRoundFormat(format)) {
+        throw new AppError('VALIDATION_ERROR', 'This round cannot be practiced');
+      }
+      const { job } = round.session;
+      if (job.description.trim() === '') {
+        throw new AppError('VALIDATION_ERROR', 'This job has no description to practice from');
+      }
+
+      let generated;
+      try {
+        generated = await withTimeout(
+          (options.ai ?? getAiProvider()).generateJson({
+            system: QUESTIONS_SYSTEM_PROMPT,
+            prompt: buildQuestionsPrompt(job, { name: round.name, format }),
+            schema: generatedPracticeQuestionsSchema,
+          }),
+          timeoutMs,
+        );
+      } catch (error) {
+        throw error instanceof AppError && error.code === 'AI_UNAVAILABLE'
+          ? error
+          : new AppError('AI_UNAVAILABLE', 'The AI could not write questions. Try again later.');
+      }
+
+      // The AI call is slow, so the lock is taken only to write: a request that lost the race
+      // finds the set already there and leaves it, and its answers, untouched.
+      const created = await prisma.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT id FROM "InterviewPracticeRound" WHERE id = ${roundId} FOR UPDATE`;
+        if ((await tx.interviewPracticeQuestion.count({ where: { roundId } })) > 0) return false;
+        await tx.interviewPracticeQuestion.createMany({
+          data: generated.questions.map((question, index) => ({
+            roundId,
+            position: index + 1,
+            prompt: question.prompt,
+            source: question.source,
+          })),
+        });
+        await tx.interviewPracticeRound.update({
+          where: { id: roundId },
+          data: { status: 'IN_PROGRESS' },
+        });
+        return true;
+      });
+      return { session: toDto((await touch(sessionId, at)) as SessionRow), created };
+    },
+
+    /** Saves or replaces the text answer to one question and moves the 24 h clock. */
+    async saveAnswer(
+      userId: string,
+      sessionId: string,
+      questionId: string,
+      input: PracticeAnswerInput,
+    ): Promise<PracticeSessionDto> {
+      const candidateId = await candidateIdFor(userId);
+      const question = await prisma.interviewPracticeQuestion.findFirst({
+        where: { id: questionId, round: { sessionId, session: { candidateId } } },
+        select: {
+          id: true,
+          round: {
+            select: {
+              id: true,
+              status: true,
+              session: {
+                select: { id: true, status: true, expiresAt: true, interviewConsentAt: true },
+              },
+            },
+          },
+        },
+      });
+      const at = now();
+      if (!question) throw new AppError('NOT_FOUND', 'Question not found');
+      assertUsable(question.round.session, at);
+      if (question.round.status === 'COMPLETED') {
+        throw new AppError('CONFLICT', 'This round is completed and its answers are final');
+      }
+
+      await prisma.interviewPracticeAnswer.upsert({
+        where: { questionId },
+        create: { questionId, answer: input.answer },
+        update: { answer: input.answer },
+      });
+      await prisma.interviewPracticeRound.updateMany({
+        where: { id: question.round.id, status: 'NOT_STARTED' },
+        data: { status: 'IN_PROGRESS' },
+      });
+      return toDto((await touch(sessionId, at)) as SessionRow);
     },
 
     async history(userId: string, query: PracticeHistoryQuery): Promise<PracticeHistoryResponse> {
