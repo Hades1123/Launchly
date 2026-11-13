@@ -328,6 +328,8 @@ describe('PUT /recruiter/jobs/:id on a rejected job', () => {
     const data = tx.job.update.mock.calls[0]![0].data;
     expect(data.publicationStatus).toBe('PENDING');
     expect(data).not.toHaveProperty('moderationReason');
+    // The new submission has not been reviewed yet.
+    expect(data).toMatchObject({ reviewedById: null, reviewedAt: null });
   });
 
   it('keeps it rejected when only saved', async () => {

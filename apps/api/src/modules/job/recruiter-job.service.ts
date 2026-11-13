@@ -245,12 +245,14 @@ export function createRecruiterJobService(prisma: PrismaClient) {
         }
         await tx.jobStage.deleteMany({ where: { jobId } });
         await tx.jobNote.deleteMany({ where: { jobId } });
+        // A resubmission starts a new review, so the earlier reviewer and time are cleared; the
+        // rejection reason itself stays until an admin approves (SCRUM-26 AC).
         const row = await tx.job.update({
           where: { id: jobId },
           data: {
             ...toJobData(input),
             ...(rejected && input.action === 'DRAFT' && { publicationStatus: 'REJECTED' as const }),
-            // The last rejection reason stays visible until an admin approves (SCRUM-26 AC).
+            ...(input.action === 'SUBMIT' && { reviewedById: null, reviewedAt: null }),
           },
           select: recruiterJobSelect,
         });
