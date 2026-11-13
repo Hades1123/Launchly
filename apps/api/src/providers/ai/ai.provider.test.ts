@@ -182,3 +182,13 @@ describe('GeminiAiProvider', () => {
     expect(await wrongShape.generateJson(input).catch((e) => e)).toBeInstanceOf(AppError);
   });
 });
+
+describe('MockAiProvider default reply', () => {
+  it('fills arrays up to minItems so a schema that needs several items still validates', async () => {
+    const out = await new MockAiProvider().generateJson({
+      prompt: 'x',
+      schema: z.object({ suggestions: z.array(z.string().min(1)).min(3) }),
+    });
+    expect(out.suggestions).toHaveLength(3);
+  });
+});
