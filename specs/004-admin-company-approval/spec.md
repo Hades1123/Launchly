@@ -22,7 +22,7 @@ All answers come from the Jira tickets; no question needed the user.
 - Q: Can the admin list companies that are not pending? → A: Yes, the list takes an optional status filter (pending, approved, rejected) and defaults to pending (SCRUM-76).
 - Q: Who is "the recruiter" that gets the email? → A: The company's owner, at their account email (SCRUM-77 Architecture).
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Admin decides on a pending company (Priority: P1)
 
@@ -84,7 +84,7 @@ A recruiter whose company was rejected can read the reason on their own company 
 - An admin opens or decides on a company that does not exist → "not found".
 - A reviewer's account is later removed → the decision stays; only the link to the reviewer is cleared.
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -112,7 +112,7 @@ A recruiter whose company was rejected can read the reason on their own company 
 - **Admin**: a user with the admin role; the reviewer of a decision.
 - **Recruiter**: the company's owner; receives the outcome email.
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 

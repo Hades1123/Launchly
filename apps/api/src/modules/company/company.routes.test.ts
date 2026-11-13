@@ -69,7 +69,10 @@ describe('POST /companies', () => {
 
   it('409 when owner already has a company', async () => {
     ctx.prisma.company.findFirst.mockResolvedValue({ id: COMPANY_ID });
-    const res = await request(ctx.app).post('/companies').set(auth).send({ name: 'A', address: 'B' });
+    const res = await request(ctx.app)
+      .post('/companies')
+      .set(auth)
+      .send({ name: 'A', address: 'B' });
     expect(res.status).toBe(409);
     expect(apiErrorSchema.parse(res.body).error.code).toBe('CONFLICT');
   });

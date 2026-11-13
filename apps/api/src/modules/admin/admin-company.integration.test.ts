@@ -18,10 +18,14 @@ describe.runIf(process.env.RUN_DB_TESTS === '1')('admin company decisions (integ
       adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }),
     });
     ownerId = (
-      await prisma.user.create({ data: { email: `mod-owner-${suffix}@example.com`, role: 'RECRUITER' } })
+      await prisma.user.create({
+        data: { email: `mod-owner-${suffix}@example.com`, role: 'RECRUITER' },
+      })
     ).id;
     adminId = (
-      await prisma.user.create({ data: { email: `mod-admin-${suffix}@example.com`, role: 'ADMIN' } })
+      await prisma.user.create({
+        data: { email: `mod-admin-${suffix}@example.com`, role: 'ADMIN' },
+      })
     ).id;
     companyId = (await prisma.company.create({ data: { ownerId, name: `Mod Co ${suffix}` } })).id;
   });
