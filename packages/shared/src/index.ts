@@ -5,6 +5,7 @@ export * from './schemas/company';
 export * from './schemas/candidate-profile';
 export * from './schemas/job-salary';
 export * from './schemas/job';
+export * from './schemas/job-posting';
 export * from './constants/job';
 export * from './utils/vietnamese';
 export * from './schemas/job-round';

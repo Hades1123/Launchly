@@ -1,4 +1,5 @@
 import { ApiError } from '@/lib/api/http';
+import type { UserRole } from '@launchly/shared';
 
 export function authErrorMessage(error: unknown): string {
   if (!(error instanceof ApiError)) {
@@ -54,3 +55,27 @@ export function safeReturnPath(value: string | null | undefined): string {
     return '/jobs';
   }
 }
+
+type NamedUser = { fullName: string | null; email: string; role: UserRole };
+
+export function userDisplayName(user: NamedUser): string {
+  return user.fullName?.trim() || user.email;
+}
+
+/** Up to two initials for the avatar bubble. */
+export function userInitials(user: NamedUser): string {
+  return (
+    userDisplayName(user)
+      .split(/[\s@._-]+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join('') || '?'
+  );
+}
+
+export const ROLE_LABELS: Record<UserRole, string> = {
+  CANDIDATE: 'Ứng viên',
+  RECRUITER: 'Nhà tuyển dụng',
+  ADMIN: 'Quản trị viên',
+};

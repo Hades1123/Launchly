@@ -1,4 +1,4 @@
-import type { PrismaClient, Prisma } from '@/generated/prisma/client';
+import type { JobLevel, PrismaClient, Prisma } from '@/generated/prisma/client';
 import { prisma as defaultPrisma } from '@/lib/prisma';
 import type { JobFilterQuery, PublicJobListResponse, PublicJobItem } from '@launchly/shared';
 import { normalizeVietnamese, roundFormatSchema, type RoundFormat } from '@launchly/shared';
@@ -11,6 +11,16 @@ export const publicJobWhere = {
   publicationStatus: 'PUBLISHED',
   company: { moderationStatus: 'APPROVED' },
 } as const satisfies Prisma.JobWhereInput;
+
+/**
+ * Only drafts may lack a level; submit requires one, so a public job always has it. A missing
+ * level here means the database broke that rule.
+ */
+function publishedLevel(job: { id: string; level: JobLevel | null }): JobLevel {
+  if (job.level === null)
+    throw new AppError('INTERNAL_ERROR', `Published job ${job.id} has no level`);
+  return job.level;
+}
 
 export class JobService {
   constructor(private readonly prismaClient: PrismaClient = defaultPrisma) {}
@@ -86,7 +96,7 @@ export class JobService {
     const data: PublicJobItem[] = jobs.map((job) => ({
       id: job.id,
       title: job.title,
-      level: job.level,
+      level: publishedLevel(job),
       location: job.location,
       industry: job.industry,
       requirements: job.requirements,
@@ -150,7 +160,7 @@ export class JobService {
       id: job.id,
       title: job.title,
       description: job.description,
-      level: job.level,
+      level: publishedLevel(job),
       location: job.location,
       industry: job.industry,
       requirements: job.requirements,
