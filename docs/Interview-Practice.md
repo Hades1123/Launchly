@@ -69,3 +69,24 @@ All routes are candidate-only (`authenticate` + `authorize('CANDIDATE')`), live 
 - Every read filters by the caller's `candidateId`. Another candidate's session, or one that does not exist, is a `404`, so ids cannot be probed. Recruiters have no access.
 - An incomplete session whose `expiresAt` has passed is a `404` on resume and is hidden from history, even before the cleanup deletes it. Completed sessions stay readable.
 - Start and resume set `lastActivityAt = now` and `expiresAt = now + 24 h`.
+
+## Expiry and cleanup (SCRUM-66)
+
+### The inactivity clock
+
+An incomplete session expires 24 hours after its last activity. Start and resume set `expiresAt = now + 24 h` (`practiceExpiry`); a saved answer will do the same. Resume and history check the deadline themselves (`isPracticeExpired`), so an expired session is inaccessible immediately, before any row is deleted.
+
+### The cleanup runner
+
+`createPracticeCleanup` (in `interview-practice.cleanup.ts`) runs inside the API process, started from `server.ts`:
+
+- **At startup:** one sweep, which catches up on every session that expired while the process was down.
+- **Then every hour** while the process is healthy, so an expired session is deleted within one hour of its deadline.
+- **Each sweep** deletes incomplete sessions with `expiresAt <= now` in batches of 100, ordered by `expiresAt` (indexed), and repeats until none are left. Rounds, questions and answers go with the session by cascade. The delete repeats the guard, so a session completed in the meantime, or already deleted by another API instance, is never touched and the sweep is safe to run concurrently or twice.
+- **Never deleted:** completed sessions (history is kept) and legacy sessions whose `expiresAt` is `NULL`.
+- **Logs** contain counts and the error type only, never questions or answers. A failed sweep is logged and the next hourly tick tries again.
+- `PRACTICE_CLEANUP_ENABLED=false` turns the runner off (default `true`).
+
+### Limitation
+
+The one-hour guarantee holds only while the API process runs. If the process is down nothing is deleted; the sessions stay inaccessible to candidates but their rows remain until the next start sweeps them. There is no external scheduler.
