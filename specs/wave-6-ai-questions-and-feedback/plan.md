@@ -6,26 +6,26 @@ Wave plan source: `docs/plans/interview-practice-wave-plan.md` · Branch: `feat/
 
 ## Tickets
 
-| Key      | Title                                                   | Label   | Areas      | Depends on           | Assignee  |
-| -------- | ------------------------------------------------------- | ------- | ---------- | -------------------- | --------- |
-| SCRUM-65 | Generate and save text-only practice rounds             | feature | api, shared | SCRUM-63, SCRUM-64   | DŨNG NGUYỄN PHẠM MẠNH |
-| SCRUM-67 | Generate round feedback and an overall practice summary | feature | api, shared, db | SCRUM-64, SCRUM-65 | SƠN NGUYỄN VÕ ĐỨC |
+| Key      | Title                                                   | Label   | Areas           | Depends on         | Assignee              |
+| -------- | ------------------------------------------------------- | ------- | --------------- | ------------------ | --------------------- |
+| SCRUM-65 | Generate and save text-only practice rounds             | feature | api, shared     | SCRUM-63, SCRUM-64 | DŨNG NGUYỄN PHẠM MẠNH |
+| SCRUM-67 | Generate round feedback and an overall practice summary | feature | api, shared, db | SCRUM-64, SCRUM-65 | SƠN NGUYỄN VÕ ĐỨC     |
 
 ## Clarifications
 
 All answered "defaults" by the user.
 
-| #   | Ticket   | Question | Answer | Source |
-| --- | -------- | -------- | ------ | ------ |
-| Q1  | SCRUM-65 | Prompt inputs | Only job title, description, requirements, round name and format. Never CV, profile or application. | user (default) |
-| Q2  | SCRUM-65 | Source labels | Fixed enum `practiceQuestionSourceSchema` in `@launchly/shared`: `JOB_DESCRIPTION`, `JOB_REQUIREMENTS`, `ROUND_PROCESS`; the model picks one per question, the schema validates it. | user (default) |
-| Q3  | SCRUM-67 | Feedback storage | Validated JSON text in existing `feedback` (answer, round) and `summary` columns, parsed with the shared schema on read. Only migration drops `InterviewPracticeAnswer.score`. | user (default) |
-| Q4  | SCRUM-67 | Disclaimer | Shared constant `PRACTICE_FEEDBACK_DISCLAIMER` = "AI-generated practice feedback is advisory and may be incorrect; it does not affect hiring decisions." (exact text from SCRUM-69), returned inside the feedback and summary DTOs. | user (default); SCRUM-69 Jira |
-| Q5  | SCRUM-67 | Feedback timing | Allowed only when all five answers of the round are saved, else `400 VALIDATION_ERROR`. | user (default) |
-| Q6  | both     | Provider failure | Nothing stored; same call can be repeated and still counts toward the limiter. | user (default) |
-| Q7  | both     | Timeout helper | Move `withTimeout` and `AI_TIMEOUT_MS` (30 000) from `assessment.service.ts` to `providers/ai`; both services use it. | user (default) |
-| Q8  | both     | Labels | Add `feature` to both tickets at the Step 5 gate. | user (default) |
-| Q9  | both     | Plan doc | Branch cut from `origin/main`; docs commit `fb93362` cherry-picked so the wave plan doc rides in this PR. | user (default); memory |
+| #   | Ticket   | Question         | Answer                                                                                                                                                                                                                              | Source                        |
+| --- | -------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| Q1  | SCRUM-65 | Prompt inputs    | Only job title, description, requirements, round name and format. Never CV, profile or application.                                                                                                                                 | user (default)                |
+| Q2  | SCRUM-65 | Source labels    | Fixed enum `practiceQuestionSourceSchema` in `@launchly/shared`: `JOB_DESCRIPTION`, `JOB_REQUIREMENTS`, `ROUND_PROCESS`; the model picks one per question, the schema validates it.                                                 | user (default)                |
+| Q3  | SCRUM-67 | Feedback storage | Validated JSON text in existing `feedback` (answer, round) and `summary` columns, parsed with the shared schema on read. Only migration drops `InterviewPracticeAnswer.score`.                                                      | user (default)                |
+| Q4  | SCRUM-67 | Disclaimer       | Shared constant `PRACTICE_FEEDBACK_DISCLAIMER` = "AI-generated practice feedback is advisory and may be incorrect; it does not affect hiring decisions." (exact text from SCRUM-69), returned inside the feedback and summary DTOs. | user (default); SCRUM-69 Jira |
+| Q5  | SCRUM-67 | Feedback timing  | Allowed only when all five answers of the round are saved, else `400 VALIDATION_ERROR`.                                                                                                                                             | user (default)                |
+| Q6  | both     | Provider failure | Nothing stored; same call can be repeated and still counts toward the limiter.                                                                                                                                                      | user (default)                |
+| Q7  | both     | Timeout helper   | Move `withTimeout` and `AI_TIMEOUT_MS` (30 000) from `assessment.service.ts` to `providers/ai`; both services use it.                                                                                                               | user (default)                |
+| Q8  | both     | Labels           | Add `feature` to both tickets at the Step 5 gate.                                                                                                                                                                                   | user (default)                |
+| Q9  | both     | Plan doc         | Branch cut from `origin/main`; docs commit `fb93362` cherry-picked so the wave plan doc rides in this PR.                                                                                                                           | user (default); memory        |
 
 ## Cross-ticket changes
 
@@ -65,22 +65,22 @@ As a candidate, I want five job-specific written questions in each supported pra
 
 ### Test cases
 
-| ID  | Type | File::test name | Proves |
-| --- | ---- | --------------- | ------ |
-| T1  | unit | `packages/shared/src/schemas/interview-practice.test.ts::generated questions schema requires exactly five with a known source` | AC1 |
-| T2  | unit | `apps/api/src/providers/ai/ai.provider.test.ts::withTimeout rejects with AI_UNAVAILABLE after the limit` | AC3 |
-| T3  | integration | `interview-practice.test.ts::POST questions stores five questions with source labels` | AC1 |
-| T4  | integration | `interview-practice.test.ts::POST questions twice returns the same set and calls the AI once` | AC2 |
-| T5  | integration | `interview-practice.test.ts::regenerating keeps saved answers` | AC2 |
-| T6  | integration | `interview-practice.test.ts::PUT answer saves, updates and reloads via GET session` | AC2 |
-| T7  | integration | `interview-practice.test.ts::provider failure stores nothing and a retry succeeds` | AC2, AC3 |
-| T8  | integration | `interview-practice.test.ts::malformed AI output is 503 and not stored` | AC3 |
-| T9  | integration | `interview-practice.test.ts::provider timeout is AI_UNAVAILABLE` | AC3 |
-| T10 | integration | `interview-practice.test.ts::missing description or consent or non-interactive round makes no AI call` | AC3 |
-| T11 | integration | `interview-practice.test.ts::wrong owner, recruiter and unauthenticated callers are rejected` | AC5 |
-| T12 | integration | `interview-practice.test.ts::11th AI request in a minute is 429 RATE_LIMITED` | AC4 |
-| T13 | integration | `interview-practice.test.ts::responses contain no score and only text fields` | AC5 |
-| T14 | gate | `pnpm typecheck && pnpm lint && pnpm test && test:coverage` | AC6 |
+| ID  | Type        | File::test name                                                                                                                | Proves   |
+| --- | ----------- | ------------------------------------------------------------------------------------------------------------------------------ | -------- |
+| T1  | unit        | `packages/shared/src/schemas/interview-practice.test.ts::generated questions schema requires exactly five with a known source` | AC1      |
+| T2  | unit        | `apps/api/src/providers/ai/ai.provider.test.ts::withTimeout rejects with AI_UNAVAILABLE after the limit`                       | AC3      |
+| T3  | integration | `interview-practice.test.ts::POST questions stores five questions with source labels`                                          | AC1      |
+| T4  | integration | `interview-practice.test.ts::POST questions twice returns the same set and calls the AI once`                                  | AC2      |
+| T5  | integration | `interview-practice.test.ts::regenerating keeps saved answers`                                                                 | AC2      |
+| T6  | integration | `interview-practice.test.ts::PUT answer saves, updates and reloads via GET session`                                            | AC2      |
+| T7  | integration | `interview-practice.test.ts::provider failure stores nothing and a retry succeeds`                                             | AC2, AC3 |
+| T8  | integration | `interview-practice.test.ts::malformed AI output is 503 and not stored`                                                        | AC3      |
+| T9  | integration | `interview-practice.test.ts::provider timeout is AI_UNAVAILABLE`                                                               | AC3      |
+| T10 | integration | `interview-practice.test.ts::missing description or consent or non-interactive round makes no AI call`                         | AC3      |
+| T11 | integration | `interview-practice.test.ts::wrong owner, recruiter and unauthenticated callers are rejected`                                  | AC5      |
+| T12 | integration | `interview-practice.test.ts::11th AI request in a minute is 429 RATE_LIMITED`                                                  | AC4      |
+| T13 | integration | `interview-practice.test.ts::responses contain no score and only text fields`                                                  | AC5      |
+| T14 | gate        | `pnpm typecheck && pnpm lint && pnpm test && test:coverage`                                                                    | AC6      |
 
 No e2e: no `apps/web` change (web UI is Wave 7).
 
@@ -106,18 +106,18 @@ As a candidate, I want feedback after each completed practice round and an overa
 
 ### Test cases
 
-| ID  | Type | File::test name | Proves |
-| --- | ---- | --------------- | ------ |
-| T15 | unit | `packages/shared/src/schemas/interview-practice.test.ts::feedback and summary schemas carry the disclaimer and no score fields` | AC3, AC5 |
-| T16 | integration | `interview-practice.test.ts::POST feedback with five answers stores feedback and completes the round` | AC1 |
-| T17 | integration | `interview-practice.test.ts::last round feedback stores the summary and completes the session` | AC1 |
-| T18 | integration | `interview-practice.test.ts::summary absent while a selected round is incomplete` | AC1 |
-| T19 | integration | `interview-practice.test.ts::feedback with fewer than five answers is 400` | AC1 |
-| T20 | integration | `interview-practice.test.ts::repeat feedback returns stored result without an AI call` | AC2 |
-| T21 | integration | `interview-practice.test.ts::malformed AI feedback is 503 and nothing is stored` | AC2 |
-| T22 | integration | `interview-practice.test.ts::feedback and question calls share one limiter counter` | AC4 |
-| T23 | integration | `interview-practice.test.ts::no score, rank or verdict in any response; other candidate and recruiter denied` | AC3, AC5 |
-| T24 | db (gated) | `apps/api/prisma/interview-practice-schema.integration.test.ts::practice answer has no score column` | AC3 |
-| T25 | gate | `pnpm typecheck && pnpm lint && pnpm test && test:coverage`; `pnpm db:migrate` clean | AC6 |
+| ID  | Type        | File::test name                                                                                                                 | Proves   |
+| --- | ----------- | ------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| T15 | unit        | `packages/shared/src/schemas/interview-practice.test.ts::feedback and summary schemas carry the disclaimer and no score fields` | AC3, AC5 |
+| T16 | integration | `interview-practice.test.ts::POST feedback with five answers stores feedback and completes the round`                           | AC1      |
+| T17 | integration | `interview-practice.test.ts::last round feedback stores the summary and completes the session`                                  | AC1      |
+| T18 | integration | `interview-practice.test.ts::summary absent while a selected round is incomplete`                                               | AC1      |
+| T19 | integration | `interview-practice.test.ts::feedback with fewer than five answers is 400`                                                      | AC1      |
+| T20 | integration | `interview-practice.test.ts::repeat feedback returns stored result without an AI call`                                          | AC2      |
+| T21 | integration | `interview-practice.test.ts::malformed AI feedback is 503 and nothing is stored`                                                | AC2      |
+| T22 | integration | `interview-practice.test.ts::feedback and question calls share one limiter counter`                                             | AC4      |
+| T23 | integration | `interview-practice.test.ts::no score, rank or verdict in any response; other candidate and recruiter denied`                   | AC3, AC5 |
+| T24 | db (gated)  | `apps/api/prisma/interview-practice-schema.integration.test.ts::practice answer has no score column`                            | AC3      |
+| T25 | gate        | `pnpm typecheck && pnpm lint && pnpm test && test:coverage`; `pnpm db:migrate` clean                                            | AC6      |
 
 No e2e: no `apps/web` change.
