@@ -24,6 +24,8 @@ export function createCandidateRouter(
     controller.updateProfile,
   );
 
+  router.post('/me/ai-consent', controller.acceptAiConsent);
+
   router.post('/cv', uploadCvMiddleware, controller.uploadCv);
   router.delete('/cv', controller.deleteCv);
   router.get('/cv', controller.downloadCv);

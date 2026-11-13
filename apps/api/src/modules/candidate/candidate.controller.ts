@@ -12,6 +12,11 @@ export class CandidateController {
     res.json(await this.candidateService.getProfile(userId));
   };
 
+  acceptAiConsent = async (_req: Request, res: Response): Promise<void> => {
+    const { userId } = currentAuth(res.locals);
+    res.json(await this.candidateService.acceptAiConsent(userId));
+  };
+
   updateProfile = async (req: Request, res: Response): Promise<void> => {
     const { userId } = currentAuth(res.locals);
     const input = req.body as UpdateCandidateProfileInput;

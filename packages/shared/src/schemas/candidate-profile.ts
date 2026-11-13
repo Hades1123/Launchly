@@ -23,6 +23,8 @@ export const candidateProfileSchema = z.object({
   skills: z.array(z.string()).default([]),
   projectsActivities: z.string().nullable().optional(),
   resumes: z.array(resumeSchema).default([]),
+  /** When the candidate agreed to AI processing of their CV; null until they do. */
+  aiConsentAcceptedAt: z.string().nullable(),
   cvOriginalFileName: z.string().nullable().optional(),
   cvUploadedAt: z.string().nullable().optional(),
   createdAt: z.string(),
