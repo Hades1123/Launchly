@@ -32,3 +32,49 @@ export const applicationDtoSchema = z.object({
   createdAt: z.string(),
 });
 export type ApplicationDto = z.infer<typeof applicationDtoSchema>;
+
+export const applicationIdParamsSchema = z.object({ id: z.uuid() });
+export type ApplicationIdParams = z.infer<typeof applicationIdParamsSchema>;
+
+/** One row of "My applications". `submittedAt` is when the candidate applied. */
+export const candidateApplicationItemSchema = z.object({
+  id: z.string(),
+  jobId: z.string(),
+  jobTitle: z.string(),
+  companyName: z.string(),
+  status: applicationStatusSchema,
+  currentStageName: z.string().nullable(),
+  submittedAt: z.string(),
+  updatedAt: z.string(),
+});
+export type CandidateApplicationItem = z.infer<typeof candidateApplicationItemSchema>;
+
+export const candidateApplicationListSchema = z.object({
+  data: z.array(candidateApplicationItemSchema),
+});
+export type CandidateApplicationList = z.infer<typeof candidateApplicationListSchema>;
+
+/** One status change; `fromStatus` is null for the first row (SUBMITTED). */
+export const applicationHistoryItemSchema = z.object({
+  fromStatus: applicationStatusSchema.nullable(),
+  toStatus: applicationStatusSchema,
+  note: z.string().nullable(),
+  changedAt: z.string(),
+});
+export type ApplicationHistoryItem = z.infer<typeof applicationHistoryItemSchema>;
+
+export const applicationStageSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  position: z.number().int(),
+});
+export type ApplicationStage = z.infer<typeof applicationStageSchema>;
+
+/** The candidate's own application with its history (oldest first) and the job's stages. */
+export const candidateApplicationDetailSchema = candidateApplicationItemSchema.extend({
+  resumeId: z.string(),
+  coverLetter: z.string().nullable(),
+  history: z.array(applicationHistoryItemSchema),
+  stages: z.array(applicationStageSchema),
+});
+export type CandidateApplicationDetail = z.infer<typeof candidateApplicationDetailSchema>;

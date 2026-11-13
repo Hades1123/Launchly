@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createApplicationSchema } from '@launchly/shared';
+import { applicationIdParamsSchema, createApplicationSchema } from '@launchly/shared';
 import { authenticate } from '@/middlewares/authenticate';
 import { authorize } from '@/middlewares/authorize';
 import { validate } from '@/middlewares/validate';
@@ -22,5 +22,14 @@ export function createApplicationRouter(authService: AuthService, service: Appli
     controller.create,
   );
 
+  // `/me` is registered before `/:id` so it is never read as an id.
+  router.get('/me', authenticate(authService), authorize('CANDIDATE'), controller.listMine);
+  router.get(
+    '/:id',
+    authenticate(authService),
+    authorize('CANDIDATE'),
+    validate({ params: applicationIdParamsSchema }),
+    controller.getMine,
+  );
   return router;
 }
