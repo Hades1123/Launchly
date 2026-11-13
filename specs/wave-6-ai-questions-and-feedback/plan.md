@@ -82,7 +82,11 @@ As a candidate, I want five job-specific written questions in each supported pra
 | T13 | integration | `interview-practice.test.ts::responses contain no score and only text fields`                                                  | AC5      |
 | T14 | gate        | `pnpm typecheck && pnpm lint && pnpm test && test:coverage`                                                                    | AC6      |
 
-No e2e: no `apps/web` change (web UI is Wave 7).
+| E1 | e2e (API over HTTP) | `apps/web/e2e/scrum-65-practice-questions.spec.ts::AC1: an interactive round gets five text questions, each with a source label` | AC1, AC5 |
+| E2 | e2e (API over HTTP) | `scrum-65-practice-questions.spec.ts::AC2: a repeat returns the same questions and saved answers survive and reload` | AC2 |
+| E3 | e2e (API over HTTP) | `scrum-65-practice-questions.spec.ts::AC3: blank answers, unknown rounds and other candidates are refused` | AC3 |
+
+e2e added after approval at the user's request: no `apps/web` change, so the gate does not require it, but the practice API has no UI until Wave 7. Specs drive the API over HTTP against the seed and the mock AI, like `scrum-64`.
 
 ## SCRUM-67 — Generate round feedback and an overall practice summary
 
@@ -120,4 +124,7 @@ As a candidate, I want feedback after each completed practice round and an overa
 | T24 | db (gated)  | `apps/api/prisma/interview-practice-schema.integration.test.ts::practice answer has no score column`                            | AC3      |
 | T25 | gate        | `pnpm typecheck && pnpm lint && pnpm test && test:coverage`; `pnpm db:migrate` clean                                            | AC6      |
 
-No e2e: no `apps/web` change.
+| E4 | e2e (API over HTTP) | `apps/web/e2e/scrum-67-practice-feedback.spec.ts::AC1: feedback needs all five answers, then completes the round and the session` (steps cover AC2, AC3 and final answers) | AC1, AC2, AC3 |
+| E5 | e2e (API over HTTP) | `scrum-67-practice-feedback.spec.ts::AC1: the overall summary waits for the last selected round` | AC1 |
+| E6 | e2e (API over HTTP) | `scrum-67-practice-feedback.spec.ts::AC5: only the owner can ask for feedback; recruiters cannot` | AC5 |
+| E7 | e2e (API over HTTP) | `scrum-67-practice-feedback.spec.ts::AC4: question and feedback requests share one 10-per-minute limit` | AC4 |
