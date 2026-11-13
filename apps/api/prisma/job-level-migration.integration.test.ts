@@ -10,7 +10,9 @@ import { fileURLToPath } from 'node:url';
 import { afterAll, describe, expect, it } from 'vitest';
 
 const MIGRATION_SQL = readFileSync(
-  fileURLToPath(new URL('./migrations/20261113110000_job_level_junior/migration.sql', import.meta.url)),
+  fileURLToPath(
+    new URL('./migrations/20261113110000_job_level_junior/migration.sql', import.meta.url),
+  ),
   'utf8',
 );
 
@@ -47,7 +49,10 @@ describe.runIf(process.env.RUN_DB_TESTS === '1')('job_level_junior migration (in
   type Tx = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
 
   /** Builds the old state, applies the migration, runs `check`, then rolls everything back. */
-  async function applyMigration(rows: Array<[string, string | null]>, check: (tx: Tx) => Promise<void>) {
+  async function applyMigration(
+    rows: Array<[string, string | null]>,
+    check: (tx: Tx) => Promise<void>,
+  ) {
     prisma ??= await makeClient();
     // Guard: only ever touch the test database.
     expect(process.env.DATABASE_URL).toContain('launchly_test');
