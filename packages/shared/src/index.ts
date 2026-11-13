@@ -15,3 +15,4 @@ export * from './utils/process-timeline';
 export * from './schemas/application';
 export * from './schemas/assessment';
 export * from './constants/interview-practice';
+export * from './schemas/interview-practice';

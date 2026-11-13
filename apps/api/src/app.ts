@@ -26,6 +26,8 @@ import { createApplicationService } from '@/modules/application/application.serv
 import { createJobApplicationsRouter } from '@/modules/application/job-applications.routes';
 import { createAssessmentRouter } from '@/modules/assessment/assessment.routes';
 import { createAssessmentService } from '@/modules/assessment/assessment.service';
+import { createInterviewPracticeRouter } from '@/modules/interview-practice/interview-practice.routes';
+import { createInterviewPracticeService } from '@/modules/interview-practice/interview-practice.service';
 import { notFound } from '@/middlewares/not-found';
 import { errorHandler } from '@/middlewares/error-handler';
 
@@ -55,6 +57,10 @@ export function createApp(
   app.use('/applications', createApplicationRouter(authService, applicationService));
   app.use('/assessments', createAssessmentRouter(authService, createAssessmentService(prisma)));
   app.use('/auth', createAuthRouter(authService));
+  app.use(
+    '/candidates/me/interview-practice',
+    createInterviewPracticeRouter(authService, createInterviewPracticeService(prisma)),
+  );
   app.use('/candidates', createCandidateRouter(authService));
   app.use('/companies', createCompanyRouter(authService, createCompanyService(prisma)));
   app.use(
