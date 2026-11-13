@@ -3,6 +3,8 @@ import type {
   PracticeRoundFeedbackDto,
   PracticeSummaryDto,
 } from '@launchly/shared';
+import { sourceLabel } from '@/components/interview-practice/source-label';
+import { Badge } from '@/components/ui/badge';
 
 function Bullets({ title, items }: { title: string; items: string[] }) {
   return (
@@ -48,9 +50,12 @@ export function RoundFeedbackView({ round }: { round: PracticeRoundDto }) {
       <ol aria-label={`Answers for ${round.name}`} className="space-y-3">
         {round.questions.map((question) => (
           <li key={question.id} className="space-y-1 rounded-card bg-surface-muted p-4 text-sm">
-            <p className="font-medium text-foreground">
-              {question.position}. {question.prompt}
-            </p>
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <p className="font-medium text-foreground">
+                {question.position}. {question.prompt}
+              </p>
+              <Badge tone="primary">{sourceLabel(question.source)}</Badge>
+            </div>
             <p className="whitespace-pre-line text-muted-foreground">{question.answer?.answer}</p>
             {question.answer?.feedback && (
               <p className="text-foreground">{question.answer.feedback}</p>
