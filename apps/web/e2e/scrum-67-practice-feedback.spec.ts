@@ -18,7 +18,7 @@ import {
  * SCRUM-67: advisory round feedback and the overall summary (this wave has no UI yet), driven over
  * HTTP against the seeded database and the deterministic mock AI. Interview AI calls are limited
  * to 10 per minute per candidate, so the long flows are split between two candidates and the
- * limit test runs last, on the candidate that has the fewest calls before it.
+ * limit test runs last, on candidate2, whose earlier calls (at most 8) leave room to reach it.
  */
 const DISCLAIMER =
   'AI-generated practice feedback is advisory and may be incorrect; it does not affect hiring decisions.';
