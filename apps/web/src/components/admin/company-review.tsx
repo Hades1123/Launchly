@@ -21,10 +21,10 @@ const statusView: Record<CompanyModerationStatus, { label: string; tone: BadgeTo
 
 const DECIDED = 'Mục này đã được xử lý';
 
-/** Readable Vietnamese text for a failed admin call. */
-function moderationErrorText(error: unknown): string {
+/** Readable Vietnamese text for a failed admin call; an invalid id only matters when loading. */
+function moderationErrorText(error: unknown, loading = false): string {
   if (error instanceof ApiError) {
-    if (error.code === 'NOT_FOUND' || error.code === 'VALIDATION_ERROR') {
+    if (error.code === 'NOT_FOUND' || (loading && error.code === 'VALIDATION_ERROR')) {
       return 'Không tìm thấy công ty.';
     }
     if (error.code === 'FORBIDDEN') return 'Bạn không có quyền duyệt nội dung.';
@@ -47,18 +47,21 @@ export function CompanyReview({ id }: { id: string }) {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  /** The decision buttons are hidden once the company is known to be decided, even if a reload failed. */
+  const [decided, setDecided] = useState(false);
 
   useEffect(() => {
     let active = true;
     setCompany(null);
     setError(null);
     setNotice(null);
+    setDecided(false);
     async function load() {
       try {
         const loaded = await getAdminCompany(id);
         if (active) setCompany(loaded);
       } catch (cause) {
-        if (active) setError(moderationErrorText(cause));
+        if (active) setError(moderationErrorText(cause, true));
       }
     }
     void load();
@@ -70,7 +73,12 @@ export function CompanyReview({ id }: { id: string }) {
   /** Another admin decided first (E1): show what they decided. */
   async function showDecided() {
     setNotice(DECIDED);
-    setCompany(await getAdminCompany(id));
+    setDecided(true);
+    try {
+      setCompany(await getAdminCompany(id));
+    } catch (cause) {
+      setError(moderationErrorText(cause));
+    }
   }
 
   async function approve() {
@@ -89,6 +97,7 @@ export function CompanyReview({ id }: { id: string }) {
   /** Throws a readable Error on failure so the dialog stays open with the reason. */
   async function reject(reason: string) {
     setBusy(true);
+    setError(null);
     try {
       setCompany(await rejectCompany(id, reason));
     } catch (cause) {
@@ -168,7 +177,7 @@ export function CompanyReview({ id }: { id: string }) {
           {error}
         </p>
       )}
-      {company.moderationStatus === 'PENDING' && (
+      {company.moderationStatus === 'PENDING' && !decided && (
         <div className="flex justify-end gap-2">
           <RejectDialog heading="Từ chối công ty" disabled={busy} onSubmit={reject} />
           <Button disabled={busy} onClick={() => void approve()}>

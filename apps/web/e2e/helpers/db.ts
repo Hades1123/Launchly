@@ -21,7 +21,11 @@ export function resetApplication(email: string, jobTitle: string) {
   reset('application', email, jobTitle);
 }
 
-/** Puts the seeded pending and rejected companies back, and removes companies a spec registered. */
+/**
+ * Puts the seeded pending and rejected companies and the seeded pending job back, removes
+ * companies a spec registered, and deletes every job titled "E2E moderation …" (keep that
+ * prefix for jobs only the moderation specs create).
+ */
 export function resetModeration() {
   reset('moderation');
 }

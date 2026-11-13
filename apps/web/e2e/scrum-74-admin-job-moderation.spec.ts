@@ -181,3 +181,59 @@ test('E4: a resubmitted job shows the previous rejection reason', async ({ page,
   await expect(page.getByText('Đã từ chối trước đó')).toBeVisible();
   await expect(page.getByText(/Thiếu mức lương cụ thể/)).toBeVisible();
 });
+
+test('review #1: a decided job shows when it was handled, not a moved "Gửi lúc"', async ({
+  page,
+  request,
+}) => {
+  const title = `E2E moderation handled ${Date.now()}`;
+  await submitJob(request, title);
+  await openJob(page, title);
+  await expect(page.getByText('Gửi lúc', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Duyệt', exact: true }).click();
+  await expect(page.getByText('Đã duyệt', { exact: true })).toBeVisible();
+  await expect(page.getByText('Xử lý lúc', { exact: true })).toBeVisible();
+  await expect(page.getByText('Gửi lúc', { exact: true })).toHaveCount(0);
+});
+
+test('review #2: a failed reload after a conflict shows an error and no buttons', async ({
+  page,
+  request,
+}) => {
+  const title = `E2E moderation reload ${Date.now()}`;
+  const id = await submitJob(request, title);
+  await openJob(page, title);
+  await request.post(`${API}/admin/jobs/${id}/approve`, { headers: await token(request, ADMIN) });
+  await page.route(`**/admin/jobs/${id}`, (route) =>
+    route.fulfill({
+      status: 500,
+      contentType: 'application/json',
+      body: JSON.stringify({ error: { code: 'INTERNAL_ERROR', message: 'boom' } }),
+    }),
+  );
+  await page.getByRole('button', { name: 'Duyệt', exact: true }).click();
+
+  await expect(page.getByText('Mục này đã được xử lý')).toBeVisible();
+  // Scoped to the page body: Next.js also renders a (silent) route announcer with role=alert.
+  await expect(page.getByRole('main').getByRole('alert')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Duyệt', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Từ chối' })).toHaveCount(0);
+});
+
+test('review #6: notes show even when a job has no rounds', async ({ page, request }) => {
+  const id = await adminJobIdByTitle(request, SEEDED_PENDING);
+  await page.route(`**/admin/jobs/${id}`, async (route) => {
+    const res = await route.fetch();
+    const job = await res.json();
+    await route.fulfill({
+      response: res,
+      json: {
+        ...job,
+        rounds: [],
+        notes: [{ id: crypto.randomUUID(), content: 'Ghi chú lẻ', position: 1 }],
+      },
+    });
+  });
+  await openJob(page, SEEDED_PENDING);
+  await expect(page.getByText('Ghi chú lẻ')).toBeVisible();
+});

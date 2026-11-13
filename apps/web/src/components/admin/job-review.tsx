@@ -20,10 +20,10 @@ import { approveJob, getAdminJob, rejectJob } from '@/lib/api/admin-jobs';
 import { ApiError } from '@/lib/api/http';
 import { authErrorMessage } from '@/lib/auth-helpers';
 
-/** Readable Vietnamese text for a failed admin call. */
-function moderationErrorText(error: unknown): string {
+/** Readable Vietnamese text for a failed admin call; an invalid id only matters when loading. */
+function moderationErrorText(error: unknown, loading = false): string {
   if (error instanceof ApiError) {
-    if (error.code === 'NOT_FOUND' || error.code === 'VALIDATION_ERROR') {
+    if (error.code === 'NOT_FOUND' || (loading && error.code === 'VALIDATION_ERROR')) {
       return 'Không tìm thấy tin tuyển dụng.';
     }
     if (error.code === 'FORBIDDEN') return 'Bạn không có quyền duyệt nội dung.';
@@ -44,8 +44,9 @@ function List({ items }: { items: string[] }) {
   if (items.length === 0) return <>—</>;
   return (
     <ul className="list-disc space-y-0.5 pl-5">
-      {items.map((item) => (
-        <li key={item}>{item}</li>
+      {items.map((item, index) => (
+        // Recruiters may repeat an item, so the position is part of the key.
+        <li key={`${index}-${item}`}>{item}</li>
       ))}
     </ul>
   );
@@ -57,18 +58,21 @@ export function JobReview({ id }: { id: string }) {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  /** The decision buttons are hidden once the job is known to be decided, even if a reload failed. */
+  const [decided, setDecided] = useState(false);
 
   useEffect(() => {
     let active = true;
     setJob(null);
     setError(null);
     setNotice(null);
+    setDecided(false);
     async function load() {
       try {
         const loaded = await getAdminJob(id);
         if (active) setJob(loaded);
       } catch (cause) {
-        if (active) setError(moderationErrorText(cause));
+        if (active) setError(moderationErrorText(cause, true));
       }
     }
     void load();
@@ -80,7 +84,12 @@ export function JobReview({ id }: { id: string }) {
   /** Another admin decided first (E1): show what they decided. */
   async function showDecided() {
     setNotice('Mục này đã được xử lý');
-    setJob(await getAdminJob(id));
+    setDecided(true);
+    try {
+      setJob(await getAdminJob(id));
+    } catch (cause) {
+      setError(moderationErrorText(cause));
+    }
   }
 
   async function approve() {
@@ -99,6 +108,7 @@ export function JobReview({ id }: { id: string }) {
   /** Throws a readable Error on failure so the dialog stays open with the reason. */
   async function reject(reason: string) {
     setBusy(true);
+    setError(null);
     try {
       setJob(await rejectJob(id, reason));
     } catch (cause) {
@@ -131,10 +141,17 @@ export function JobReview({ id }: { id: string }) {
     );
   }
 
-  const process = buildProcessView(
+  const timeline = buildProcessView(
     job.rounds.map((round) => ({ ...round, description: null })),
     job.notes,
   );
+  // The candidate view hides notes when a job has no rounds; the admin must still see them.
+  const notesView = {
+    ...timeline,
+    showNotes: job.notes.length > 0,
+    notes: [...job.notes].sort((a, b) => a.position - b.position),
+  };
+  const pending = job.status === 'PENDING' && !decided;
 
   return (
     <>
@@ -166,7 +183,13 @@ export function JobReview({ id }: { id: string }) {
           <Field label="Lương">{salaryText(job.salary)}</Field>
           <Field label="Lĩnh vực">{job.industry}</Field>
           <Field label="Email nhà tuyển dụng">{job.creatorEmail}</Field>
-          <Field label="Gửi lúc">{moderationDate.format(new Date(job.updatedAt))}</Field>
+          {job.status === 'PENDING' ? (
+            <Field label="Gửi lúc">{moderationDate.format(new Date(job.updatedAt))}</Field>
+          ) : (
+            <Field label="Xử lý lúc">
+              {job.reviewedAt ? moderationDate.format(new Date(job.reviewedAt)) : null}
+            </Field>
+          )}
           <div className="sm:col-span-2">
             <Field label="Mô tả">{job.description}</Field>
           </div>
@@ -178,14 +201,14 @@ export function JobReview({ id }: { id: string }) {
           </Field>
         </dl>
       </Card>
-      <HiringProcessTimeline view={process} />
-      <CompanyNotes view={process} />
+      <HiringProcessTimeline view={timeline} />
+      <CompanyNotes view={notesView} />
       {error && (
         <p role="alert" className="text-sm text-danger">
           {error}
         </p>
       )}
-      {job.status === 'PENDING' && (
+      {pending && (
         <div className="flex justify-end gap-2">
           <RejectDialog heading="Từ chối tin tuyển dụng" disabled={busy} onSubmit={reject} />
           <Button disabled={busy} onClick={() => void approve()}>
