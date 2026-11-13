@@ -123,7 +123,13 @@ export function RecruiterJobList({
           return;
         }
         setData(result);
-        setSelected(new Set());
+        // Keep the ticks on drafts still listed: a search finishing after the recruiter ticked
+        // must not clear the selection (and close the confirm dialog). Jobs no longer listed,
+        // such as deleted ones or ones on another page, drop out.
+        setSelected((current) => {
+          const listed = new Set(result.jobs.map((job) => job.id));
+          return new Set([...current].filter((id) => listed.has(id)));
+        });
         setError(null);
         setLoading(false);
       } catch {
