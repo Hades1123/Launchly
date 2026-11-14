@@ -5,7 +5,9 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import type { PracticeSessionDto, PracticeStatus } from '@launchly/shared';
 import { RoundFeedbackView, SummaryView } from '@/components/interview-practice/feedback-view';
+import { JobDescriptionLoader } from '@/components/interview-practice/job-description';
 import { isGeneralRound } from '@/components/interview-practice/labels';
+import { PracticeTabs } from '@/components/interview-practice/practice-tabs';
 import { RoundPanel } from '@/components/interview-practice/round-panel';
 import { Badge, type BadgeTone } from '@/components/ui/badge';
 import { buttonClasses } from '@/components/ui/button';
@@ -94,28 +96,46 @@ export function PracticeSession({ id }: { id: string }) {
         </Link>
       </Card>
 
-      {active && (
-        <RoundPanel
-          key={active.id}
-          sessionId={session.id}
-          round={active}
-          roundName={roundName(active)}
-          onChange={(next) => setLoaded({ session: next })}
-        />
-      )}
+      <PracticeTabs
+        label={t('jobTab.label')}
+        tabs={[
+          {
+            key: 'practice',
+            label: t('jobTab.practice'),
+            content: (
+              <div className="space-y-6">
+                {active && (
+                  <RoundPanel
+                    key={active.id}
+                    sessionId={session.id}
+                    round={active}
+                    roundName={roundName(active)}
+                    onChange={(next) => setLoaded({ session: next })}
+                  />
+                )}
 
-      {finished.length > 0 && (
-        <Card className="space-y-8">
-          {finished.map((round) => (
-            <RoundFeedbackView key={round.id} round={round} />
-          ))}
-          {session.summary && <SummaryView summary={session.summary} />}
-        </Card>
-      )}
+                {finished.length > 0 && (
+                  <Card className="space-y-8">
+                    {finished.map((round) => (
+                      <RoundFeedbackView key={round.id} round={round} />
+                    ))}
+                    {session.summary && <SummaryView summary={session.summary} />}
+                  </Card>
+                )}
 
-      {session.status === 'COMPLETED' && finished.length === 0 && (
-        <Card className="text-sm text-muted-foreground">{t('session.noFeedback')}</Card>
-      )}
+                {session.status === 'COMPLETED' && finished.length === 0 && (
+                  <Card className="text-sm text-muted-foreground">{t('session.noFeedback')}</Card>
+                )}
+              </div>
+            ),
+          },
+          {
+            key: 'description',
+            label: t('jobTab.description'),
+            content: <JobDescriptionLoader jobId={session.jobId} />,
+          },
+        ]}
+      />
     </div>
   );
 }

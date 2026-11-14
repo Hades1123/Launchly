@@ -350,6 +350,16 @@
       "previous": "Previous",
       "next": "Next",
       "pageStatus": "Page {page} of {totalPages}"
+    },
+    "jobTab": {
+      "label": "Practice sections",
+      "practice": "Practice",
+      "description": "Job description",
+      "basis": "The practice questions are written from the job title, the description and the requirements below.",
+      "about": "About the role",
+      "requirements": "Requirements",
+      "openJob": "Open the full job post",
+      "loadError": "Could not load the job description. The job may have been taken down."
     }
   }
 }

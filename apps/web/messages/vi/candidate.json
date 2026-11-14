@@ -350,6 +350,16 @@
       "previous": "Trước",
       "next": "Sau",
       "pageStatus": "Trang {page}/{totalPages}"
+    },
+    "jobTab": {
+      "label": "Các phần luyện tập",
+      "practice": "Luyện tập",
+      "description": "Mô tả công việc",
+      "basis": "Câu hỏi luyện tập được tạo từ tiêu đề, mô tả và yêu cầu công việc dưới đây.",
+      "about": "Về vị trí",
+      "requirements": "Yêu cầu",
+      "openJob": "Xem tin tuyển dụng đầy đủ",
+      "loadError": "Không tải được mô tả công việc. Tin tuyển dụng có thể đã bị gỡ."
     }
   }
 }

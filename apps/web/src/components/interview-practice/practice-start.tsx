@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState, type ReactNode } from 'react';
 import { isInteractiveRoundFormat, type PublicJobDetail } from '@launchly/shared';
+import { JobDescription } from '@/components/interview-practice/job-description';
+import { PracticeTabs } from '@/components/interview-practice/practice-tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonClasses } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -152,98 +154,124 @@ export function PracticeStart({ jobId }: { jobId: string }) {
         </Link>
       </header>
 
-      <fieldset className="space-y-3">
-        <legend className="mb-3 font-display text-base font-semibold text-foreground">
-          {t('start.modeLegend')}
-        </legend>
+      <PracticeTabs
+        label={t('jobTab.label')}
+        tabs={[
+          {
+            key: 'practice',
+            label: t('jobTab.practice'),
+            content: (
+              <div className="space-y-6">
+                <fieldset className="space-y-3">
+                  <legend className="mb-3 font-display text-base font-semibold text-foreground">
+                    {t('start.modeLegend')}
+                  </legend>
 
-        <ModeOption
-          title={t('start.quick.title')}
-          badge={t('start.quick.badge')}
-          body={t('start.quick.body')}
-          checked={mode === 'QUICK'}
-          onSelect={() => setMode('QUICK')}
-        />
+                  <ModeOption
+                    title={t('start.quick.title')}
+                    badge={t('start.quick.badge')}
+                    body={t('start.quick.body')}
+                    checked={mode === 'QUICK'}
+                    onSelect={() => setMode('QUICK')}
+                  />
 
-        <ModeOption
-          title={t('start.byRound.title')}
-          body={
-            canPickRounds
-              ? t('start.byRound.body')
-              : job.stages.length > 0
-                ? t('start.byRound.unavailable')
-                : t('start.byRound.noProcess')
-          }
-          checked={mode === 'ROUNDS'}
-          disabled={!canPickRounds}
-          onSelect={() => setMode('ROUNDS')}
-        >
-          <section aria-label={t('start.process')} className="space-y-2">
-            <h3 className="text-sm font-semibold text-foreground">{t('start.process')}</h3>
-            <ol className="space-y-2">
-              {job.stages.map((stage) => (
-                <li
-                  key={stage.id}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-control bg-surface px-3 py-2 text-sm"
-                >
-                  <span className="text-foreground">{stage.name}</span>
-                  {isInteractiveRoundFormat(stage.format) ? (
-                    <Badge tone="primary" shape="pill">
-                      {t('start.interactive')}
-                    </Badge>
-                  ) : (
-                    <Badge tone="neutral" shape="pill">
-                      {t('start.infoOnly')}
-                    </Badge>
-                  )}
-                </li>
-              ))}
-            </ol>
-          </section>
+                  <ModeOption
+                    title={t('start.byRound.title')}
+                    body={
+                      canPickRounds
+                        ? t('start.byRound.body')
+                        : job.stages.length > 0
+                          ? t('start.byRound.unavailable')
+                          : t('start.byRound.noProcess')
+                    }
+                    checked={mode === 'ROUNDS'}
+                    disabled={!canPickRounds}
+                    onSelect={() => setMode('ROUNDS')}
+                  >
+                    <section aria-label={t('start.process')} className="space-y-2">
+                      <h3 className="text-sm font-semibold text-foreground">
+                        {t('start.process')}
+                      </h3>
+                      <ol className="space-y-2">
+                        {job.stages.map((stage) => (
+                          <li
+                            key={stage.id}
+                            className="flex flex-wrap items-center justify-between gap-2 rounded-control bg-surface px-3 py-2 text-sm"
+                          >
+                            <span className="text-foreground">{stage.name}</span>
+                            {isInteractiveRoundFormat(stage.format) ? (
+                              <Badge tone="primary" shape="pill">
+                                {t('start.interactive')}
+                              </Badge>
+                            ) : (
+                              <Badge tone="neutral" shape="pill">
+                                {t('start.infoOnly')}
+                              </Badge>
+                            )}
+                          </li>
+                        ))}
+                      </ol>
+                    </section>
 
-          <fieldset className="space-y-2">
-            <legend className="mb-2 text-sm font-semibold text-foreground">
-              {t('start.roundsLegend')}
-            </legend>
-            <label className="flex items-center gap-3 text-sm text-foreground">
-              <input
-                type="radio"
-                name="practice-rounds"
-                checked={stageId === ''}
-                onChange={() => setStageId('')}
-                className="size-4 accent-primary"
-              />
-              {t('start.allRounds', { count: interactive.length })}
-            </label>
-            {interactive.map((stage) => (
-              <label key={stage.id} className="flex items-center gap-3 text-sm text-foreground">
-                <input
-                  type="radio"
-                  name="practice-rounds"
-                  checked={stageId === stage.id}
-                  onChange={() => setStageId(stage.id)}
-                  className="size-4 accent-primary"
-                />
-                {t('start.onlyRound', { name: stage.name })}
-              </label>
-            ))}
-          </fieldset>
-        </ModeOption>
-      </fieldset>
+                    <fieldset className="space-y-2">
+                      <legend className="mb-2 text-sm font-semibold text-foreground">
+                        {t('start.roundsLegend')}
+                      </legend>
+                      <label className="flex items-center gap-3 text-sm text-foreground">
+                        <input
+                          type="radio"
+                          name="practice-rounds"
+                          checked={stageId === ''}
+                          onChange={() => setStageId('')}
+                          className="size-4 accent-primary"
+                        />
+                        {t('start.allRounds', { count: interactive.length })}
+                      </label>
+                      {interactive.map((stage) => (
+                        <label
+                          key={stage.id}
+                          className="flex items-center gap-3 text-sm text-foreground"
+                        >
+                          <input
+                            type="radio"
+                            name="practice-rounds"
+                            checked={stageId === stage.id}
+                            onChange={() => setStageId(stage.id)}
+                            className="size-4 accent-primary"
+                          />
+                          {t('start.onlyRound', { name: stage.name })}
+                        </label>
+                      ))}
+                    </fieldset>
+                  </ModeOption>
+                </fieldset>
 
-      <label className="flex items-start gap-1 text-sm text-muted-foreground">
-        <Checkbox checked={consent} onChange={(event) => setConsent(event.target.checked)} />
-        <span className="pt-3">{t('start.consent')}</span>
-      </label>
+                <label className="flex items-start gap-1 text-sm text-muted-foreground">
+                  <Checkbox
+                    checked={consent}
+                    onChange={(event) => setConsent(event.target.checked)}
+                  />
+                  <span className="pt-3">{t('start.consent')}</span>
+                </label>
 
-      {error && (
-        <p role="alert" className="text-sm text-danger">
-          {error}
-        </p>
-      )}
-      <Button onClick={start} disabled={!consent || pending}>
-        {pending ? t('start.starting') : t('start.start')}
-      </Button>
+                {error && (
+                  <p role="alert" className="text-sm text-danger">
+                    {error}
+                  </p>
+                )}
+                <Button onClick={start} disabled={!consent || pending}>
+                  {pending ? t('start.starting') : t('start.start')}
+                </Button>
+              </div>
+            ),
+          },
+          {
+            key: 'description',
+            label: t('jobTab.description'),
+            content: <JobDescription job={job} />,
+          },
+        ]}
+      />
     </Card>
   );
 }
