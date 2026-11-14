@@ -22,6 +22,7 @@ import {
 import { useTranslations } from 'next-intl';
 import type { CompanyDto, CompanyModerationStatus } from '@launchly/shared';
 import { BrandLogo } from '@/components/layout/brand-logo';
+import { LanguageSwitcher } from '@/components/layout/language-switcher';
 import { Badge, type BadgeTone } from '@/components/ui/badge';
 import { buttonClasses } from '@/components/ui/button';
 import { getMyCompany } from '@/lib/api/company';
@@ -275,13 +276,16 @@ export function RecruiterShell({ children }: { children: ReactNode }) {
             <NavLinks company={company} pathname={pathname} />
           </nav>
           <div className="mt-auto space-y-3">
-            <Link
-              href="/jobs"
-              className={cn(navBase, 'text-muted-foreground hover:bg-surface-muted')}
-            >
-              <ArrowLeft className="size-5" />
-              {t('backToJobs')}
-            </Link>
+            <div className="flex items-center gap-1">
+              <Link
+                href="/jobs"
+                className={cn(navBase, 'flex-1 text-muted-foreground hover:bg-surface-muted')}
+              >
+                <ArrowLeft className="size-5" />
+                {t('backToJobs')}
+              </Link>
+              <LanguageSwitcher />
+            </div>
             <div className="flex items-center gap-3 rounded-card bg-surface-muted p-3">
               <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-subtle text-xs font-semibold text-primary-subtle-foreground">
                 {userInitials(user)}
@@ -306,9 +310,12 @@ export function RecruiterShell({ children }: { children: ReactNode }) {
         <header className="sticky top-0 z-40 bg-surface/90 shadow-card backdrop-blur-xl lg:hidden">
           <div className="flex h-16 items-center justify-between gap-3 px-4">
             <BrandLogo />
-            <Link href="/jobs" className={buttonClasses('ghost', 'px-2')}>
-              <ChevronLeft className="size-4" aria-hidden /> {t('jobsPage')}
-            </Link>
+            <div className="flex items-center gap-1">
+              <LanguageSwitcher />
+              <Link href="/jobs" className={buttonClasses('ghost', 'px-2')}>
+                <ChevronLeft className="size-4" aria-hidden /> {t('jobsPage')}
+              </Link>
+            </div>
           </div>
           {company.kind === 'ready' && company.company.moderationStatus === 'REJECTED' && (
             <div className="mx-4 mb-3 rounded-card bg-danger-subtle p-3">

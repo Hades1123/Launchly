@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { BrandLogo } from '@/components/layout/brand-logo';
+import { LanguageSwitcher } from '@/components/layout/language-switcher';
 import { buttonClasses } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth-context';
 
@@ -75,10 +76,13 @@ export function AdminShell({ children }: { children: ReactNode }) {
               {t('badge')}
             </span>
           </div>
-          <Link href="/jobs" className={buttonClasses('ghost')}>
-            <ArrowLeft className="size-4" aria-hidden />
-            {t('backToJobs')}
-          </Link>
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher />
+            <Link href="/jobs" className={buttonClasses('ghost')}>
+              <ArrowLeft className="size-4" aria-hidden />
+              {t('backToJobs')}
+            </Link>
+          </div>
         </div>
       </header>
       <main className="mx-auto max-w-5xl space-y-6 px-4 py-8">{children}</main>
