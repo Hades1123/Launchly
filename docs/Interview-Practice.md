@@ -115,7 +115,7 @@ Saving an answer creates or replaces it, starts a not-started round and moves th
 
 ### Shared AI limit
 
-Question and feedback generation share one quota per signed-in candidate: **10 requests per 60 seconds**. The 11th returns `429 RATE_LIMITED` in the standard error shape; wait a minute and retry. The counter is in this API process's memory, so with more than one API instance each has its own quota. Use a shared store (for example Redis) before running several instances.
+Question and feedback generation share one quota per signed-in candidate: **10 requests per 60 seconds** (default; set `INTERVIEW_AI_RATE_LIMIT` to change it, as the Playwright config does). The 11th returns `429 RATE_LIMITED` in the standard error shape; wait a minute and retry. The counter is in this API process's memory, so with more than one API instance each has its own quota. Use a shared store (for example Redis) before running several instances.
 
 ## Feedback and summary (SCRUM-67)
 

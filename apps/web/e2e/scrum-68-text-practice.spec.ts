@@ -6,8 +6,8 @@ import { API, BASE, CANDIDATE, questionsUrl, startRoundPractice, token } from '.
 /**
  * SCRUM-68: the text-only practice flow (start, consent, questions, answers) in the browser.
  * The API runs with the deterministic mock AI, so generated questions are placeholders: the
- * tests count items and never read their text. Interview AI calls are limited to 10 per minute
- * per candidate; this spec makes at most three.
+ * tests count items and never read their text. Interview AI calls are limited per minute
+ * per candidate (raised in playwright.config.ts); this spec makes at most three.
  */
 test.beforeEach(() => resetPractice(CANDIDATE));
 test.afterAll(() => resetPractice(CANDIDATE));
