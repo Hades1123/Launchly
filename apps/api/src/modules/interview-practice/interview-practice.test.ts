@@ -562,6 +562,8 @@ describe('POST /:id/rounds/:roundId/questions', () => {
     expect(prompt).toContain('Online test');
     expect(prompt).toContain('ONLINE');
     expect(system).toMatch(/five/i);
+    // Practice is always in Vietnamese, whatever language the job description is in.
+    expect(system).toContain('in Vietnamese');
   });
 
   it.each([
@@ -913,10 +915,11 @@ describe('POST /:id/rounds/:roundId/feedback', () => {
     expect(res.status).toBe(201);
     expect(practiceSessionDtoSchema.safeParse(res.body).success).toBe(true);
     expect(ai.generateJson).toHaveBeenCalledTimes(1);
-    const { prompt } = ai.generateJson.mock.calls[0]![0];
+    const { prompt, system } = ai.generateJson.mock.calls[0]![0];
     expect(prompt).toContain('Frontend Intern');
     expect(prompt).toContain('Question 1?');
     expect(prompt).toContain('My answer 5');
+    expect(system).toContain('in Vietnamese');
 
     const updates = ctx.prisma.interviewPracticeAnswer.update.mock.calls.map((c) => c[0]);
     expect(updates).toEqual(
@@ -954,6 +957,7 @@ describe('POST /:id/rounds/:roundId/feedback', () => {
     expect(res.status).toBe(201);
     expect(ai.generateJson).toHaveBeenCalledTimes(2);
     expect(ai.generateJson.mock.calls[1]![0].prompt).toContain('A clear start.');
+    expect(ai.generateJson.mock.calls[1]![0].system).toContain('in Vietnamese');
     expect(ctx.prisma.interviewSession.updateMany.mock.calls[0]![0]).toEqual({
       where: { id: SESSION, status: { not: 'COMPLETED' } },
       data: { status: 'COMPLETED', completedAt: NOW, summary: JSON.stringify(summaryBody) },
