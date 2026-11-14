@@ -9,7 +9,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { AuthFeedback } from '@/components/auth/auth-ui';
 import type { Locale } from '@/i18n/locale';
 import { useAuth } from '@/lib/auth-context';
-import { authErrorMessage } from '@/lib/auth-helpers';
+import { authErrorMessage, postLoginPath } from '@/lib/auth-helpers';
 import { signInWithGoogle } from '@/lib/api/auth';
 
 type GoogleCredentialResponse = { credential: string };
@@ -123,7 +123,7 @@ export function GoogleAuthAction({ returnTo }: { returnTo?: string }) {
         const result = await signInWithGoogle({ idToken, ...(role ? { role } : {}) });
         if ('accessToken' in result) {
           acceptSession(result.accessToken, result.user);
-          router.replace(returnTo || '/jobs');
+          router.replace(postLoginPath(result.user.role, returnTo));
           return;
         }
         if ('requiresRoleSelection' in result) {
