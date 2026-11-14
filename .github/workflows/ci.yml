@@ -48,6 +48,8 @@ jobs:
           --health-retries 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # coverage:changed diffs against origin/main
       - uses: pnpm/action-setup@v4 # version comes from "packageManager" in package.json
       - uses: actions/setup-node@v4
         with:
@@ -61,6 +63,14 @@ jobs:
         run: pnpm lint
       - name: Unit tests
         run: pnpm test
+      - name: Gate script tests
+        run: pnpm test:scripts
+      - name: Changed-file coverage (>= 80 % lines and branches)
+        # Constitution Principle IV applies this to `feature` tickets only, and the label is a Jira
+        # field CI cannot see, so it keys on the branch type (`feat/...`) that
+        # CONTRIBUTING.md ties to features. bug and maintenance branches are exempt.
+        if: startsWith(github.head_ref || github.ref_name, 'feat/')
+        run: pnpm test:coverage && pnpm coverage:changed
       - name: Apply migrations
         run: pnpm db:deploy
       - name: Schema drift (migrations match schema.prisma)

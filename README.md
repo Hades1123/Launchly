@@ -128,10 +128,10 @@ Run a script in a single package with `pn --filter @launchly/api <script>`.
 
 `.github/workflows/ci.yml` runs on every push to `main` and on every pull request (opened, new commits, reopened). Two jobs, each with its own PostgreSQL service:
 
-- **gates:** `pnpm typecheck`, `pnpm lint`, `pnpm test`, then `prisma migrate deploy`, a schema-drift check and the database-backed tests (`RUN_DB_TESTS=1`).
+- **gates:** `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm test:scripts`, on `feat/*` branches `pnpm test:coverage && pnpm coverage:changed` (≥80 % lines and branches on changed files), then `prisma migrate deploy`, a schema-drift check and the database-backed tests (`RUN_DB_TESTS=1`).
 - **e2e:** migrate, seed and `pnpm --filter @launchly/web test:e2e` (Chromium). The Playwright report is uploaded as an artifact when it fails.
 
-It uses `AI_DRIVER=mock`, so no secret is needed. The live Gemini check (`ai:smoke`) stays a manual step. The changed-file coverage gate does not exist yet, so CI does not run it.
+It uses `AI_DRIVER=mock`, so no secret is needed. The live Gemini check (`ai:smoke`) stays a manual step. CI cannot read the Jira label, so the coverage gate keys on the `feat/` branch prefix; `fix/` and `chore/` branches are exempt, as the constitution requires.
 
 ## Running e2e tests locally
 
