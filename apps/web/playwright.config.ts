@@ -40,6 +40,8 @@ export default defineConfig({
         AI_DRIVER: 'mock',
         // Specs sign in once per test; the default 10 per 2 minutes would throttle them.
         LOGIN_RATE_LIMIT: '1000',
+        // Specs 64 to 69 share two candidates and run within one minute; spec 67 AC4 reads this value.
+        INTERVIEW_AI_RATE_LIMIT: '40',
       },
       reuseExistingServer: false,
       gracefulShutdown: { signal: 'SIGTERM', timeout: 5_000 },
