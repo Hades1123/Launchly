@@ -1,7 +1,6 @@
 {
   "header": {
-    "switchLanguage": "Chuyển ngôn ngữ sang {language}",
-    "notifications": "Thông báo tiến độ ({count} mới)"
+    "switchLanguage": "Chuyển ngôn ngữ sang {language}"
   },
   "nav": {
     "label": "Điều hướng chính",
@@ -12,7 +11,9 @@
       "cvReview": "Đánh giá CV",
       "interviewPractice": "Luyện phỏng vấn AI",
       "applications": "Việc đã ứng tuyển",
-      "profile": "Hồ sơ của tôi"
+      "profile": "Hồ sơ của tôi",
+      "recruiterJobs": "Quản lý tuyển dụng",
+      "adminModeration": "Duyệt nội dung"
     }
   },
   "auth": {

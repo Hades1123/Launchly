@@ -1,7 +1,6 @@
 {
   "header": {
-    "switchLanguage": "Switch language to {language}",
-    "notifications": "Progress notifications ({count} new)"
+    "switchLanguage": "Switch language to {language}"
   },
   "nav": {
     "label": "Main navigation",
@@ -12,7 +11,9 @@
       "cvReview": "CV review",
       "interviewPractice": "AI interview practice",
       "applications": "My applications",
-      "profile": "My profile"
+      "profile": "My profile",
+      "recruiterJobs": "Manage hiring",
+      "adminModeration": "Content moderation"
     }
   },
   "auth": {

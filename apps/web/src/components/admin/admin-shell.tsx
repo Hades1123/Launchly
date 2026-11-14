@@ -69,7 +69,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
       <header className="bg-surface shadow-card">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
+        <div className="mx-auto flex max-w-page items-center justify-between gap-4 px-4 py-3 md:px-8">
           <div className="flex items-center gap-3">
             <BrandLogo />
             <span className="text-xs font-semibold tracking-wide text-subtle-foreground uppercase">
@@ -85,7 +85,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-5xl space-y-6 px-4 py-8">{children}</main>
+      <main className="mx-auto max-w-page space-y-6 px-4 py-8 md:px-8">{children}</main>
     </div>
   );
 }

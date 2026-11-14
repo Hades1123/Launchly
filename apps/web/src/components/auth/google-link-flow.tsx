@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { AuthFeedback, AuthHeading } from '@/components/auth/auth-ui';
 import { useAuth } from '@/lib/auth-context';
-import { authErrorMessage } from '@/lib/auth-helpers';
+import { authErrorMessage, postLoginPath } from '@/lib/auth-helpers';
 import { completeGoogleLink } from '@/lib/api/auth';
 import { ApiError } from '@/lib/api/http';
 
@@ -30,7 +30,7 @@ export function GoogleLinkFlow({ token }: { token?: string }) {
         const session = await completeGoogleLink({ token });
         window.history.replaceState(null, '', '/google-link');
         acceptSession(session.accessToken, session.user);
-        router.replace('/jobs');
+        router.replace(postLoginPath(session.user.role));
       } catch (cause) {
         if (cause instanceof ApiError && cause.status === 400) {
           window.history.replaceState(null, '', '/google-link');

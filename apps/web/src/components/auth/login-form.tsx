@@ -15,7 +15,7 @@ import {
 } from '@/components/auth/auth-ui';
 import { GoogleAuthAction } from '@/components/auth/google-auth-action';
 import { useAuth } from '@/lib/auth-context';
-import { authErrorMessage, safeReturnPath } from '@/lib/auth-helpers';
+import { authErrorMessage, postLoginPath } from '@/lib/auth-helpers';
 import { login, resendVerification } from '@/lib/api/auth';
 import { ApiError } from '@/lib/api/http';
 
@@ -65,7 +65,7 @@ export function LoginForm({ returnTo }: { returnTo?: string }) {
     try {
       const session = await login(parsed.data);
       acceptSession(session.accessToken, session.user);
-      router.replace(safeReturnPath(returnTo));
+      router.replace(postLoginPath(session.user.role, returnTo));
     } catch (cause) {
       setError(authErrorMessage(cause, tErrors));
       setUnverified(cause instanceof ApiError && cause.code === 'EMAIL_NOT_VERIFIED');
@@ -145,7 +145,7 @@ export function LoginForm({ returnTo }: { returnTo?: string }) {
       </form>
 
       <AuthDivider />
-      <GoogleAuthAction returnTo={safeReturnPath(returnTo)} />
+      <GoogleAuthAction returnTo={returnTo} />
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
         {t('login.noAccount')}{' '}

@@ -42,17 +42,44 @@ export function fieldErrorMessage(
   return detail.message;
 }
 
-export function safeReturnPath(value: string | null | undefined): string {
+export function safeReturnPath(value: string | null | undefined, fallback = '/jobs'): string {
   if (!value || !value.startsWith('/') || value.startsWith('//') || value.includes('\\')) {
-    return '/jobs';
+    return fallback;
   }
   try {
     const url = new URL(value, window.location.origin);
-    if (url.origin !== window.location.origin) return '/jobs';
+    if (url.origin !== window.location.origin) return fallback;
     return `${url.pathname}${url.search}${url.hash}`;
   } catch {
-    return '/jobs';
+    return fallback;
   }
+}
+
+/** Where each role lands after signing in when no return path applies. */
+const HOME_PATHS: Record<UserRole, string> = {
+  CANDIDATE: '/jobs',
+  RECRUITER: '/recruiter/jobs',
+  ADMIN: '/admin/moderation',
+};
+
+/** Recruiters and admins only return to pages inside their own area. */
+const ROLE_AREAS: Partial<Record<UserRole, string>> = {
+  RECRUITER: '/recruiter',
+  ADMIN: '/admin',
+};
+
+/**
+ * Page to open after sign-in: the safe `next` path, or the role's home. A recruiter or admin is
+ * sent to their own area instead of a candidate page.
+ */
+export function postLoginPath(role: UserRole, returnTo?: string | null): string {
+  const home = HOME_PATHS[role];
+  const path = safeReturnPath(returnTo, home);
+  const area = ROLE_AREAS[role];
+  if (area && path !== area && !path.startsWith(`${area}/`) && !path.startsWith(`${area}?`)) {
+    return home;
+  }
+  return path;
 }
 
 type NamedUser = { fullName: string | null; email: string; role: UserRole };
