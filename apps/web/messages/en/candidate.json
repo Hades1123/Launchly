@@ -65,15 +65,38 @@
       "cv": "Your CV",
       "compareAgainst": "Compare against",
       "sourceJob": "A Launchly job",
-      "sourceText": "A pasted job description",
+      "sourceText": "Paste a job description",
       "jobDescription": "Job description",
       "jobDescriptionPlaceholder": "Paste the job description here…",
       "analyse": "Analyse",
       "analysing": "Analysing…",
       "changeJob": "Change job",
       "searchJobs": "Search jobs",
-      "searchPlaceholder": "Search a Launchly job by title…",
-      "jobResults": "Job results"
+      "searchPlaceholder": "Search by job title or company…",
+      "jobResults": "Job results",
+      "uploadedOn": "Uploaded {date}",
+      "uploadCv": "Upload a new CV",
+      "viewJd": "View job description",
+      "hideJd": "Hide job description",
+      "requirements": "Requirements",
+      "openJob": "Open the job page",
+      "jdLoadError": "Could not load the job description.",
+      "picker": {
+        "recent": "Recently picked",
+        "applied": "Jobs you applied to",
+        "latest": "Newly posted",
+        "companies": "Companies",
+        "jobs": "Jobs",
+        "other": "Other",
+        "companyHint": "See its open positions",
+        "pasteInstead": "Can't find it? Paste the job description instead",
+        "noResults": "No jobs match “{keyword}”.",
+        "searchError": "Could not search jobs. Try again.",
+        "searching": "Searching…",
+        "typeHint": "Type a job title or company name to search.",
+        "clearCompany": "Remove the company filter",
+        "filterCompanyPlaceholder": "Filter this company’s jobs by title…"
+      }
     },
     "result": {
       "label": "Analysis result",
@@ -84,7 +107,17 @@
       "required": "Required",
       "niceToHave": "Nice to have",
       "improve": "How to improve",
-      "evidence": "Evidence from your CV"
+      "evidence": "Evidence from your CV",
+      "applyJob": "Apply to this job",
+      "matchesEmpty": "No clear matches yet.",
+      "missingEmpty": "Nothing important is missing.",
+      "placeholder": {
+        "title": "Your result will appear here",
+        "body": "Pick a CV and a job on the left, then press Analyse.",
+        "step1": "Pick the CV you want to check.",
+        "step2": "Choose a Launchly job or paste a job description.",
+        "step3": "Get a match score, the gaps, and how to close them."
+      }
     },
     "gauge": {
       "label": "Match score {score} out of 100",

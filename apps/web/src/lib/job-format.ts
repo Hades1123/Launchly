@@ -28,3 +28,13 @@ export function formatSalary({ negotiable, min, max }: PublicSalary, t: JobsTran
   if (max !== null) return t('salary.upTo', { max: String(max) });
   return t('salary.negotiable');
 }
+
+/** Lower-cases and strips Vietnamese diacritics so "Kỹ sư" matches "ky su". */
+export function foldText(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .toLowerCase();
+}

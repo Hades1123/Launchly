@@ -83,7 +83,7 @@ test('AC4: a pasted job description can be analysed too', async ({ page }) => {
   await page.goto('/cv-review');
   await agree(page);
 
-  await page.getByLabel('Một mô tả công việc tự dán').check();
+  await page.getByRole('radio', { name: 'Dán mô tả công việc' }).check();
   await page
     .getByRole('textbox', { name: 'Mô tả công việc' })
     .fill('React developer with TypeScript experience.');
@@ -109,7 +109,7 @@ test('AC6: an API error is shown with its message', async ({ page }) => {
   );
   await page.goto('/cv-review');
   await agree(page);
-  await page.getByLabel('Một mô tả công việc tự dán').check();
+  await page.getByRole('radio', { name: 'Dán mô tả công việc' }).check();
   await page.getByRole('textbox', { name: 'Mô tả công việc' }).fill('Any job description.');
   await page.getByRole('button', { name: 'Phân tích' }).click();
 
