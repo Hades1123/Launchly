@@ -1,6 +1,9 @@
 export const PRACTICE_QUESTIONS_PER_ROUND = 5;
 export const PRACTICE_EXPIRY_HOURS = 24;
 
+/** Stored name of the QUICK scope's round; the web app shows its own translated label. */
+export const PRACTICE_GENERAL_ROUND_NAME = 'General interview';
+
 /**
  * Round formats that run as an interactive Q&A practice round. Other formats (on-site,
  * take-home assignment, or a format that is not set) are shown as information only.

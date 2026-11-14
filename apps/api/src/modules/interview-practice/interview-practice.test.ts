@@ -9,6 +9,7 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   PRACTICE_FEEDBACK_DISCLAIMER,
+  PRACTICE_GENERAL_ROUND_NAME,
   PRACTICE_QUESTIONS_PER_ROUND,
   apiErrorSchema,
   practiceHistoryResponseSchema,
@@ -200,6 +201,43 @@ describe('POST /candidates/me/interview-practice', () => {
     expect(data.rounds.create).toEqual([
       expect.objectContaining({ stageId: PHONE, name: 'Phone screen', position: 1 }),
     ]);
+  });
+
+  it('starts a quick practice for a job with no hiring process', async () => {
+    ctx.prisma.job.findFirst.mockResolvedValue(publishedJob({ stages: [] }));
+
+    const res = await start(ctx, { jobId: JOB, consent: true, scope: 'QUICK' });
+
+    expect(res.status).toBe(201);
+    const data = ctx.prisma.interviewSession.create.mock.calls[0]![0].data;
+    expect(data.scope).toBe('QUICK');
+    // One general round with no stage, whatever the job's rounds are.
+    expect(data.rounds.create).toEqual([
+      { stageId: null, name: PRACTICE_GENERAL_ROUND_NAME, position: 1 },
+    ]);
+    const where = ctx.prisma.interviewSession.findFirst.mock.calls[0]![0].where;
+    expect(where).toMatchObject({ jobId: JOB, scope: 'QUICK' });
+  });
+
+  it('400 for a round outside the ROUND scope and for ROUND without a round', async () => {
+    const quick = await start(ctx, { jobId: JOB, consent: true, scope: 'QUICK', stageId: PHONE });
+    const full = await start(ctx, { jobId: JOB, consent: true, scope: 'FULL', stageId: PHONE });
+    const round = await start(ctx, { jobId: JOB, consent: true, scope: 'ROUND' });
+
+    for (const res of [quick, full, round]) {
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    }
+    expect(ctx.prisma.job.findFirst).not.toHaveBeenCalled();
+  });
+
+  it('400 for a quick practice of a job without a description', async () => {
+    ctx.prisma.job.findFirst.mockResolvedValue(publishedJob({ description: ' ', stages: [] }));
+
+    const res = await start(ctx, { jobId: JOB, consent: true, scope: 'QUICK' });
+
+    expect(res.status).toBe(400);
+    expect(ctx.prisma.interviewSession.create).not.toHaveBeenCalled();
   });
 
   it('rejects a start without consent and creates no session', async () => {
@@ -526,6 +564,21 @@ describe('POST /:id/rounds/:roundId/questions', () => {
     expect(system).toMatch(/five/i);
   });
 
+  it('writes a general round from the job alone when the round has no stage', async () => {
+    ctx.prisma.interviewPracticeRound.findFirst.mockResolvedValue(
+      roundRow({ name: PRACTICE_GENERAL_ROUND_NAME, stage: null }),
+    );
+
+    const res = await generate(ctx);
+
+    expect(res.status).toBe(201);
+    const { prompt } = ai.generateJson.mock.calls[0]![0];
+    expect(prompt).toContain('Build UI with React.');
+    expect(prompt).toContain('General interview');
+    expect(prompt).not.toContain('ROUND_PROCESS');
+    expect(ctx.prisma.interviewPracticeQuestion.createMany).toHaveBeenCalledTimes(1);
+  });
+
   it('a repeat returns the stored set with no AI call and no new rows (200)', async () => {
     ctx.prisma.interviewPracticeRound.findFirst.mockResolvedValue(
       roundRow({ _count: { questions: 5 } }),
@@ -607,7 +660,6 @@ describe('POST /:id/rounds/:roundId/questions', () => {
     ],
     ['no interview consent', { session: sessionOf({ interviewConsentAt: null }) }, 403],
     ['an informational round', { stage: { format: 'ONSITE' } }, 400],
-    ['a round whose stage was deleted', { stage: null }, 400],
     ['an expired session', { session: sessionOf({ expiresAt: NOW }) }, 404],
   ])('%s: no AI call, nothing stored', async (_label, over, status) => {
     ctx.prisma.interviewPracticeRound.findFirst.mockResolvedValue(roundRow(over));

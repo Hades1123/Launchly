@@ -3,6 +3,7 @@ import type { PrismaClient } from '@/generated/prisma/client';
 import {
   PRACTICE_EXPIRY_HOURS,
   PRACTICE_FEEDBACK_DISCLAIMER,
+  PRACTICE_GENERAL_ROUND_NAME,
   PRACTICE_QUESTIONS_PER_ROUND,
   generatedPracticeQuestionsSchema,
   generatedPracticeSummarySchema,
@@ -80,14 +81,18 @@ function buildSummaryPrompt(
   return `## Job\n${jobTitle}\n\n## Round feedback\n${parts.join('\n\n')}`;
 }
 
+/** `round` is null for a general round (QUICK scope, or a stage the recruiter later removed). */
 function buildQuestionsPrompt(
   job: { title: string; description: string; requirements: string[] },
-  round: { name: string; format: string },
+  round: { name: string; format: string } | null,
 ): string {
   const requirements = job.requirements.length
     ? `\n\n## Requirements\n${job.requirements.map((r) => `- ${r}`).join('\n')}`
     : '';
-  return `## Job\n${job.title}\n\n## Description\n${job.description}${requirements}\n\n## Round\n${round.name} (${round.format})`;
+  const roundText = round
+    ? `${round.name} (${round.format})`
+    : 'General interview. No round details are given, so ask about the job itself and tag every question JOB_DESCRIPTION or JOB_REQUIREMENTS.';
+  return `## Job\n${job.title}\n\n## Description\n${job.description}${requirements}\n\n## Round\n${roundText}`;
 }
 
 const sessionInclude = {
@@ -252,27 +257,34 @@ export function createInterviewPracticeService(prisma: PrismaClient, options: Op
       if (job.description.trim() === '') {
         throw new AppError('VALIDATION_ERROR', 'This job has no description to practice from');
       }
-      if (job.stages.length === 0) {
-        throw new AppError('VALIDATION_ERROR', 'This job has no hiring process to practice');
-      }
 
-      let selected = job.stages.filter((stage) => isInteractiveRoundFormat(stage.format));
-      if (input.stageId) {
-        const stage = job.stages.find((s) => s.id === input.stageId);
-        if (!stage) throw new AppError('VALIDATION_ERROR', 'Round not found for this job');
-        if (!isInteractiveRoundFormat(stage.format)) {
-          throw new AppError(
-            'VALIDATION_ERROR',
-            'This round is informational and cannot be practiced',
-          );
+      const scope = input.scope ?? (input.stageId ? 'ROUND' : 'FULL');
+      // QUICK needs only the job description: one general round with no stage.
+      let rounds: Array<{ stageId: string | null; name: string }> = [
+        { stageId: null, name: PRACTICE_GENERAL_ROUND_NAME },
+      ];
+      if (scope !== 'QUICK') {
+        if (job.stages.length === 0) {
+          throw new AppError('VALIDATION_ERROR', 'This job has no hiring process to practice');
         }
-        selected = [stage];
-      } else if (selected.length === 0) {
-        throw new AppError('VALIDATION_ERROR', 'This job has no round that can be practiced');
+        let selected = job.stages.filter((stage) => isInteractiveRoundFormat(stage.format));
+        if (input.stageId) {
+          const stage = job.stages.find((s) => s.id === input.stageId);
+          if (!stage) throw new AppError('VALIDATION_ERROR', 'Round not found for this job');
+          if (!isInteractiveRoundFormat(stage.format)) {
+            throw new AppError(
+              'VALIDATION_ERROR',
+              'This round is informational and cannot be practiced',
+            );
+          }
+          selected = [stage];
+        } else if (selected.length === 0) {
+          throw new AppError('VALIDATION_ERROR', 'This job has no round that can be practiced');
+        }
+        rounds = selected.map((stage) => ({ stageId: stage.id, name: stage.name }));
       }
 
       const at = now();
-      const scope = input.stageId ? 'ROUND' : 'FULL';
       const existing = await prisma.interviewSession.findFirst({
         where: {
           candidateId,
@@ -305,9 +317,9 @@ export function createInterviewPracticeService(prisma: PrismaClient, options: Op
           lastActivityAt: at,
           expiresAt: practiceExpiry(at),
           rounds: {
-            create: selected.map((stage, index) => ({
-              stageId: stage.id,
-              name: stage.name,
+            create: rounds.map((round, index) => ({
+              stageId: round.stageId,
+              name: round.name,
               position: index + 1,
             })),
           },
@@ -370,8 +382,9 @@ export function createInterviewPracticeService(prisma: PrismaClient, options: Op
         return { session: toDto((await touch(sessionId, at)) as SessionRow), created: false };
       }
 
-      const format = round.stage?.format ?? null;
-      if (!format || !isInteractiveRoundFormat(format)) {
+      // A round without a stage is a general round; a stage must still be interactive.
+      const format = round.stage ? round.stage.format : null;
+      if (round.stage && (!format || !isInteractiveRoundFormat(format))) {
         throw new AppError('VALIDATION_ERROR', 'This round cannot be practiced');
       }
       const { job } = round.session;
@@ -381,7 +394,7 @@ export function createInterviewPracticeService(prisma: PrismaClient, options: Op
 
       const generated = await ask(
         QUESTIONS_SYSTEM_PROMPT,
-        buildQuestionsPrompt(job, { name: round.name, format }),
+        buildQuestionsPrompt(job, format ? { name: round.name, format } : null),
         generatedPracticeQuestionsSchema,
         'The AI could not write questions. Try again later.',
       );

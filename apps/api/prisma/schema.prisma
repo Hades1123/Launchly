@@ -115,6 +115,7 @@ enum InterviewSessionStatus {
 enum PracticeScope {
   FULL
   ROUND
+  QUICK
 }
 
 enum NotificationType {

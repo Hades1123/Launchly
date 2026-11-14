@@ -1,19 +1,36 @@
 import { z } from 'zod';
 import { PRACTICE_QUESTIONS_PER_ROUND } from '../constants/interview-practice';
 
-export const practiceScopeSchema = z.enum(['FULL', 'ROUND']);
+/**
+ * QUICK: one general round written from the job description, open to every published job.
+ * FULL: every interactive round of the hiring process. ROUND: one interactive round.
+ */
+export const practiceScopeSchema = z.enum(['QUICK', 'FULL', 'ROUND']);
 export type PracticeScope = z.infer<typeof practiceScopeSchema>;
 
 export const practiceStatusSchema = z.enum(['NOT_STARTED', 'IN_PROGRESS', 'COMPLETED']);
 export type PracticeStatus = z.infer<typeof practiceStatusSchema>;
 
 /** Start (or return) a practice session. `consent` is the interview AI consent, not the CV consent. */
-export const startPracticeSchema = z.object({
-  jobId: z.uuid(),
-  consent: z.literal(true, { error: 'Interview AI consent is required to start practice' }),
-  /** Practice only this round; omit to practice every interactive round of the job. */
-  stageId: z.uuid().optional(),
-});
+export const startPracticeSchema = z
+  .object({
+    jobId: z.uuid(),
+    consent: z.literal(true, { error: 'Interview AI consent is required to start practice' }),
+    /** Defaults to ROUND with a `stageId`, otherwise FULL. */
+    scope: practiceScopeSchema.optional(),
+    /** The round to practice; only with the ROUND scope. */
+    stageId: z.uuid().optional(),
+  })
+  .refine(
+    (input) =>
+      (input.scope ?? (input.stageId ? 'ROUND' : 'FULL')) === 'ROUND'
+        ? Boolean(input.stageId)
+        : !input.stageId,
+    {
+      message: 'Pick a round only to practice a single round',
+      path: ['stageId'],
+    },
+  );
 export type StartPracticeInput = z.infer<typeof startPracticeSchema>;
 
 export const practiceSessionIdParamsSchema = z.object({ id: z.uuid() });
