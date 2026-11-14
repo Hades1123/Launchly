@@ -1,6 +1,6 @@
 # Interview practice
 
-Text-only, job-linked interview practice for candidates (C-07 Interview Demonstration). This page describes the data model (SCRUM-63). The API (SCRUM-64), the expiry cleanup (SCRUM-66), question generation and answers (SCRUM-65) and feedback (SCRUM-67) extend it.
+Text-only, job-linked interview practice for candidates (C-07 Interview Demonstration). This page describes the data model (SCRUM-63). The API (SCRUM-64), the expiry cleanup (SCRUM-66), question generation and answers (SCRUM-65), feedback (SCRUM-67) and the web UI (SCRUM-68, SCRUM-69) extend it.
 
 ## Data model
 
@@ -115,7 +115,7 @@ Saving an answer creates or replaces it, starts a not-started round and moves th
 
 ### Shared AI limit
 
-Question and feedback generation share one quota per signed-in candidate: **10 requests per 60 seconds**. The 11th returns `429 RATE_LIMITED` in the standard error shape; wait a minute and retry. The counter is in this API process's memory, so with more than one API instance each has its own quota. Use a shared store (for example Redis) before running several instances.
+Question and feedback generation share one quota per signed-in candidate: **10 requests per 60 seconds** (default; set `INTERVIEW_AI_RATE_LIMIT` to change it, as the Playwright config does). The 11th returns `429 RATE_LIMITED` in the standard error shape; wait a minute and retry. The counter is in this API process's memory, so with more than one API instance each has its own quota. Use a shared store (for example Redis) before running several instances.
 
 ## Feedback and summary (SCRUM-67)
 
@@ -142,3 +142,33 @@ Same rules as question generation: candidate-only, owner and interview-consent c
 ### What the candidate receives
 
 Every round `feedback` and the session `summary` carry the shared `PRACTICE_FEEDBACK_DISCLAIMER`: "AI-generated practice feedback is advisory and may be incorrect; it does not affect hiring decisions." There is no score, percentile, rank, pass/fail verdict or hiring recommendation anywhere: the answer `score` field was removed from the DTO and the `InterviewPracticeAnswer.score` column is dropped by the forward migration `20261114000000_drop_practice_answer_score` (the legacy `InterviewAnswer.score` is a different table and stays). Only the owning candidate can read results; there is no recruiter route.
+
+## Web UI (SCRUM-68, SCRUM-69)
+
+The mock demo (voice, countdown timer, score, percentile, verdict) is gone. The pages call the API above through `apps/web/src/lib/api/interview-practice.ts` and the `/api` rewrite; every response is validated with the shared schemas. All pages are for a signed-in candidate; anonymous visitors get a login link and recruiters and admins a short notice.
+
+| Route                       | What it shows                                                                                                    |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `/interview-practice`       | **New practice** tab: recent published jobs with a keyword search. **History** tab (`?tab=history`): see below.   |
+| `/interview-practice?jobId` | Start page for one job: every round of its hiring process, what to practice and the consent. Linked from the job page ("Practice this interview"). |
+| `/interview-practice/[id]`  | One session: the round in progress, then the saved feedback and the summary. Reload and resume use this URL.     |
+
+### Starting
+
+- Rounds with format `ONLINE` or `PHONE` are **Interactive**; every other round is listed as **Information only** and cannot be picked.
+- The candidate chooses **All interactive rounds** or a single round. "Start practice" stays disabled until the separate interview AI consent is ticked (it is not the CV consent). A job the API refuses (no description, no process, no interactive round) shows the API message and nothing is made up.
+
+### Practicing a round
+
+1. "Generate questions" asks the API for the five written questions (up to 30 seconds; on `503` or `429` the message is shown and the button works again). Each question carries a source label: "From the job description", "From the requirements" or "From the interview round".
+2. Each answer is saved on its own ("Save answer n"); saved answers come from the API, so a reload keeps them.
+3. "Get feedback" is enabled once all five answers are saved. Feedback completes the round; the next round becomes active. After the last round the overall summary appears.
+
+There is no timer, voice, video, score, percentile, rank, pass/fail verdict or recruiter view anywhere in the UI.
+
+### History and results
+
+- The **History** tab lists completed sessions and still-live unfinished ones, newest first, ten per page (`limit=10`, Previous/Next). Empty, loading and error states are shown; an error has a "Try again" button.
+- Opening a session shows, per completed round, the advisory overview, strengths, things to improve and a note per answer with its source label, then the overall summary. Every feedback and the summary show the shared disclaimer text.
+- "Resume" is offered only for unfinished sessions the API still lists, that is within 24 hours of the last activity. An expired or deleted session is not listed and its URL shows "no longer available". The server decides; the page never computes expiry itself.
+- A session completed before round feedback existed (the seeded legacy session) has no rounds and shows a short notice.

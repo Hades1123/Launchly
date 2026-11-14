@@ -16,7 +16,7 @@ import {
  * against the seeded database and the deterministic mock AI. AC3's failure paths (missing description or
  * consent, informational round, malformed AI output, timeout) are unit-tested: the seed and the mock
  * AI cannot reach them over HTTP. The API limits interview AI calls to
- * 10 per minute per candidate, so each test makes as few question requests as it can.
+ * a per-minute quota per candidate, so each test makes as few question requests as it can.
  */
 const SOURCES = ['JOB_DESCRIPTION', 'JOB_REQUIREMENTS', 'ROUND_PROCESS'];
 

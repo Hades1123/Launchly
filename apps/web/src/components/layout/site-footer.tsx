@@ -10,7 +10,7 @@ const columns: Array<{ title: string; links: FooterLink[] }> = [
     links: [
       { label: 'Khám phá việc làm Fresher & Intern', href: '/jobs' },
       { label: 'Phân tích & tối ưu hóa CV bằng AI', href: '/cv-review' },
-      { label: 'Phòng luyện phỏng vấn giả lập AI', href: '/interview-practice' },
+      { label: 'Luyện phỏng vấn AI', href: '/interview-practice' },
       { label: 'Theo dõi hồ sơ ứng tuyển', href: '/applications' },
     ],
   },

@@ -24,6 +24,9 @@ export const envSchema = z
     AI_MODEL: z.string().min(1).default('gemini-3.5-flash-lite'),
     // Sign-ins allowed per IP in 2 minutes; Playwright raises it because specs sign in often.
     LOGIN_RATE_LIMIT: z.coerce.number().int().positive().default(10),
+    // Interview AI requests (questions and feedback) allowed per candidate in 60 seconds;
+    // Playwright raises it because the practice specs share two seeded candidates.
+    INTERVIEW_AI_RATE_LIMIT: z.coerce.number().int().positive().default(10),
     // Deletes expired incomplete interview practice sessions at startup and hourly (SCRUM-66).
     PRACTICE_CLEANUP_ENABLED: z.stringbool().default(true),
   })

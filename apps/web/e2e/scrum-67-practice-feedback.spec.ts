@@ -17,9 +17,11 @@ import {
 /**
  * SCRUM-67: advisory round feedback and the overall summary (this wave has no UI yet), driven over
  * HTTP against the seeded database and the deterministic mock AI. Interview AI calls are limited
- * to 10 per minute per candidate, so the long flows are split between two candidates and the
- * limit test runs last, on candidate2, whose earlier calls (at most 8) leave room to reach it.
+ * per candidate per minute; playwright.config.ts raises the limit to AI_LIMIT (the production
+ * default is 10), so the practice specs, which share two candidates, do not exhaust it. The limit
+ * test runs last, on candidate2, and keeps calling until it is reached.
  */
+const AI_LIMIT = 40; // keep equal to INTERVIEW_AI_RATE_LIMIT in playwright.config.ts
 const DISCLAIMER =
   'AI-generated practice feedback is advisory and may be incorrect; it does not affect hiring decisions.';
 
@@ -151,13 +153,13 @@ test('AC5: only the owner can ask for feedback; other candidates and recruiters 
   expect(foreignRead.status()).toBe(404);
 });
 
-test('AC4: question and feedback requests share one 10-per-minute limit', async ({ request }) => {
+test('AC4: question and feedback requests share one per-minute limit', async ({ request }) => {
   const auth = await token(request, OTHER_CANDIDATE);
   const { session, round } = await startRoundPractice(request, auth);
 
   // Alternate the two routes: once the shared counter is used up, both answer 429.
   let limited: { status: number; body: { error: { code: string } } } | undefined;
-  for (let i = 0; i < 12 && !limited; i++) {
+  for (let i = 0; i < AI_LIMIT + 2 && !limited; i++) {
     const res =
       i % 2 === 0
         ? await request.post(questionsUrl(session.id, round.id), { headers: auth })
