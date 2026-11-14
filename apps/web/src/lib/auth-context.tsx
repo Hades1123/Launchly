@@ -1,6 +1,7 @@
 'use client';
 
 import type { UserDto } from '@launchly/shared';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   createContext,
@@ -32,6 +33,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const t = useTranslations('layout.auth');
+  const router = useRouter();
   const [status, setStatus] = useState<AuthStatus>('loading');
   const [user, setUser] = useState<UserDto | null>(null);
   // The server's message when it sent one; null falls back to a translated message below.
@@ -79,13 +81,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [acceptSession, endSession]);
 
+  // The local session ends even when the request fails, so the login page opens either way.
   const logout = useCallback(async () => {
     try {
       await logoutRequest();
     } finally {
       endSession();
+      router.replace('/login');
     }
-  }, [endSession]);
+  }, [endSession, router]);
 
   // Translated at render time so the fallback follows the current locale.
   const error = status === 'unavailable' ? (serverError ?? t('restoreFailed')) : null;
