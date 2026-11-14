@@ -1,6 +1,7 @@
 'use client';
 
 import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import {
   PRACTICE_QUESTIONS_PER_ROUND,
@@ -21,6 +22,8 @@ import { cn } from '@/lib/cn';
 type RoundPanelProps = {
   sessionId: string;
   round: PracticeRoundDto;
+  /** The round's display name (a quick practice's round is translated). */
+  roundName: string;
   onChange: (session: PracticeSessionDto) => void;
 };
 
@@ -30,7 +33,8 @@ type Step = 'save' | 'questions' | 'feedback' | null;
 const savedOf = (question: Question) => question.answer?.answer ?? '';
 
 /** The round being practiced: generate its five questions, answer them one at a time, then ask for feedback. */
-export function RoundPanel({ sessionId, round, onChange }: RoundPanelProps) {
+export function RoundPanel({ sessionId, round, roundName, onChange }: RoundPanelProps) {
+  const t = useTranslations('candidate.interviewPractice.round');
   const [step, setStep] = useState<Step>(null);
   const [error, setError] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
@@ -70,10 +74,7 @@ export function RoundPanel({ sessionId, round, onChange }: RoundPanelProps) {
     return () => window.removeEventListener('beforeunload', warn);
   }, [unsaved]);
 
-  const failure = (cause: unknown) =>
-    cause instanceof ApiError
-      ? cause.message
-      : 'Something went wrong. Check your connection and try again.';
+  const failure = (cause: unknown) => (cause instanceof ApiError ? cause.message : t('error'));
 
   async function attempt(kind: Exclude<Step, null>, action: () => Promise<void>) {
     busy.current = true;
@@ -142,29 +143,26 @@ export function RoundPanel({ sessionId, round, onChange }: RoundPanelProps) {
   return (
     <Card className="space-y-5">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 className="font-display text-lg font-semibold text-foreground">{round.name}</h3>
+        <h3 className="font-display text-lg font-semibold text-foreground">{roundName}</h3>
         {hasQuestions && (
           <span className="text-sm text-muted-foreground">
-            {answered} of {questions.length} answered
+            {t('answered', { answered, total: questions.length })}
           </span>
         )}
       </div>
 
       {!hasQuestions && (
         <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">
-            Five written questions are prepared from the job and this round. It can take up to half
-            a minute.
-          </p>
+          <p className="text-sm text-muted-foreground">{t('intro')}</p>
           <Button onClick={() => void attempt('questions', generate)} disabled={step !== null}>
-            {step === 'questions' ? 'Generating questions…' : 'Generate questions'}
+            {step === 'questions' ? t('generating') : t('generate')}
           </Button>
         </div>
       )}
 
       {current && (
         <>
-          <ol aria-label="Questions" className="grid grid-cols-5 gap-2">
+          <ol aria-label={t('questionsLabel')} className="grid grid-cols-5 gap-2">
             {questions.map((question, position) => {
               const here = position === index;
               const done = Boolean(question.answer);
@@ -175,7 +173,9 @@ export function RoundPanel({ sessionId, round, onChange }: RoundPanelProps) {
                     onClick={() => go(position)}
                     disabled={step !== null}
                     aria-current={here ? 'step' : undefined}
-                    aria-label={`Question ${question.position}, ${done ? 'answered' : 'not answered'}`}
+                    aria-label={t(done ? 'navAnswered' : 'navOpen', {
+                      position: question.position,
+                    })}
                     className={cn(
                       'flex h-10 w-full items-center justify-center gap-1 rounded-control text-sm font-semibold transition-colors',
                       'focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed',
@@ -210,33 +210,29 @@ export function RoundPanel({ sessionId, round, onChange }: RoundPanelProps) {
               disabled={index === 0 || step !== null}
             >
               <ChevronLeft aria-hidden className="size-4" />
-              Previous
+              {t('previous')}
             </Button>
             <span className="hidden text-xs text-subtle-foreground sm:inline">
-              Ctrl + Enter to {last ? 'save' : 'save and continue'}
+              {last ? t('hintSave') : t('hintContinue')}
             </span>
             {last ? (
               // Keeps Previous on the left; the last answer saves on blur or with feedback.
               <span aria-hidden />
             ) : (
               <Button variant="soft" onClick={submit} disabled={step !== null}>
-                {step === 'save' ? 'Saving…' : canSave ? 'Save and next' : 'Next'}
+                {step === 'save' ? t('saving') : canSave ? t('saveAndNext') : t('next')}
                 <ChevronRight aria-hidden className="size-4" />
               </Button>
             )}
           </div>
 
           <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-muted-foreground">
-              {ready
-                ? 'All five answers are written. Get feedback when you are ready.'
-                : 'Answer all five questions to get feedback.'}
-            </p>
+            <p className="text-sm text-muted-foreground">{ready ? t('ready') : t('notReady')}</p>
             <Button
               onClick={() => void attempt('feedback', feedback)}
               disabled={!ready || step !== null}
             >
-              {step === 'feedback' ? 'Writing feedback…' : 'Get feedback'}
+              {step === 'feedback' ? t('writingFeedback') : t('getFeedback')}
             </Button>
           </div>
         </>
@@ -244,7 +240,7 @@ export function RoundPanel({ sessionId, round, onChange }: RoundPanelProps) {
 
       {error && (
         <p role="alert" className="text-sm text-danger">
-          {error} You can try again.
+          {error} {t('retry')}
         </p>
       )}
     </Card>

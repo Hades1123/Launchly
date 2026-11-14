@@ -1,9 +1,12 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
 import type {
   PracticeRoundDto,
   PracticeRoundFeedbackDto,
   PracticeSummaryDto,
 } from '@launchly/shared';
-import { sourceLabel } from '@/components/interview-practice/source-label';
+import { isGeneralRound, sourceKey } from '@/components/interview-practice/labels';
 import { Badge } from '@/components/ui/badge';
 
 function Bullets({ title, items }: { title: string; items: string[] }) {
@@ -27,14 +30,15 @@ function FeedbackBody({
   feedback: PracticeRoundFeedbackDto | PracticeSummaryDto;
   nextSteps?: string[];
 }) {
+  const t = useTranslations('candidate.interviewPractice.feedback');
   return (
     <div className="space-y-4">
       <p className="text-sm text-foreground">{feedback.overview}</p>
-      <Bullets title="Strengths" items={feedback.strengths} />
-      <Bullets title="Things to improve" items={feedback.improvements} />
-      {nextSteps && <Bullets title="Next steps" items={nextSteps} />}
+      <Bullets title={t('strengths')} items={feedback.strengths} />
+      <Bullets title={t('improvements')} items={feedback.improvements} />
+      {nextSteps && <Bullets title={t('nextSteps')} items={nextSteps} />}
       <p className="rounded-control bg-info-subtle px-3 py-2 text-xs text-info">
-        {feedback.disclaimer}
+        {t('disclaimer')}
       </p>
     </div>
   );
@@ -42,19 +46,21 @@ function FeedbackBody({
 
 /** A completed round: its feedback, then each answer with its short note. */
 export function RoundFeedbackView({ round }: { round: PracticeRoundDto }) {
+  const t = useTranslations('candidate.interviewPractice');
   if (!round.feedback) return null;
+  const name = isGeneralRound(round) ? t('session.generalRound') : round.name;
   return (
-    <section aria-label={`Feedback for ${round.name}`} className="space-y-4">
-      <h3 className="font-display text-lg font-semibold text-foreground">{round.name}</h3>
+    <section aria-label={t('feedback.feedbackFor', { round: name })} className="space-y-4">
+      <h3 className="font-display text-lg font-semibold text-foreground">{name}</h3>
       <FeedbackBody feedback={round.feedback} />
-      <ol aria-label={`Answers for ${round.name}`} className="space-y-3">
+      <ol aria-label={t('feedback.answersFor', { round: name })} className="space-y-3">
         {round.questions.map((question) => (
           <li key={question.id} className="space-y-1 rounded-card bg-surface-muted p-4 text-sm">
             <div className="flex flex-wrap items-start justify-between gap-2">
               <p className="font-medium text-foreground">
                 {question.position}. {question.prompt}
               </p>
-              <Badge tone="primary">{sourceLabel(question.source)}</Badge>
+              <Badge tone="primary">{t(`sources.${sourceKey(question.source)}`)}</Badge>
             </div>
             <p className="whitespace-pre-line text-muted-foreground">{question.answer?.answer}</p>
             {question.answer?.feedback && (
@@ -69,9 +75,10 @@ export function RoundFeedbackView({ round }: { round: PracticeRoundDto }) {
 
 /** The overall summary of a completed workflow. */
 export function SummaryView({ summary }: { summary: PracticeSummaryDto }) {
+  const t = useTranslations('candidate.interviewPractice.feedback');
   return (
-    <section aria-label="Overall summary" className="space-y-4">
-      <h3 className="font-display text-lg font-semibold text-foreground">Overall summary</h3>
+    <section aria-label={t('summary')} className="space-y-4">
+      <h3 className="font-display text-lg font-semibold text-foreground">{t('summary')}</h3>
       <FeedbackBody feedback={summary} nextSteps={summary.nextSteps} />
     </section>
   );

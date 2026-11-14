@@ -183,5 +183,173 @@
       "deleting": "Đang xóa...",
       "confirmDelete": "Xóa CV"
     }
+  },
+  "interviewPractice": {
+    "metadata": {
+      "title": "Luyện phỏng vấn | Launchly"
+    },
+    "title": "Luyện phỏng vấn",
+    "subtitle": "Trả lời câu hỏi phỏng vấn dạng viết cho một công việc thật và nhận góp ý từ AI. Kết quả chỉ để tham khảo, không ảnh hưởng đến quyết định tuyển dụng.",
+    "loading": "Đang tải…",
+    "tabs": {
+      "label": "Các mục luyện tập",
+      "new": "Luyện mới",
+      "history": "Lịch sử"
+    },
+    "gate": {
+      "logIn": "Đăng nhập bằng tài khoản ứng viên để luyện phỏng vấn.",
+      "logInCta": "Đăng nhập để luyện tập",
+      "candidatesOnly": "Chỉ ứng viên mới có thể luyện phỏng vấn."
+    },
+    "picker": {
+      "findJob": "Tìm công việc",
+      "searchLabel": "Tìm việc làm",
+      "placeholder": "Tên vị trí hoặc từ khoá",
+      "search": "Tìm kiếm",
+      "clear": "Xoá tìm kiếm",
+      "howLabel": "Cách luyện tập",
+      "howTitle": "Cách hoạt động",
+      "steps": {
+        "pick": {
+          "title": "Chọn một công việc",
+          "body": "Bất kỳ tin tuyển dụng nào, trước hay sau khi ứng tuyển."
+        },
+        "choose": {
+          "title": "Chọn cách luyện",
+          "body": "Luyện nhanh từ mô tả công việc, hoặc theo các vòng phỏng vấn của công việc."
+        },
+        "answer": {
+          "title": "Trả lời và nhận góp ý",
+          "body": "Năm câu hỏi dạng viết mỗi vòng, sau đó AI góp ý."
+        }
+      },
+      "sectionLabel": "Chọn công việc",
+      "latest": "Việc làm mới nhất",
+      "matching": "Kết quả cho “{keyword}”",
+      "count": "{count} việc làm",
+      "practice": "Luyện tập",
+      "pages": "Trang việc làm",
+      "previous": "Trước",
+      "next": "Sau",
+      "pageStatus": "Trang {page}/{totalPages}",
+      "loadError": {
+        "title": "Không tải được danh sách việc làm",
+        "body": "Danh sách việc làm tạm thời không khả dụng. Vui lòng thử lại sau.",
+        "retry": "Thử lại"
+      },
+      "emptyPage": {
+        "title": "Trang này trống",
+        "body": "Số việc làm ít hơn số trang bạn đang xem.",
+        "cta": "Về trang đầu"
+      },
+      "empty": {
+        "title": "Không có tin tuyển dụng phù hợp",
+        "body": "Thử tên vị trí khác hoặc từ khoá ngắn hơn."
+      }
+    },
+    "start": {
+      "loadError": "Không tải được công việc này. Vui lòng thử lại.",
+      "notOpen": "Công việc này không mở để luyện tập.",
+      "chooseAnother": "Chọn công việc khác",
+      "modeLegend": "Bạn muốn luyện tập theo cách nào?",
+      "quick": {
+        "title": "Luyện nhanh",
+        "badge": "Khuyên dùng",
+        "body": "Năm câu hỏi dạng viết dựa trên mô tả công việc và yêu cầu. Dùng được cho mọi công việc."
+      },
+      "byRound": {
+        "title": "Luyện theo vòng phỏng vấn",
+        "body": "Câu hỏi bám theo các vòng trong quy trình tuyển dụng của công việc này.",
+        "unavailable": "Công việc này không có vòng online hoặc qua điện thoại để luyện riêng.",
+        "noProcess": "Công việc này chưa có quy trình tuyển dụng."
+      },
+      "roundsLegend": "Luyện những vòng nào?",
+      "allRounds": "Cả quy trình ({count} vòng)",
+      "onlyRound": "Chỉ vòng {name}",
+      "process": "Quy trình tuyển dụng",
+      "interactive": "Luyện được",
+      "infoOnly": "Chỉ để tham khảo",
+      "consent": "Tôi đồng ý gửi câu trả lời của mình tới một dịch vụ AI để tạo câu hỏi luyện tập và góp ý. Sự đồng ý này tách biệt với sự đồng ý cho tính năng kiểm tra CV.",
+      "start": "Bắt đầu luyện tập",
+      "starting": "Đang bắt đầu…",
+      "startError": "Không thể bắt đầu luyện tập. Vui lòng thử lại."
+    },
+    "session": {
+      "loadError": "Không tải được phiên luyện tập này. Vui lòng thử lại.",
+      "gone": "Phiên luyện tập này không còn nữa. Phiên chưa hoàn thành sẽ bị xoá sau 24 giờ kể từ lần hoạt động cuối.",
+      "back": "Quay lại luyện tập",
+      "roundsLabel": "Các vòng",
+      "generalRound": "Phỏng vấn chung",
+      "status": {
+        "NOT_STARTED": "Chưa bắt đầu",
+        "IN_PROGRESS": "Đang làm",
+        "COMPLETED": "Đã hoàn thành"
+      },
+      "scope": {
+        "QUICK": "Luyện nhanh",
+        "FULL": "Cả quy trình",
+        "ROUND": "Một vòng"
+      },
+      "noFeedback": "Phiên này đã hoàn thành trước khi góp ý từng vòng được lưu, nên không còn gì để hiển thị."
+    },
+    "round": {
+      "intro": "Năm câu hỏi dạng viết được chuẩn bị từ công việc và vòng này. Có thể mất đến nửa phút.",
+      "generate": "Tạo câu hỏi",
+      "generating": "Đang tạo câu hỏi…",
+      "answered": "Đã trả lời {answered}/{total}",
+      "questionsLabel": "Câu hỏi",
+      "navAnswered": "Câu {position}, đã trả lời",
+      "navOpen": "Câu {position}, chưa trả lời",
+      "previous": "Câu trước",
+      "next": "Câu sau",
+      "saveAndNext": "Lưu và tiếp tục",
+      "saving": "Đang lưu…",
+      "hintSave": "Ctrl + Enter để lưu",
+      "hintContinue": "Ctrl + Enter để lưu và sang câu tiếp",
+      "ready": "Bạn đã viết đủ năm câu trả lời. Nhận góp ý khi bạn sẵn sàng.",
+      "notReady": "Trả lời đủ năm câu hỏi để nhận góp ý.",
+      "getFeedback": "Nhận góp ý",
+      "writingFeedback": "Đang viết góp ý…",
+      "error": "Đã có lỗi xảy ra. Kiểm tra kết nối và thử lại.",
+      "retry": "Bạn có thể thử lại."
+    },
+    "question": {
+      "of": "Câu {position}/{total}",
+      "answerLabel": "Câu trả lời cho câu {position}",
+      "placeholder": "Viết câu trả lời như khi bạn nói trong buổi phỏng vấn",
+      "unsaved": "Chưa lưu thay đổi",
+      "saved": "Đã lưu"
+    },
+    "sources": {
+      "JOB_DESCRIPTION": "Từ mô tả công việc",
+      "JOB_REQUIREMENTS": "Từ yêu cầu công việc",
+      "ROUND_PROCESS": "Từ vòng phỏng vấn",
+      "other": "Từ công việc"
+    },
+    "feedback": {
+      "strengths": "Điểm mạnh",
+      "improvements": "Cần cải thiện",
+      "nextSteps": "Bước tiếp theo",
+      "feedbackFor": "Góp ý cho {round}",
+      "answersFor": "Câu trả lời cho {round}",
+      "summary": "Tổng kết",
+      "disclaimer": "Góp ý luyện tập do AI tạo chỉ mang tính tham khảo và có thể chưa chính xác; nó không ảnh hưởng đến quyết định tuyển dụng."
+    },
+    "history": {
+      "label": "Lịch sử luyện tập",
+      "loadError": "Không tải được lịch sử luyện tập của bạn.",
+      "retry": "Thử lại",
+      "empty": "Bạn chưa có phiên luyện tập nào.",
+      "startFirst": "Bắt đầu buổi luyện tập đầu tiên",
+      "completed": "Đã hoàn thành",
+      "inProgress": "Đang làm",
+      "rounds": "{count} vòng",
+      "resume": "Tiếp tục",
+      "resumeLabel": "Tiếp tục {job}",
+      "pages": "Trang lịch sử",
+      "previous": "Trước",
+      "next": "Sau",
+      "pageStatus": "Trang {page}/{totalPages}"
+    }
   }
 }

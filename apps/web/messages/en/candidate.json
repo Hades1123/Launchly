@@ -183,5 +183,173 @@
       "deleting": "Deleting...",
       "confirmDelete": "Delete CV"
     }
+  },
+  "interviewPractice": {
+    "metadata": {
+      "title": "Interview practice | Launchly"
+    },
+    "title": "Interview practice",
+    "subtitle": "Answer written interview questions for a real job and get advisory AI feedback. Nothing here affects a hiring decision.",
+    "loading": "Loading…",
+    "tabs": {
+      "label": "Practice sections",
+      "new": "New practice",
+      "history": "History"
+    },
+    "gate": {
+      "logIn": "Log in as a candidate to practice interviews.",
+      "logInCta": "Log in to practice",
+      "candidatesOnly": "Only candidates can practice interviews."
+    },
+    "picker": {
+      "findJob": "Find a job",
+      "searchLabel": "Search jobs",
+      "placeholder": "Job title or keyword",
+      "search": "Search",
+      "clear": "Clear search",
+      "howLabel": "How practice works",
+      "howTitle": "How it works",
+      "steps": {
+        "pick": {
+          "title": "Pick a job",
+          "body": "Any published job, before or after you apply."
+        },
+        "choose": {
+          "title": "Choose how to practice",
+          "body": "A quick round from the job description, or the job's interview rounds."
+        },
+        "answer": {
+          "title": "Answer and get feedback",
+          "body": "Five written questions per round, then AI feedback."
+        }
+      },
+      "sectionLabel": "Choose a job",
+      "latest": "Latest jobs",
+      "matching": "Jobs matching “{keyword}”",
+      "count": "{count, plural, one {# job} other {# jobs}}",
+      "practice": "Practice",
+      "pages": "Job pages",
+      "previous": "Previous",
+      "next": "Next",
+      "pageStatus": "Page {page} of {totalPages}",
+      "loadError": {
+        "title": "Could not load jobs",
+        "body": "The job list is unavailable right now. Try again in a moment.",
+        "retry": "Try again"
+      },
+      "emptyPage": {
+        "title": "This page is empty",
+        "body": "There are fewer jobs than this page needs.",
+        "cta": "Back to the first page"
+      },
+      "empty": {
+        "title": "No published job matches your search",
+        "body": "Try another job title or a shorter keyword."
+      }
+    },
+    "start": {
+      "loadError": "Could not load this job. Try again.",
+      "notOpen": "This job is not open for practice.",
+      "chooseAnother": "Choose another job",
+      "modeLegend": "How do you want to practice?",
+      "quick": {
+        "title": "Quick practice",
+        "badge": "Recommended",
+        "body": "Five written questions from the job description and requirements. Works for every job."
+      },
+      "byRound": {
+        "title": "Practice by interview round",
+        "body": "Questions follow the rounds of this job's hiring process.",
+        "unavailable": "This job has no online or phone round to practice on its own.",
+        "noProcess": "This job has no hiring process yet."
+      },
+      "roundsLegend": "Which rounds?",
+      "allRounds": "Whole process ({count, plural, one {# round} other {# rounds}})",
+      "onlyRound": "Only {name}",
+      "process": "Hiring process",
+      "interactive": "Interactive",
+      "infoOnly": "Information only",
+      "consent": "I agree to send my answers to an AI service to generate practice questions and feedback. This is separate from the consent for CV checks.",
+      "start": "Start practice",
+      "starting": "Starting…",
+      "startError": "Could not start practice. Try again."
+    },
+    "session": {
+      "loadError": "Could not load this practice session. Try again.",
+      "gone": "This practice session is no longer available. Unfinished sessions are removed 24 hours after your last activity.",
+      "back": "Back to practice",
+      "roundsLabel": "Rounds",
+      "generalRound": "General interview",
+      "status": {
+        "NOT_STARTED": "Not started",
+        "IN_PROGRESS": "In progress",
+        "COMPLETED": "Completed"
+      },
+      "scope": {
+        "QUICK": "Quick practice",
+        "FULL": "Full workflow",
+        "ROUND": "Single round"
+      },
+      "noFeedback": "This session was completed before round feedback was saved, so there is nothing more to show."
+    },
+    "round": {
+      "intro": "Five written questions are prepared from the job and this round. It can take up to half a minute.",
+      "generate": "Generate questions",
+      "generating": "Generating questions…",
+      "answered": "{answered} of {total} answered",
+      "questionsLabel": "Questions",
+      "navAnswered": "Question {position}, answered",
+      "navOpen": "Question {position}, not answered",
+      "previous": "Previous",
+      "next": "Next",
+      "saveAndNext": "Save and next",
+      "saving": "Saving…",
+      "hintSave": "Ctrl + Enter to save",
+      "hintContinue": "Ctrl + Enter to save and continue",
+      "ready": "All five answers are written. Get feedback when you are ready.",
+      "notReady": "Answer all five questions to get feedback.",
+      "getFeedback": "Get feedback",
+      "writingFeedback": "Writing feedback…",
+      "error": "Something went wrong. Check your connection and try again.",
+      "retry": "You can try again."
+    },
+    "question": {
+      "of": "Question {position} of {total}",
+      "answerLabel": "Answer to question {position}",
+      "placeholder": "Write your answer as you would say it in the interview",
+      "unsaved": "Unsaved changes",
+      "saved": "Saved"
+    },
+    "sources": {
+      "JOB_DESCRIPTION": "From the job description",
+      "JOB_REQUIREMENTS": "From the requirements",
+      "ROUND_PROCESS": "From the interview round",
+      "other": "From the job"
+    },
+    "feedback": {
+      "strengths": "Strengths",
+      "improvements": "Things to improve",
+      "nextSteps": "Next steps",
+      "feedbackFor": "Feedback for {round}",
+      "answersFor": "Answers for {round}",
+      "summary": "Overall summary",
+      "disclaimer": "AI-generated practice feedback is advisory and may be incorrect; it does not affect hiring decisions."
+    },
+    "history": {
+      "label": "Practice history",
+      "loadError": "Could not load your practice history.",
+      "retry": "Try again",
+      "empty": "No practice sessions yet.",
+      "startFirst": "Start your first practice",
+      "completed": "Completed",
+      "inProgress": "In progress",
+      "rounds": "{count, plural, one {# round} other {# rounds}}",
+      "resume": "Resume",
+      "resumeLabel": "Resume {job}",
+      "pages": "History pages",
+      "previous": "Previous",
+      "next": "Next",
+      "pageStatus": "Page {page} of {totalPages}"
+    }
   }
 }

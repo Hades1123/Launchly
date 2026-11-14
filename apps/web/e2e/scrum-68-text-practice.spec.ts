@@ -1,7 +1,14 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
-import { signIn, waitForSession } from './helpers/auth';
 import { resetPractice } from './helpers/db';
-import { API, BASE, CANDIDATE, questionsUrl, startRoundPractice, token } from './helpers/practice';
+import {
+  API,
+  BASE,
+  CANDIDATE,
+  questionsUrl,
+  signInEnglish,
+  startRoundPractice,
+  token,
+} from './helpers/practice';
 
 /**
  * SCRUM-68: the text-only practice flow (start, consent, questions, answers) in the browser.
@@ -41,9 +48,13 @@ const mixedRounds = (stages: Stage[]) =>
   anyInteractive(stages) && stages.some((s) => !isInteractive(s));
 
 async function openPractice(page: Page, jobId: string) {
-  await signIn(page, CANDIDATE);
-  await waitForSession(page);
+  await signInEnglish(page, CANDIDATE);
   await page.goto(`/interview-practice?jobId=${jobId}`);
+}
+
+/** Practice by interview round instead of the default quick practice. */
+async function pickRounds(page: Page) {
+  await page.getByRole('radio', { name: /Practice by interview round/ }).check();
 }
 
 async function consentAndStart(page: Page) {
@@ -52,22 +63,31 @@ async function consentAndStart(page: Page) {
   await expect(page).toHaveURL(/\/interview-practice\/[0-9a-f-]{36}$/);
 }
 
-test('AC1: start the full workflow from a job link and a single round from the job list', async ({
+test('AC1: quick practice by default, the whole process or a single round on request', async ({
   page,
   request,
 }) => {
   const job = await findJob(request, severalInteractive);
-  await signIn(page, CANDIDATE);
-  await waitForSession(page);
+  await signInEnglish(page, CANDIDATE);
 
   await test.step('the job page links to practice for that job', async () => {
     await page.goto(`/jobs/${job.id}`);
-    await page.getByRole('link', { name: 'Luyện phỏng vấn cho vị trí này' }).click();
+    await page.getByRole('link', { name: 'Practice this interview' }).click();
     await expect(page).toHaveURL(new RegExp(`/interview-practice\\?jobId=${job.id}$`));
     await expect(page.getByRole('heading', { level: 2, name: job.title })).toBeVisible();
   });
 
-  await test.step('the default start practices every interactive round', async () => {
+  await test.step('the default start is one general round from the job description', async () => {
+    await consentAndStart(page);
+    const rounds = page.getByRole('list', { name: 'Rounds' }).getByRole('listitem');
+    await expect(rounds).toHaveCount(1);
+    await expect(rounds.first()).toContainText('General interview');
+    await expect(page.getByText('Quick practice', { exact: true })).toBeVisible();
+  });
+
+  await test.step('practice by round starts every interactive round', async () => {
+    await page.goto(`/interview-practice?jobId=${job.id}`);
+    await pickRounds(page);
     await consentAndStart(page);
     const rounds = page.getByRole('list', { name: 'Rounds' }).getByRole('listitem');
     await expect(rounds).toHaveCount(job.interactive.length);
@@ -81,7 +101,8 @@ test('AC1: start the full workflow from a job link and a single round from the j
     await page.getByRole('link', { name: job.title }).first().click();
     await expect(page).toHaveURL(/\/interview-practice\?jobId=/);
     const only = job.interactive[0]!;
-    await page.getByRole('radio', { name: new RegExp(only.name) }).check();
+    await pickRounds(page);
+    await page.getByRole('radio', { name: `Only ${only.name}` }).check();
     await consentAndStart(page);
     await expect(page.getByRole('list', { name: 'Rounds' }).getByRole('listitem')).toHaveCount(1);
   });
@@ -157,6 +178,7 @@ test('AC3: informational rounds, exactly five text questions and no timer or med
   await openPractice(page, job.id);
 
   await test.step('rounds that are not ONLINE or PHONE are information only', async () => {
+    await pickRounds(page);
     const informational = job.stages.length - job.interactive.length;
     expect(informational).toBeGreaterThan(0);
     await expect(page.getByText('Information only')).toHaveCount(informational);
@@ -177,14 +199,31 @@ test('AC3: informational rounds, exactly five text questions and no timer or med
   await expect(page.locator('audio, video')).toHaveCount(0);
 });
 
+test('a job without a hiring process can still be practiced quickly', async ({ page, request }) => {
+  const job = await findJob(request, anyInteractive);
+  // The job page reports no rounds; the quick start needs only the job description.
+  await page.route(`**/api/jobs/${job.id}`, async (route) => {
+    const response = await route.fetch();
+    await route.fulfill({ response, json: { ...(await response.json()), stages: [] } });
+  });
+  await openPractice(page, job.id);
+
+  await expect(page.getByText('This job has no hiring process yet.')).toBeVisible();
+  await expect(page.getByRole('radio', { name: /Practice by interview round/ })).toBeDisabled();
+  await expect(page.getByRole('radio', { name: /Quick practice/ })).toBeChecked();
+  await consentAndStart(page);
+  const rounds = page.getByRole('list', { name: 'Rounds' }).getByRole('listitem');
+  await expect(rounds).toHaveCount(1);
+  await expect(rounds.first()).toContainText('General interview');
+});
+
 test('AC4: a saved answer survives a reload', async ({ page, request }) => {
   const auth = await token(request, CANDIDATE);
   const { session, round } = await startRoundPractice(request, auth);
   const generated = await request.post(questionsUrl(session.id, round.id), { headers: auth });
   expect(generated.status()).toBe(201);
 
-  await signIn(page, CANDIDATE);
-  await waitForSession(page);
+  await signInEnglish(page, CANDIDATE);
   await page.goto(`/interview-practice/${session.id}`);
 
   await page.getByRole('textbox', { name: 'Answer to question 1' }).fill('My saved answer');
@@ -210,8 +249,7 @@ test('AC5: no score, rank or verdict and none of the old mock content', async ({
   const { session, round } = await startRoundPractice(request, auth);
   await request.post(questionsUrl(session.id, round.id), { headers: auth });
 
-  await signIn(page, CANDIDATE);
-  await waitForSession(page);
+  await signInEnglish(page, CANDIDATE);
 
   // The job list shows real job titles, so only the session page is scanned for score words.
   await page.goto('/interview-practice');

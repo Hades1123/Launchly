@@ -1,5 +1,4 @@
 import { expect, test, type APIRequestContext } from '@playwright/test';
-import { signIn, waitForSession } from './helpers/auth';
 import { expirePractice, resetPractice } from './helpers/db';
 import {
   BASE,
@@ -10,6 +9,7 @@ import {
   feedbackUrl,
   jobWithInteractiveRounds,
   questionsUrl,
+  signInEnglish,
   startRoundPractice,
   token,
 } from './helpers/practice';
@@ -58,8 +58,7 @@ test.afterAll(() => {
 test('AC1: a completed session shows its job, round, source labels, feedback and summary', async ({
   page,
 }) => {
-  await signIn(page, CANDIDATE);
-  await waitForSession(page);
+  await signInEnglish(page, CANDIDATE);
 
   await page.goto('/interview-practice?tab=history');
   const row = page.getByRole('listitem').filter({ hasText: completed.jobTitle }).first();
@@ -80,8 +79,7 @@ test('AC1: a completed session shows its job, round, source labels, feedback and
 
 test('AC2: empty, error and paged states of the history', async ({ page }) => {
   await test.step('a candidate without sessions sees an empty state', async () => {
-    await signIn(page, OTHER_CANDIDATE);
-    await waitForSession(page);
+    await signInEnglish(page, OTHER_CANDIDATE);
     await page.goto('/interview-practice?tab=history');
     await expect(page.getByText('No practice sessions yet.')).toBeVisible();
   });
@@ -155,8 +153,7 @@ test('AC3: an unfinished session resumes within 24 hours and is gone after', asy
   expect(started.status()).toBe(201);
   const open = await started.json();
 
-  await signIn(page, CANDIDATE);
-  await waitForSession(page);
+  await signInEnglish(page, CANDIDATE);
 
   await test.step('it is listed with a Resume link that opens it', async () => {
     await page.goto('/interview-practice?tab=history');
@@ -180,8 +177,7 @@ test('AC4: no score or verdict, and only the owner can see the results', async (
   page,
   request,
 }) => {
-  await signIn(page, CANDIDATE);
-  await waitForSession(page);
+  await signInEnglish(page, CANDIDATE);
   await page.goto(`/interview-practice/${completed.id}`);
   await expect(page.getByRole('region', { name: 'Overall summary' })).toBeVisible();
   await expect(page.getByText(/score|percentile|ranking|verdict|pass rate/i)).toHaveCount(0);
@@ -200,8 +196,7 @@ test('AC4: no score or verdict, and only the owner can see the results', async (
 
   await test.step('the page shows a recruiter nothing', async () => {
     await page.context().clearCookies();
-    await signIn(page, RECRUITER);
-    await waitForSession(page);
+    await signInEnglish(page, RECRUITER);
     await page.goto(`/interview-practice/${completed.id}`);
     await expect(page.getByText('Only candidates can practice interviews.')).toBeVisible();
     await expect(page.getByRole('region', { name: 'Overall summary' })).toHaveCount(0);
@@ -211,8 +206,7 @@ test('AC4: no score or verdict, and only the owner can see the results', async (
 test('AC5: the advisory disclaimer shows with the round feedback and the summary', async ({
   page,
 }) => {
-  await signIn(page, CANDIDATE);
-  await waitForSession(page);
+  await signInEnglish(page, CANDIDATE);
   await page.goto(`/interview-practice/${completed.id}`);
 
   const feedback = page.getByRole('region', { name: `Feedback for ${completed.roundName}` });

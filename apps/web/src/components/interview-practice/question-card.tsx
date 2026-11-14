@@ -1,8 +1,9 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import type { KeyboardEvent } from 'react';
 import { PRACTICE_ANSWER_MAX_LENGTH, type PracticeSessionDto } from '@launchly/shared';
-import { sourceLabel } from '@/components/interview-practice/source-label';
+import { sourceKey } from '@/components/interview-practice/labels';
 import { Badge } from '@/components/ui/badge';
 
 type Question = PracticeSessionDto['rounds'][number]['questions'][number];
@@ -27,6 +28,7 @@ export function QuestionCard({
   onSubmit,
   onBlur,
 }: QuestionCardProps) {
+  const t = useTranslations('candidate.interviewPractice');
   const saved = question.answer?.answer ?? '';
   const dirty = value.trim() !== saved;
   const fieldId = 'practice-answer';
@@ -42,14 +44,14 @@ export function QuestionCard({
     <div className="space-y-4 rounded-card bg-surface-muted p-4 md:p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-xs font-semibold text-subtle-foreground">
-          Question {question.position} of {total}
+          {t('question.of', { position: question.position, total })}
         </span>
-        <Badge tone="neutral">{sourceLabel(question.source)}</Badge>
+        <Badge tone="neutral">{t(`sources.${sourceKey(question.source)}`)}</Badge>
       </div>
       <p className="font-display text-lg font-semibold text-foreground">{question.prompt}</p>
       <div className="space-y-2">
         <label htmlFor={fieldId} className="sr-only">
-          Answer to question {question.position}
+          {t('question.answerLabel', { position: question.position })}
         </label>
         <textarea
           id={fieldId}
@@ -59,12 +61,12 @@ export function QuestionCard({
           onChange={(event) => onChange(event.target.value)}
           onKeyDown={handleKeyDown}
           onBlur={onBlur}
-          placeholder="Write your answer as you would say it in the interview"
+          placeholder={t('question.placeholder')}
           className="w-full resize-y rounded-control bg-surface px-3 py-2 text-sm text-foreground placeholder:text-subtle-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         />
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
           <span role="status" className={dirty ? 'text-muted-foreground' : 'text-success'}>
-            {dirty ? 'Unsaved changes' : saved ? 'Saved' : ''}
+            {dirty ? t('question.unsaved') : saved ? t('question.saved') : ''}
           </span>
           <span className="text-subtle-foreground">
             {value.length}/{PRACTICE_ANSWER_MAX_LENGTH}

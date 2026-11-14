@@ -1,11 +1,15 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import { CandidateGate } from '@/components/interview-practice/candidate-gate';
 import { JobPicker } from '@/components/interview-practice/job-picker';
 import { PracticeHistory } from '@/components/interview-practice/practice-history';
 import { PracticeStart } from '@/components/interview-practice/practice-start';
 import { cn } from '@/lib/cn';
 
-export const metadata = { title: 'Interview practice | Launchly' };
+export async function generateMetadata() {
+  const t = await getTranslations('candidate.interviewPractice');
+  return { title: t('metadata.title') };
+}
 
 type PageProps = {
   searchParams: Promise<{
@@ -19,6 +23,7 @@ type PageProps = {
 const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
 
 export default async function InterviewPracticePage({ searchParams }: PageProps) {
+  const t = await getTranslations('candidate.interviewPractice');
   const params = await searchParams;
   const jobId = first(params.jobId);
   const history = first(params.tab) === 'history';
@@ -26,23 +31,20 @@ export default async function InterviewPracticePage({ searchParams }: PageProps)
   const page = Math.max(1, Math.floor(Number(first(params.page)) || 1));
 
   const tabs = [
-    { label: 'New practice', href: '/interview-practice', current: !history },
-    { label: 'History', href: '/interview-practice?tab=history', current: history },
+    { label: t('tabs.new'), href: '/interview-practice', current: !history },
+    { label: t('tabs.history'), href: '/interview-practice?tab=history', current: history },
   ];
 
   return (
     <div className="mx-auto w-full max-w-page space-y-6 px-4 py-6 md:px-8">
       <header className="space-y-1">
         <h1 className="font-display text-3xl font-semibold tracking-tight text-foreground">
-          Interview practice
+          {t('title')}
         </h1>
-        <p className="text-sm text-muted-foreground">
-          Answer five written questions per interview round and get advisory AI feedback. Nothing
-          here affects a hiring decision.
-        </p>
+        <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
       </header>
 
-      <nav aria-label="Practice sections" className="flex gap-2">
+      <nav aria-label={t('tabs.label')} className="flex gap-2">
         {tabs.map((tab) => (
           <Link
             key={tab.label}

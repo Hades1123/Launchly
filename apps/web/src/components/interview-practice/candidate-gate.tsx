@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 import { buttonClasses } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -12,19 +13,20 @@ function Notice({ children }: { children: ReactNode }) {
 
 /** Practice belongs to a signed-in candidate; everyone else gets a short explanation. */
 export function CandidateGate({ next, children }: { next: string; children: ReactNode }) {
+  const t = useTranslations('candidate.interviewPractice');
   const { status, user } = useAuth();
 
-  if (status === 'loading') return <Notice>Loading…</Notice>;
+  if (status === 'loading') return <Notice>{t('loading')}</Notice>;
   if (status !== 'authenticated') {
     return (
       <Notice>
-        <p>Log in as a candidate to practice interviews.</p>
+        <p>{t('gate.logIn')}</p>
         <Link href={`/login?next=${encodeURIComponent(next)}`} className={buttonClasses('primary')}>
-          Log in to practice
+          {t('gate.logInCta')}
         </Link>
       </Notice>
     );
   }
-  if (user?.role !== 'CANDIDATE') return <Notice>Only candidates can practice interviews.</Notice>;
+  if (user?.role !== 'CANDIDATE') return <Notice>{t('gate.candidatesOnly')}</Notice>;
   return <>{children}</>;
 }

@@ -13,11 +13,7 @@ import { getInitials, levelConfig } from '@/lib/job-format';
 
 const PAGE_SIZE = 10;
 
-const STEPS = [
-  { title: 'Pick a job', body: 'Any published job, before or after you apply.' },
-  { title: 'Choose the rounds', body: 'Practice the whole hiring process or a single round.' },
-  { title: 'Answer and get feedback', body: 'Five written questions per round, then AI feedback.' },
-];
+const STEPS = ['pick', 'choose', 'answer'] as const;
 
 /** The picker's address with the search and page kept; page 1 and an empty keyword are dropped. */
 function pickerHref(keyword: string, page: number): string {
@@ -42,6 +38,7 @@ async function loadJobs(keyword: string, page: number): Promise<PublicJobListRes
 
 async function JobCard({ job }: { job: PublicJobItem }) {
   const t = await getTranslations('jobs');
+  const tp = await getTranslations('candidate.interviewPractice.picker');
   const format = await getFormatter();
   const posted = format.relativeTime(new Date(job.createdAt), new Date());
 
@@ -71,7 +68,7 @@ async function JobCard({ job }: { job: PublicJobItem }) {
           {job.location} · {posted}
         </span>
         <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-primary">
-          Practice
+          {tp('practice')}
           <ArrowRight
             aria-hidden
             className="size-3.5 transition-transform group-hover:translate-x-0.5"
@@ -123,6 +120,7 @@ function EmptyState({ title, body, action }: { title: string; body: string; acti
 
 /** Published jobs to practice for: the search and how practice works on the left, a paged list on the right. */
 export async function JobPicker({ keyword, page }: { keyword: string; page: number }) {
+  const t = await getTranslations('candidate.interviewPractice.picker');
   const result = await loadJobs(keyword, page);
 
   return (
@@ -137,7 +135,7 @@ export async function JobPicker({ keyword, page }: { keyword: string; page: numb
             htmlFor="practice-keyword"
             className="block font-display text-sm font-semibold text-foreground"
           >
-            Find a job
+            {t('findJob')}
           </label>
           <div className="relative">
             <Search
@@ -148,33 +146,33 @@ export async function JobPicker({ keyword, page }: { keyword: string; page: numb
               id="practice-keyword"
               type="search"
               name="keyword"
-              aria-label="Search jobs"
+              aria-label={t('searchLabel')}
               defaultValue={keyword}
-              placeholder="Job title or keyword"
+              placeholder={t('placeholder')}
               className="w-full rounded-control bg-surface-muted py-2 pr-3 pl-9 text-sm text-foreground placeholder:text-subtle-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             />
           </div>
           <button type="submit" className={buttonClasses('primary', 'w-full')}>
-            Search
+            {t('search')}
           </button>
           {keyword && (
             <Link
               href="/interview-practice"
               className="block text-center text-xs font-medium text-subtle-foreground hover:text-primary"
             >
-              Clear search
+              {t('clear')}
             </Link>
           )}
         </Form>
 
         <section
-          aria-label="How practice works"
+          aria-label={t('howLabel')}
           className="space-y-3 rounded-card bg-surface p-4 shadow-card"
         >
-          <h2 className="font-display text-sm font-semibold text-foreground">How it works</h2>
+          <h2 className="font-display text-sm font-semibold text-foreground">{t('howTitle')}</h2>
           <ol className="space-y-3">
             {STEPS.map((step, index) => (
-              <li key={step.title} className="flex gap-3">
+              <li key={step} className="flex gap-3">
                 <span
                   aria-hidden
                   className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary-subtle text-xs font-semibold text-primary-subtle-foreground"
@@ -182,8 +180,8 @@ export async function JobPicker({ keyword, page }: { keyword: string; page: numb
                   {index + 1}
                 </span>
                 <div className="space-y-0.5">
-                  <p className="text-sm font-medium text-foreground">{step.title}</p>
-                  <p className="text-xs text-muted-foreground">{step.body}</p>
+                  <p className="text-sm font-medium text-foreground">{t(`steps.${step}.title`)}</p>
+                  <p className="text-xs text-muted-foreground">{t(`steps.${step}.body`)}</p>
                 </div>
               </li>
             ))}
@@ -191,47 +189,47 @@ export async function JobPicker({ keyword, page }: { keyword: string; page: numb
         </section>
       </aside>
 
-      <section aria-label="Choose a job" className="space-y-4 lg:col-span-8 xl:col-span-9">
+      <section aria-label={t('sectionLabel')} className="space-y-4 lg:col-span-8 xl:col-span-9">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="font-display text-xl font-semibold text-foreground">
-            {keyword ? `Jobs matching “${keyword}”` : 'Latest jobs'}
+            {keyword ? t('matching', { keyword }) : t('latest')}
           </h2>
           {result && (
             <span className="text-sm text-muted-foreground">
-              {result.pagination.total} {result.pagination.total === 1 ? 'job' : 'jobs'}
+              {t('count', { count: result.pagination.total })}
             </span>
           )}
         </div>
 
         {!result ? (
           <EmptyState
-            title="Could not load jobs"
-            body="The job list is unavailable right now. Try again in a moment."
+            title={t('loadError.title')}
+            body={t('loadError.body')}
             action={
               <Link href={pickerHref(keyword, page)} className={buttonClasses('soft')}>
-                Try again
+                {t('loadError.retry')}
               </Link>
             }
           />
         ) : result.data.length === 0 ? (
           page > 1 && result.pagination.total > 0 ? (
             <EmptyState
-              title="This page is empty"
-              body="There are fewer jobs than this page needs."
+              title={t('emptyPage.title')}
+              body={t('emptyPage.body')}
               action={
                 <Link href={pickerHref(keyword, 1)} className={buttonClasses('soft')}>
-                  Back to the first page
+                  {t('emptyPage.cta')}
                 </Link>
               }
             />
           ) : (
             <EmptyState
-              title="No published job matches your search"
-              body="Try another job title or a shorter keyword."
+              title={t('empty.title')}
+              body={t('empty.body')}
               action={
                 keyword ? (
                   <Link href="/interview-practice" className={buttonClasses('soft')}>
-                    Clear search
+                    {t('clear')}
                   </Link>
                 ) : undefined
               }
@@ -249,21 +247,24 @@ export async function JobPicker({ keyword, page }: { keyword: string; page: numb
 
             {result.pagination.totalPages > 1 && (
               <nav
-                aria-label="Job pages"
+                aria-label={t('pages')}
                 className="flex items-center justify-between gap-3 border-t border-border pt-4"
               >
                 <PageLink href={pickerHref(keyword, page - 1)} disabled={page <= 1}>
                   <ChevronLeft aria-hidden className="size-4" />
-                  Previous
+                  {t('previous')}
                 </PageLink>
                 <span className="text-sm text-muted-foreground">
-                  Page {result.pagination.page} of {result.pagination.totalPages}
+                  {t('pageStatus', {
+                    page: result.pagination.page,
+                    totalPages: result.pagination.totalPages,
+                  })}
                 </span>
                 <PageLink
                   href={pickerHref(keyword, page + 1)}
                   disabled={page >= result.pagination.totalPages}
                 >
-                  Next
+                  {t('next')}
                   <ChevronRight aria-hidden className="size-4" />
                 </PageLink>
               </nav>

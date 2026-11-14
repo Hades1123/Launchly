@@ -1,5 +1,5 @@
-import { expect, type APIRequestContext } from '@playwright/test';
-import { SEED_PASSWORD } from './auth';
+import { expect, type APIRequestContext, type Page } from '@playwright/test';
+import { SEED_PASSWORD, signIn, waitForSession } from './auth';
 
 /** Interview practice API helpers, driven over HTTP against the seeded database. */
 export const API = 'http://localhost:4100';
@@ -7,6 +7,18 @@ export const BASE = `${API}/candidates/me/interview-practice`;
 export const CANDIDATE = 'candidate1@launchly.test';
 export const OTHER_CANDIDATE = 'candidate2@launchly.test';
 export const RECRUITER = 'recruiter@launchly.test';
+
+/**
+ * Signs in on the login page (read in Vietnamese, the default), then switches the app to English:
+ * the practice specs assert the English copy.
+ */
+export async function signInEnglish(page: Page, email: string) {
+  await signIn(page, email);
+  await waitForSession(page);
+  await page
+    .context()
+    .addCookies([{ name: 'locale', value: 'en', url: new URL(page.url()).origin }]);
+}
 
 export async function token(request: APIRequestContext, email: string) {
   const res = await request.post(`${API}/auth/login`, { data: { email, password: SEED_PASSWORD } });
