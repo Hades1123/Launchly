@@ -71,7 +71,7 @@ BREAKING CHANGE: `username` is now `email` in loginSchema.
    pn lint
    pn test
    pn test:coverage && pn coverage:changed   # feature tickets: ≥80 % lines and branches on changed files
-   pn --filter @launchly/web test:e2e        # feature tickets that touch apps/web
+   pn --filter @launchly/web test:e2e        # any ticket that touches apps/web, whatever its label
    ```
    Which gates apply depends on the Story's label (`feature`, `bug`, `maintenance`); see the table in `AGENTS.md`.
 4. Open the pull request into `main` as a **Draft**, titled `[<JIRA-KEY>] <outcome>`, e.g. `[SCRUM-12] Add login endpoint`, and link the Jira ticket in the description. The automated pre-review (code review comment, Playwright e2e) runs on the Draft.

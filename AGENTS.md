@@ -87,11 +87,10 @@ Commands: `pn typecheck`, `pn lint`, `pn test`, `pn test:coverage && pn coverage
 
 ### Prerequisite tooling
 
-One gate command does not exist yet. Until its ticket is merged, `implement-ticket` stops at that gate for `feature` Stories:
+All gate commands exist. A missing one still blocks (see above), it is never skipped.
 
-- `pn test:coverage` and `pn coverage:changed`: changed-file coverage tooling (ticket: not yet created). Wave 5 and 6 read each package's `coverage/coverage-summary.json` instead and record the method.
-
-`pn --filter @launchly/web test:e2e` (the Playwright harness for `apps/web`) exists; a missing `test:e2e` script still blocks any Story, of any label, whose diff touches `apps/web`.
+- `pn test:coverage && pn coverage:changed`: `scripts/coverage-changed.mjs` diffs against `origin/main` (override with `COVERAGE_BASE`) and checks every changed `src/**` file of `apps/api` and `packages/shared` against each package's `coverage/coverage-summary.json` (≥80 % lines and branches). `apps/web` has no unit coverage report, so its files are printed as `SKIP`; the Playwright e2e gate covers it. CI runs it on `feat/*` pull requests, the branch type that maps to the `feature` label. Its own tests: `pn test:scripts`.
+- `pn --filter @launchly/web test:e2e` (the Playwright harness for `apps/web`) blocks any Story, of any label, whose diff touches `apps/web`.
 
 Branches, commits, and PR titles carry the Jira key so the Jira–GitHub integration links them: branch `<type>/SCRUM-123-short-slug`, commit `<type>(<scope>): SCRUM-123 <summary>`, PR title `[SCRUM-123] <outcome>`.
 

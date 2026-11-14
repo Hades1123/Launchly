@@ -1,6 +1,15 @@
 <!--
 Sync Impact Report
 ==================
+Version change: 2.2.0 → 2.2.1
+Bump rationale: PATCH. Wording fixes only: `pn coverage:changed` and `pn --filter @launchly/web
+test:e2e` now exist and GitHub Actions CI exists, so the "no CI" and "do not exist yet" statements
+were stale. No rule changed. CONTRIBUTING.md still said e2e applied to `feature` tickets only;
+corrected to match Principle IV (any label touching `apps/web`).
+Templates and docs checked: AGENTS.md ✅ prerequisite tooling, CONTRIBUTING.md ✅, README.md ✅.
+
+Previous entry
+--------------
 Version change: 2.1.0 → 2.2.0
 Bump rationale: MINOR. The Playwright e2e gate (Principle IV, Local gates) now applies to every
 ticket whose diff touches `apps/web`, whatever its label, instead of `feature` tickets only; `bug`
@@ -56,10 +65,8 @@ Templates and docs checked:
   - .claude/skills/review-implementation ⚠ reruns gates and posts the GitHub review
 
 Follow-up TODOs:
-  - `pn coverage:changed` and `pn --filter @launchly/web test:e2e` do not exist yet; they are
-    delivered by two prerequisite maintenance tickets. Until then implement-ticket halts at the
-    gate that needs them.
-  - No CI exists; the gates are enforced locally by implement-ticket and again in review.
+  - None. `pn coverage:changed` (scripts/coverage-changed.mjs) and `test:e2e` exist, and CI runs
+    the gates; implement-ticket and review still run them locally.
 -->
 
 # Launchly Constitution
@@ -153,8 +160,8 @@ Behaviour that carries business rules MUST ship with automated tests in the same
 - Tickets labelled `bug` or `maintenance` are exempt from the changed-file coverage gate, not from
   the e2e gate above; a `bug` still needs the failing-first test above.
 
-**Rationale**: there is no CI, so these gates are enforced locally by the implementing agent and
-again by the reviewer; without them, regressions in auth and role checks surface only in demos.
+**Rationale**: these gates run locally by the implementing agent, again by the reviewer, and in CI
+(the coverage gate on `feat/*` pull requests); without them, regressions in auth and role checks surface only in demos.
 
 ### V. Safe Data Evolution
 
@@ -294,4 +301,4 @@ they disagree, this document wins and the other file is corrected.
   touched by the change. Unjustified violations are grounds for `REJECTED`. The team reviews the
   constitution at least once per milestone and amends it when practice has drifted.
 
-**Version**: 2.2.0 | **Ratified**: 2026-11-04 | **Last Amended**: 2026-11-14
+**Version**: 2.2.1 | **Ratified**: 2026-11-04 | **Last Amended**: 2026-11-14
