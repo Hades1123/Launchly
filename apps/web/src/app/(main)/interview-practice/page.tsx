@@ -8,7 +8,12 @@ import { cn } from '@/lib/cn';
 export const metadata = { title: 'Interview practice | Launchly' };
 
 type PageProps = {
-  searchParams: Promise<{ jobId?: string | string[]; tab?: string | string[] }>;
+  searchParams: Promise<{
+    jobId?: string | string[];
+    tab?: string | string[];
+    keyword?: string | string[];
+    page?: string | string[];
+  }>;
 };
 
 const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
@@ -17,6 +22,8 @@ export default async function InterviewPracticePage({ searchParams }: PageProps)
   const params = await searchParams;
   const jobId = first(params.jobId);
   const history = first(params.tab) === 'history';
+  const keyword = first(params.keyword)?.trim() ?? '';
+  const page = Math.max(1, Math.floor(Number(first(params.page)) || 1));
 
   const tabs = [
     { label: 'New practice', href: '/interview-practice', current: !history },
@@ -24,7 +31,7 @@ export default async function InterviewPracticePage({ searchParams }: PageProps)
   ];
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-6 px-4 py-6 md:px-8">
+    <div className="mx-auto w-full max-w-page space-y-6 px-4 py-6 md:px-8">
       <header className="space-y-1">
         <h1 className="font-display text-3xl font-semibold tracking-tight text-foreground">
           Interview practice
@@ -55,11 +62,15 @@ export default async function InterviewPracticePage({ searchParams }: PageProps)
 
       <CandidateGate next={history ? '/interview-practice?tab=history' : '/interview-practice'}>
         {history ? (
-          <PracticeHistory />
+          <div className="max-w-4xl">
+            <PracticeHistory />
+          </div>
         ) : jobId ? (
-          <PracticeStart key={jobId} jobId={jobId} />
+          <div className="max-w-4xl">
+            <PracticeStart key={jobId} jobId={jobId} />
+          </div>
         ) : (
-          <JobPicker />
+          <JobPicker keyword={keyword} page={page} />
         )}
       </CandidateGate>
     </div>
