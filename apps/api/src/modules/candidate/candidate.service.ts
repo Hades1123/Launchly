@@ -6,6 +6,17 @@ import { getStorageProvider, type StorageProvider } from '@/providers/storage';
 import { validateCvFile } from './cv-validator';
 import type { CandidateProfile, UpdateCandidateProfileInput, CvMetadata } from '@launchly/shared';
 
+const withUsageCount = {
+  include: { _count: { select: { applications: true, assessments: true } } },
+} as const;
+
+type ResumeUsage = { _count: { applications: number; assessments: number } };
+
+/** True while an application or an AI assessment still points at the resume. */
+function isReferenced(resume: ResumeUsage): boolean {
+  return resume._count.applications + resume._count.assessments > 0;
+}
+
 export class CandidateService {
   constructor(private readonly storage: StorageProvider = getStorageProvider()) {}
 
@@ -178,7 +189,7 @@ export class CandidateService {
 
     let profile = await prisma.candidateProfile.findUnique({
       where: { userId },
-      include: { resumes: true },
+      include: { resumes: withUsageCount },
     });
 
     if (!profile) {
@@ -187,16 +198,8 @@ export class CandidateService {
           userId,
           skills: [],
         },
-        include: { resumes: true },
+        include: { resumes: withUsageCount },
       });
-    }
-
-    // Clean up old resumes to prevent orphaned storage files
-    if (profile.resumes && profile.resumes.length > 0) {
-      for (const oldResume of profile.resumes) {
-        await this.storage.delete(oldResume.storageKey);
-        await prisma.resume.delete({ where: { id: oldResume.id } });
-      }
     }
 
     const storageKey = await this.storage.save(fileBuffer, originalFileName);
@@ -210,6 +213,14 @@ export class CandidateService {
         sizeBytes: fileBuffer.length,
       },
     });
+
+    // Drop the replaced CVs only after the new one is saved. One that an application or an AI
+    // check points at stays, with its file, because those rows must keep resolving to it.
+    for (const oldResume of profile.resumes ?? []) {
+      if (isReferenced(oldResume)) continue;
+      await prisma.resume.delete({ where: { id: oldResume.id } });
+      await this.storage.delete(oldResume.storageKey);
+    }
 
     return {
       id: resume.id,
@@ -225,16 +236,24 @@ export class CandidateService {
   async deleteCv(userId: string): Promise<void> {
     const profile = await prisma.candidateProfile.findUnique({
       where: { userId },
-      include: { resumes: true },
+      include: { resumes: withUsageCount },
     });
 
     if (!profile || !profile.resumes || profile.resumes.length === 0) {
       throw new AppError('NOT_FOUND', 'No CV uploaded for candidate');
     }
 
+    // Refuse before touching storage: an application or AI check still needs the file.
+    if (profile.resumes.some(isReferenced)) {
+      throw new AppError(
+        'CONFLICT',
+        'This CV was used in an application or AI check and cannot be deleted. Upload a replacement instead.',
+      );
+    }
+
     for (const resume of profile.resumes) {
-      await this.storage.delete(resume.storageKey);
       await prisma.resume.delete({ where: { id: resume.id } });
+      await this.storage.delete(resume.storageKey);
     }
   }
 

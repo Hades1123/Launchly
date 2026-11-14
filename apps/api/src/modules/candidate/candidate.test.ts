@@ -256,6 +256,7 @@ describe('Candidate Profile and CV Module', () => {
           {
             id: 'old-resume-id',
             storageKey: 'old-file-uuid.pdf',
+            _count: { applications: 0, assessments: 0 },
           },
         ],
       } as any);
@@ -291,6 +292,7 @@ describe('Candidate Profile and CV Module', () => {
           {
             id: 'resume-to-delete-id',
             storageKey: 'file-to-delete.pdf',
+            _count: { applications: 0, assessments: 0 },
           },
         ],
       } as any);
@@ -303,6 +305,98 @@ describe('Candidate Profile and CV Module', () => {
       expect(prisma.resume.delete).toHaveBeenCalledWith({
         where: { id: 'resume-to-delete-id' },
       });
+    });
+
+    it('keeps a referenced old CV and its file when replacing (no 500)', async () => {
+      const validPdfBuffer = Buffer.from('%PDF-1.7\nUpdated valid content');
+      vi.mocked(prisma.candidateProfile.findUnique).mockResolvedValueOnce({
+        id: '11111111-1111-1111-1111-111111111112',
+        userId: testUserId,
+        resumes: [
+          {
+            id: 'applied-resume-id',
+            storageKey: 'applied-file.pdf',
+            _count: { applications: 1, assessments: 0 },
+          },
+        ],
+      } as any);
+      vi.mocked(prisma.resume.create).mockResolvedValueOnce({
+        id: '22222222-2222-2222-2222-222222222225',
+        candidateId: '11111111-1111-1111-1111-111111111112',
+        fileName: 'new.pdf',
+        storageKey: 'new.pdf',
+        contentType: 'application/pdf',
+        sizeBytes: validPdfBuffer.length,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as any);
+
+      const res = await request(app)
+        .post('/candidates/cv')
+        .set(auth)
+        .attach('cv', validPdfBuffer, 'new.pdf');
+
+      expect(res.status).toBe(201);
+      expect(prisma.resume.delete).not.toHaveBeenCalled();
+    });
+
+    it('deletes the DB row before the stored file when replacing an unreferenced CV', async () => {
+      const { CandidateService } = await import('./candidate.service');
+      const order: string[] = [];
+      const storage = {
+        save: vi.fn(async () => 'new-key.pdf'),
+        delete: vi.fn(async () => {
+          order.push('storage');
+        }),
+      } as any;
+      vi.mocked(prisma.candidateProfile.findUnique).mockResolvedValueOnce({
+        id: 'p1',
+        resumes: [{ id: 'r1', storageKey: 'old.pdf', _count: { applications: 0, assessments: 0 } }],
+      } as any);
+      vi.mocked(prisma.resume.delete).mockImplementationOnce((async () => {
+        order.push('db');
+      }) as any);
+      vi.mocked(prisma.resume.create).mockResolvedValueOnce({
+        id: 'r2',
+        fileName: 'a.pdf',
+        sizeBytes: 1,
+        createdAt: new Date(),
+      } as any);
+
+      await new CandidateService(storage).uploadCv(testUserId, Buffer.from('%PDF-1.7\nx'), 'a.pdf');
+
+      expect(order).toEqual(['db', 'storage']);
+    });
+
+    it('returns 409 and keeps the file when deleting a CV used by an application', async () => {
+      const { CandidateService } = await import('./candidate.service');
+      const storage = { delete: vi.fn() } as any;
+      vi.mocked(prisma.candidateProfile.findUnique).mockResolvedValueOnce({
+        id: 'p1',
+        resumes: [
+          { id: 'r1', storageKey: 'used.pdf', _count: { applications: 0, assessments: 1 } },
+        ],
+      } as any);
+
+      await expect(new CandidateService(storage).deleteCv(testUserId)).rejects.toMatchObject({
+        code: 'CONFLICT',
+      });
+      expect(storage.delete).not.toHaveBeenCalled();
+      expect(prisma.resume.delete).not.toHaveBeenCalled();
+    });
+
+    it('DELETE /candidates/cv responds 409 for a referenced CV', async () => {
+      vi.mocked(prisma.candidateProfile.findUnique).mockResolvedValueOnce({
+        id: 'p1',
+        resumes: [
+          { id: 'r1', storageKey: 'used.pdf', _count: { applications: 1, assessments: 0 } },
+        ],
+      } as any);
+
+      const res = await request(app).delete('/candidates/cv').set(auth);
+
+      expect(res.status).toBe(409);
+      expect(res.body.error.code).toBe('CONFLICT');
     });
   });
 
