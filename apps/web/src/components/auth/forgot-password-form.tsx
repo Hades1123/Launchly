@@ -3,11 +3,14 @@
 import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
 import { forgotPasswordSchema } from '@launchly/shared';
+import { useTranslations } from 'next-intl';
 import { AuthFeedback, AuthField, AuthHeading, SubmitButton } from '@/components/auth/auth-ui';
 import { authErrorMessage } from '@/lib/auth-helpers';
 import { forgotPassword } from '@/lib/api/auth';
 
 export function ForgotPasswordForm() {
+  const t = useTranslations('auth');
+  const tErrors = useTranslations('errors');
   const [email, setEmail] = useState('');
   const [pending, setPending] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -19,7 +22,7 @@ export function ForgotPasswordForm() {
     setError(null);
     const parsed = forgotPasswordSchema.safeParse({ email });
     if (!parsed.success) {
-      setFieldError('Vui lòng nhập địa chỉ email hợp lệ.');
+      setFieldError(t('fields.emailInvalid'));
       return;
     }
     setFieldError(undefined);
@@ -28,7 +31,7 @@ export function ForgotPasswordForm() {
       await forgotPassword(parsed.data);
       setSubmitted(true);
     } catch (cause) {
-      setError(authErrorMessage(cause));
+      setError(authErrorMessage(cause, tErrors));
     } finally {
       setPending(false);
     }
@@ -39,50 +42,48 @@ export function ForgotPasswordForm() {
       {submitted ? (
         <>
           <AuthHeading
-            eyebrow="Khôi phục tài khoản"
-            title="Kiểm tra email"
-            description="Nếu email đủ điều kiện, hướng dẫn đặt lại mật khẩu sẽ được gửi đến hộp thư."
+            eyebrow={t('forgotPassword.eyebrow')}
+            title={t('forgotPassword.submitted.title')}
+            description={t('forgotPassword.submitted.description')}
           />
           <div className="space-y-4">
-            <AuthFeedback tone="success">
-              Yêu cầu đã được tiếp nhận. Nếu tài khoản tồn tại, email sẽ sớm được gửi.
-            </AuthFeedback>
+            <AuthFeedback tone="success">{t('forgotPassword.submitted.notice')}</AuthFeedback>
             <Link
               href="/login"
               className="block text-center text-sm font-semibold text-primary hover:text-primary-hover"
             >
-              Quay lại đăng nhập
+              {t('common.backToLogin')}
             </Link>
           </div>
         </>
       ) : (
         <>
           <AuthHeading
-            eyebrow="Khôi phục tài khoản"
-            title="Đặt lại mật khẩu"
-            description="Nhập email đã đăng ký. Nếu tài khoản tồn tại, chúng tôi sẽ gửi liên kết đặt lại."
+            eyebrow={t('forgotPassword.eyebrow')}
+            title={t('forgotPassword.title')}
+            description={t('forgotPassword.description')}
           />
           <form className="space-y-4" onSubmit={handleSubmit} noValidate>
             <AuthField
-              label="Email"
+              label={t('fields.email')}
               name="email"
               type="email"
               autoComplete="email"
               inputMode="email"
-              placeholder="ban@email.com"
+              placeholder={t('fields.emailPlaceholder')}
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               error={fieldError}
               required
             />
             {error && <AuthFeedback tone="error">{error}</AuthFeedback>}
-            <SubmitButton pending={pending}>Gửi liên kết đặt lại</SubmitButton>
+            <SubmitButton pending={pending}>{t('forgotPassword.submit')}</SubmitButton>
           </form>
           <Link
             href="/login"
             className="mt-6 block text-center text-sm font-semibold text-muted-foreground hover:text-primary"
           >
-            Quay lại đăng nhập
+            {t('common.backToLogin')}
           </Link>
         </>
       )}

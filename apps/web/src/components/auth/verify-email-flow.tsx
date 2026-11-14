@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { resendVerificationSchema } from '@launchly/shared';
+import { useTranslations } from 'next-intl';
 import { AuthFeedback, AuthField, AuthHeading, SubmitButton } from '@/components/auth/auth-ui';
 import { authErrorMessage } from '@/lib/auth-helpers';
 import { resendVerification, verifyEmail } from '@/lib/api/auth';
@@ -11,6 +12,8 @@ import { ApiError } from '@/lib/api/http';
 type VerificationState = 'verifying' | 'success' | 'expired' | 'missing' | 'error';
 
 export function VerifyEmailFlow({ token }: { token?: string }) {
+  const t = useTranslations('auth');
+  const tErrors = useTranslations('errors');
   const started = useRef(false);
   const [state, setState] = useState<VerificationState>(token ? 'verifying' : 'missing');
   const [attempt, setAttempt] = useState(0);
@@ -34,10 +37,10 @@ export function VerifyEmailFlow({ token }: { token?: string }) {
         } else {
           setState('error');
         }
-        setError(authErrorMessage(cause));
+        setError(authErrorMessage(cause, tErrors));
       }
     })();
-  }, [attempt, token]);
+  }, [attempt, tErrors, token]);
 
   async function resend(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -46,7 +49,7 @@ export function VerifyEmailFlow({ token }: { token?: string }) {
     setNotice(null);
     const parsed = resendVerificationSchema.safeParse({ email });
     if (!parsed.success) {
-      setError('Vui lòng nhập địa chỉ email hợp lệ.');
+      setError(t('fields.emailInvalid'));
       setPending(false);
       return;
     }
@@ -54,7 +57,7 @@ export function VerifyEmailFlow({ token }: { token?: string }) {
       const result = await resendVerification(parsed.data);
       setNotice(result.message);
     } catch (cause) {
-      setError(authErrorMessage(cause));
+      setError(authErrorMessage(cause, tErrors));
     } finally {
       setPending(false);
     }
@@ -64,12 +67,12 @@ export function VerifyEmailFlow({ token }: { token?: string }) {
     return (
       <section className="rounded-card bg-surface p-6 shadow-card sm:p-8">
         <AuthHeading
-          eyebrow="Xác minh email"
-          title="Đang xác minh"
-          description="Đang kiểm tra liên kết xác minh của bạn."
+          eyebrow={t('verifyEmail.eyebrow')}
+          title={t('verifyEmail.verifying.title')}
+          description={t('verifyEmail.verifying.description')}
         />
         <p role="status" className="text-sm text-muted-foreground">
-          Vui lòng chờ trong giây lát…
+          {t('common.pleaseWait')}
         </p>
       </section>
     );
@@ -79,16 +82,16 @@ export function VerifyEmailFlow({ token }: { token?: string }) {
     return (
       <section className="rounded-card bg-surface p-6 shadow-card sm:p-8">
         <AuthHeading
-          eyebrow="Xác minh email"
-          title="Email đã được xác minh"
-          description="Bạn có thể đăng nhập để tiếp tục."
+          eyebrow={t('verifyEmail.eyebrow')}
+          title={t('verifyEmail.success.title')}
+          description={t('verifyEmail.success.description')}
         />
-        <AuthFeedback tone="success">Tài khoản Launchly của bạn đã sẵn sàng.</AuthFeedback>
+        <AuthFeedback tone="success">{t('verifyEmail.success.notice')}</AuthFeedback>
         <Link
           href="/login"
           className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-control bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
-          Đến trang đăng nhập
+          {t('verifyEmail.success.goToLogin')}
         </Link>
       </section>
     );
@@ -98,9 +101,9 @@ export function VerifyEmailFlow({ token }: { token?: string }) {
     return (
       <section className="rounded-card bg-surface p-6 shadow-card sm:p-8">
         <AuthHeading
-          eyebrow="Xác minh email"
-          title="Chưa thể xác minh"
-          description="Có sự cố khi kiểm tra liên kết. Bạn có thể thử lại."
+          eyebrow={t('verifyEmail.eyebrow')}
+          title={t('verifyEmail.error.title')}
+          description={t('verifyEmail.error.description')}
         />
         {error && <AuthFeedback tone="error">{error}</AuthFeedback>}
         <button
@@ -113,7 +116,7 @@ export function VerifyEmailFlow({ token }: { token?: string }) {
           }}
           className="mt-5 min-h-12 w-full rounded-control bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
-          Thử xác minh lại
+          {t('verifyEmail.error.retry')}
         </button>
       </section>
     );
@@ -122,9 +125,9 @@ export function VerifyEmailFlow({ token }: { token?: string }) {
   return (
     <section className="rounded-card bg-surface p-6 shadow-card sm:p-8">
       <AuthHeading
-        eyebrow="Xác minh email"
-        title={state === 'expired' ? 'Liên kết không còn hiệu lực' : 'Chưa có liên kết xác minh'}
-        description="Nhập email đăng ký để yêu cầu gửi lại liên kết xác minh."
+        eyebrow={t('verifyEmail.eyebrow')}
+        title={state === 'expired' ? t('verifyEmail.expiredTitle') : t('verifyEmail.missingTitle')}
+        description={t('verifyEmail.resendDescription')}
       />
       {error && (
         <div className="mb-4">
@@ -138,23 +141,23 @@ export function VerifyEmailFlow({ token }: { token?: string }) {
       )}
       <form className="space-y-4" onSubmit={resend} noValidate>
         <AuthField
-          label="Email đăng ký"
+          label={t('verifyEmail.emailLabel')}
           name="email"
           type="email"
           autoComplete="email"
           inputMode="email"
-          placeholder="ban@email.com"
+          placeholder={t('fields.emailPlaceholder')}
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           required
         />
-        <SubmitButton pending={pending}>Gửi lại email xác minh</SubmitButton>
+        <SubmitButton pending={pending}>{t('common.resendVerification')}</SubmitButton>
       </form>
       <Link
         href="/login"
         className="mt-5 block text-center text-sm font-semibold text-muted-foreground hover:text-primary"
       >
-        Quay lại đăng nhập
+        {t('common.backToLogin')}
       </Link>
     </section>
   );

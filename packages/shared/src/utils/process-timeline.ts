@@ -11,7 +11,15 @@ type StageInput = {
 };
 type NoteInput = { id: string; content: string; position: number };
 
-export type TimelineRow = { id: string; name: string; description: string | null; meta: string[] };
+export type TimelineRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  /** English text pieces; the web app translates `format` and `durationMinutes` instead. */
+  meta: string[];
+  format: RoundFormat | null;
+  durationMinutes: number | null;
+};
 
 export type ProcessView = {
   rows: TimelineRow[];
@@ -26,7 +34,14 @@ export type ProcessView = {
 export function buildProcessView(stages: StageInput[], notes: NoteInput[]): ProcessView {
   const rows = [...stages]
     .sort((a, b) => a.position - b.position)
-    .map((s) => ({ id: s.id, name: s.name, description: s.description, meta: roundMeta(s) }));
+    .map((s) => ({
+      id: s.id,
+      name: s.name,
+      description: s.description,
+      meta: roundMeta(s),
+      format: s.format,
+      durationMinutes: s.estimatedDurationMinutes,
+    }));
   const empty = rows.length === 0;
   const orderedNotes = [...notes]
     .sort((a, b) => a.position - b.position)

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { ResumeDto } from '@launchly/shared';
 import { ApplyDialog } from '@/components/jobs/apply-dialog';
 import { Button, buttonClasses } from '@/components/ui/button';
@@ -14,6 +15,7 @@ type Loaded = Candidate | 'error';
 
 /** The Apply action of the job page: what it shows depends on who is looking. */
 export function JobActions({ jobId, jobTitle }: { jobId: string; jobTitle: string }) {
+  const t = useTranslations('jobs.actions');
   const { status, user } = useAuth();
   const [candidate, setCandidate] = useState<Loaded | null>(null);
   const [open, setOpen] = useState(false);
@@ -44,7 +46,7 @@ export function JobActions({ jobId, jobTitle }: { jobId: string; jobTitle: strin
         href={`/login?next=${encodeURIComponent(`/jobs/${jobId}`)}`}
         className={buttonClasses('primary')}
       >
-        Apply
+        {t('apply')}
       </Link>
     );
   }
@@ -54,7 +56,7 @@ export function JobActions({ jobId, jobTitle }: { jobId: string; jobTitle: strin
   if (!candidate) {
     return (
       <Button disabled aria-disabled="true">
-        Apply
+        {t('apply')}
       </Button>
     );
   }
@@ -63,10 +65,10 @@ export function JobActions({ jobId, jobTitle }: { jobId: string; jobTitle: strin
     return (
       <>
         <Button disabled aria-disabled="true">
-          Apply
+          {t('apply')}
         </Button>
         <p role="alert" className="w-full text-sm text-danger">
-          Could not check your applications. Reload the page to try again.
+          {t('checkFailed')}
         </p>
       </>
     );
@@ -76,13 +78,13 @@ export function JobActions({ jobId, jobTitle }: { jobId: string; jobTitle: strin
     return (
       <>
         <Button disabled aria-disabled="true">
-          Applied
+          {t('applied')}
         </Button>
         {justApplied && (
           <p role="status" className="w-full text-sm text-success">
-            Application sent.{' '}
+            {t('sent')}{' '}
             <Link href="/applications" className="font-semibold underline">
-              View my applications
+              {t('viewApplications')}
             </Link>
           </p>
         )}
@@ -94,12 +96,12 @@ export function JobActions({ jobId, jobTitle }: { jobId: string; jobTitle: strin
     return (
       <>
         <Button disabled aria-disabled="true">
-          Apply
+          {t('apply')}
         </Button>
         <p className="w-full text-sm text-muted-foreground">
-          You need a CV to apply.{' '}
+          {t('needCv')}{' '}
           <Link href="/profile" className="font-semibold text-primary hover:underline">
-            Upload a CV in your profile
+            {t('uploadCv')}
           </Link>
         </p>
       </>
@@ -108,7 +110,7 @@ export function JobActions({ jobId, jobTitle }: { jobId: string; jobTitle: strin
 
   return (
     <>
-      <Button onClick={() => setOpen(true)}>Apply</Button>
+      <Button onClick={() => setOpen(true)}>{t('apply')}</Button>
       {open && (
         <ApplyDialog
           jobId={jobId}

@@ -2,11 +2,12 @@
 
 import { useId, useRef, useState } from 'react';
 import { XCircle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { MAX_MODERATION_REASON } from '@launchly/shared';
 import { Button } from '@/components/ui/button';
 
 /**
- * "Từ chối" button plus a modal that asks for the reason; confirm stays disabled until a
+ * Reject button plus a modal that asks for the reason; confirm stays disabled until a
  * non-blank reason is typed. `onSubmit` throws an Error with a readable message to keep the
  * dialog open with the typed reason. Generic so the job review reuses it.
  */
@@ -19,6 +20,7 @@ export function RejectDialog({
   onSubmit: (reason: string) => Promise<void>;
   disabled?: boolean;
 }) {
+  const t = useTranslations('admin.rejectDialog');
   const dialog = useRef<HTMLDialogElement>(null);
   const headingId = useId();
   const reasonId = useId();
@@ -34,7 +36,7 @@ export function RejectDialog({
       await onSubmit(trimmed);
       dialog.current?.close();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Không thể từ chối. Vui lòng thử lại.');
+      setError(cause instanceof Error ? cause.message : t('failed'));
     } finally {
       setSending(false);
     }
@@ -52,7 +54,7 @@ export function RejectDialog({
         }}
       >
         <XCircle className="size-4" aria-hidden />
-        Từ chối
+        {t('open')}
       </Button>
       <dialog
         ref={dialog}
@@ -64,7 +66,7 @@ export function RejectDialog({
           {heading}
         </h2>
         <label htmlFor={reasonId} className="mt-4 block text-sm font-medium text-foreground">
-          Lý do từ chối
+          {t('reasonLabel')}
         </label>
         <textarea
           id={reasonId}
@@ -74,9 +76,7 @@ export function RejectDialog({
           onChange={(event) => setReason(event.target.value)}
           className="mt-1 w-full rounded-control border border-border bg-surface p-3 text-sm text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         />
-        <p className="mt-1 text-xs text-subtle-foreground">
-          Lý do sẽ được gửi cho nhà tuyển dụng qua email.
-        </p>
+        <p className="mt-1 text-xs text-subtle-foreground">{t('reasonHint')}</p>
         {error && (
           <p role="alert" className="mt-3 text-sm text-danger">
             {error}
@@ -84,10 +84,10 @@ export function RejectDialog({
         )}
         <div className="mt-5 flex justify-end gap-2">
           <Button variant="ghost" disabled={sending} onClick={() => dialog.current?.close()}>
-            Hủy
+            {t('cancel')}
           </Button>
           <Button variant="danger" disabled={!trimmed || sending} onClick={() => void confirm()}>
-            Xác nhận từ chối
+            {t('confirm')}
           </Button>
         </div>
       </dialog>

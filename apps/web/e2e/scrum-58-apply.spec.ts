@@ -28,18 +28,18 @@ test('AC1: a candidate with a CV applies in two steps and the button becomes App
   await openJob(page, OPEN_JOB);
 
   // Step 1: open the dialog. The newest CV is already selected.
-  await page.getByRole('button', { name: 'Apply' }).click();
-  const dialog = page.getByRole('dialog', { name: /Apply to/ });
+  await page.getByRole('button', { name: 'Ứng tuyển', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: /Ứng tuyển vị trí/ });
   await expect(dialog).toBeVisible();
-  await expect(dialog.getByLabel('Your CV')).not.toHaveValue('');
-  await dialog.getByLabel('Cover letter (optional)').fill('I would love to join the team.');
+  await expect(dialog.getByLabel('CV của bạn')).not.toHaveValue('');
+  await dialog.getByLabel('Thư giới thiệu (không bắt buộc)').fill('I would love to join the team.');
 
   // Step 2: submit.
-  await dialog.getByRole('button', { name: 'Submit application' }).click();
+  await dialog.getByRole('button', { name: 'Nộp hồ sơ' }).click();
 
-  await expect(page.getByRole('button', { name: 'Applied' })).toBeDisabled();
-  await expect(page.getByRole('status')).toContainText('Application sent');
-  await expect(page.getByRole('link', { name: 'View my applications' })).toHaveAttribute(
+  await expect(page.getByRole('button', { name: 'Đã ứng tuyển' })).toBeDisabled();
+  await expect(page.getByRole('status')).toContainText('Đã gửi hồ sơ ứng tuyển');
+  await expect(page.getByRole('link', { name: 'Xem việc đã ứng tuyển' })).toHaveAttribute(
     'href',
     '/applications',
   );
@@ -48,9 +48,9 @@ test('AC1: a candidate with a CV applies in two steps and the button becomes App
 test('AC1: the cover letter counter stops at 2000 characters', async ({ page }) => {
   await signIn(page, CANDIDATE);
   await openJob(page, OPEN_JOB);
-  await page.getByRole('button', { name: 'Apply' }).click();
+  await page.getByRole('button', { name: 'Ứng tuyển', exact: true }).click();
 
-  const letter = page.getByLabel('Cover letter (optional)');
+  const letter = page.getByLabel('Thư giới thiệu (không bắt buộc)');
   await letter.fill('x'.repeat(2005));
 
   await expect(letter).toHaveValue('x'.repeat(2000));
@@ -61,23 +61,23 @@ test('AC2: an anonymous visitor is sent to login and returns to the job', async 
   await openJob(page, OPEN_JOB);
   const jobUrl = page.url();
 
-  await page.getByRole('link', { name: 'Apply' }).click();
+  await page.getByRole('link', { name: 'Ứng tuyển', exact: true }).click();
   await expect(page).toHaveURL(/\/login\?next=/);
   await page.getByLabel('Email').fill(CANDIDATE);
   await page.getByLabel('Mật khẩu', { exact: true }).fill('Launchly@123');
   await page.getByRole('button', { name: 'Đăng nhập' }).click();
 
   await expect(page).toHaveURL(jobUrl);
-  await expect(page.getByRole('button', { name: 'Apply' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Ứng tuyển', exact: true })).toBeVisible();
 });
 
 test('AC2: a recruiter does not see the Apply button', async ({ page }) => {
   await signIn(page, 'recruiter@launchly.test');
   await openJob(page, OPEN_JOB);
 
-  await expect(page.getByRole('link', { name: 'Check my CV fit' })).toBeVisible();
-  await expect(page.getByRole('button', { name: /^Apply/ })).toHaveCount(0);
-  await expect(page.getByRole('link', { name: 'Apply' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Kiểm tra độ phù hợp CV' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Ứng tuyển/ })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Ứng tuyển', exact: true })).toHaveCount(0);
 });
 
 test('AC2: a candidate without a CV sees a link to the profile', async ({ page }) => {
@@ -89,18 +89,18 @@ test('AC2: a candidate without a CV sees a link to the profile', async ({ page }
   });
   await openJob(page, OPEN_JOB);
 
-  await expect(page.getByRole('link', { name: 'Upload a CV in your profile' })).toHaveAttribute(
+  await expect(page.getByRole('link', { name: 'Tải CV lên trong hồ sơ của bạn' })).toHaveAttribute(
     'href',
     '/profile',
   );
-  await expect(page.getByRole('button', { name: 'Apply' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Ứng tuyển', exact: true })).toBeDisabled();
 });
 
 test('AC2: an already applied job shows a disabled Applied button', async ({ page }) => {
   await signIn(page, CANDIDATE);
   await openJob(page, APPLIED_JOB);
 
-  await expect(page.getByRole('button', { name: 'Applied' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Đã ứng tuyển' })).toBeDisabled();
 });
 
 test('AC2: a 409 duplicate and a 404 closed job show readable messages', async ({ page }) => {
@@ -116,23 +116,23 @@ test('AC2: a 409 duplicate and a 404 closed job show readable messages', async (
         })
       : route.continue(),
   );
-  await page.getByRole('button', { name: 'Apply' }).click();
-  const dialog = page.getByRole('dialog', { name: /Apply to/ });
+  await page.getByRole('button', { name: 'Ứng tuyển', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: /Ứng tuyển vị trí/ });
 
-  await dialog.getByRole('button', { name: 'Submit application' }).click();
-  await expect(dialog.getByRole('alert')).toContainText('You have already applied to this job');
+  await dialog.getByRole('button', { name: 'Nộp hồ sơ' }).click();
+  await expect(dialog.getByRole('alert')).toContainText('Bạn đã ứng tuyển việc làm này rồi');
 
   reply = { status: 404, code: 'NOT_FOUND', message: 'Job not found' };
-  await dialog.getByRole('button', { name: 'Submit application' }).click();
-  await expect(dialog.getByRole('alert')).toContainText('This job is no longer open');
+  await dialog.getByRole('button', { name: 'Nộp hồ sơ' }).click();
+  await expect(dialog.getByRole('alert')).toContainText('Việc làm này không còn nhận hồ sơ');
 });
 
 test('AC3: the apply dialog fits a phone width without horizontal scroll', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 700 });
   await signIn(page, CANDIDATE);
   await openJob(page, OPEN_JOB);
-  await page.getByRole('button', { name: 'Apply' }).click();
-  await expect(page.getByRole('dialog', { name: /Apply to/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Ứng tuyển', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: /Ứng tuyển vị trí/ })).toBeVisible();
 
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,

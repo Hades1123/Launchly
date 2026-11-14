@@ -2,17 +2,20 @@
 
 import { useId, useRef, useState, type ReactNode } from 'react';
 import { LoaderCircle, Trash2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { ApiError } from '@/lib/api/http';
 import { deleteJob, deleteJobs } from '@/lib/api/recruiter-jobs';
 
-function deleteErrorText(error: unknown): string {
+type DeleteDraftT = ReturnType<typeof useTranslations<'recruiter.deleteDraft'>>;
+
+function deleteErrorText(error: unknown, t: DeleteDraftT): string {
   if (error instanceof ApiError) {
-    if (error.code === 'CONFLICT') return 'Có tin đã được gửi duyệt nên không thể xóa.';
-    if (error.code === 'NOT_FOUND') return 'Có bản nháp không còn tồn tại. Hãy tải lại trang.';
-    if (error.code === 'FORBIDDEN') return 'Bạn không có quyền xóa tin tuyển dụng này.';
+    if (error.code === 'CONFLICT') return t('errors.conflict');
+    if (error.code === 'NOT_FOUND') return t('errors.notFound');
+    if (error.code === 'FORBIDDEN') return t('errors.forbidden');
   }
-  return 'Không thể xóa bản nháp. Vui lòng thử lại.';
+  return t('errors.generic');
 }
 
 /** A button that opens a modal asking to confirm a permanent delete, then runs it. */
@@ -37,6 +40,7 @@ function ConfirmDeleteButton({
   variant?: 'danger-ghost' | 'danger';
   disabled?: boolean;
 }) {
+  const t = useTranslations('recruiter.deleteDraft');
   const dialog = useRef<HTMLDialogElement>(null);
   const headingId = useId();
   const [deleting, setDeleting] = useState(false);
@@ -50,7 +54,7 @@ function ConfirmDeleteButton({
       dialog.current?.close();
       onDeleted();
     } catch (cause) {
-      setError(deleteErrorText(cause));
+      setError(deleteErrorText(cause, t));
     } finally {
       setDeleting(false);
     }
@@ -93,7 +97,7 @@ function ConfirmDeleteButton({
         </div>
         <div className="mt-6 flex justify-end gap-2">
           <Button variant="ghost" disabled={deleting} onClick={() => dialog.current?.close()}>
-            Hủy
+            {t('cancel')}
           </Button>
           <Button variant="danger" disabled={deleting} onClick={() => void confirm()}>
             {deleting && <LoaderCircle className="size-4 animate-spin" aria-hidden />}{' '}
@@ -105,41 +109,37 @@ function ConfirmDeleteButton({
   );
 }
 
-/** "Xóa" for one draft. */
+/** "Xóa" (Delete) for one draft. */
 export function DeleteDraftButton({
   jobId,
   title,
   onDeleted,
-  label = 'Xóa',
+  label,
 }: {
   jobId: string;
   title: string;
   onDeleted: () => void;
   label?: string;
 }) {
+  const t = useTranslations('recruiter.deleteDraft.one');
   return (
     <ConfirmDeleteButton
       trigger={
         <>
-          <Trash2 className="size-4" aria-hidden /> {label}
+          <Trash2 className="size-4" aria-hidden /> {label ?? t('label')}
         </>
       }
-      triggerLabel={`Xóa bản nháp ${title}`}
-      heading="Xóa bản nháp?"
-      body={
-        <p>
-          Bản nháp “{title}” cùng các vòng tuyển dụng và ghi chú sẽ bị xóa vĩnh viễn. Bạn không thể
-          hoàn tác thao tác này.
-        </p>
-      }
-      confirmLabel="Xóa bản nháp"
+      triggerLabel={t('triggerLabel', { title })}
+      heading={t('heading')}
+      body={<p>{t('body', { title })}</p>}
+      confirmLabel={t('confirm')}
       onConfirm={() => deleteJob(jobId)}
       onDeleted={onDeleted}
     />
   );
 }
 
-/** "Xóa đã chọn" for several drafts at once; all of them are deleted or none. */
+/** Deletes several selected drafts at once; all of them are deleted or none. */
 export function DeleteDraftsButton({
   jobs,
   onDeleted,
@@ -147,24 +147,23 @@ export function DeleteDraftsButton({
   jobs: { id: string; title: string }[];
   onDeleted: () => void;
 }) {
+  const t = useTranslations('recruiter.deleteDraft.many');
   const shown = jobs.slice(0, 5);
+  const count = jobs.length;
   return (
     <ConfirmDeleteButton
       variant="danger"
       disabled={jobs.length === 0}
       trigger={
         <>
-          <Trash2 className="size-4" aria-hidden /> Xóa {jobs.length} bản nháp
+          <Trash2 className="size-4" aria-hidden /> {t('trigger', { count })}
         </>
       }
-      triggerLabel={`Xóa ${jobs.length} bản nháp đã chọn`}
-      heading={`Xóa ${jobs.length} bản nháp?`}
+      triggerLabel={t('triggerLabel', { count })}
+      heading={t('heading', { count })}
       body={
         <>
-          <p>
-            Các bản nháp sau cùng vòng tuyển dụng và ghi chú sẽ bị xóa vĩnh viễn. Bạn không thể hoàn
-            tác thao tác này.
-          </p>
+          <p>{t('body')}</p>
           <ul className="mt-2 list-disc space-y-0.5 pl-5 text-foreground">
             {shown.map((job) => (
               <li key={job.id} className="truncate">
@@ -173,11 +172,11 @@ export function DeleteDraftsButton({
             ))}
           </ul>
           {jobs.length > shown.length && (
-            <p className="mt-1">và {jobs.length - shown.length} bản nháp khác.</p>
+            <p className="mt-1">{t('more', { count: jobs.length - shown.length })}</p>
           )}
         </>
       }
-      confirmLabel={`Xóa ${jobs.length} bản nháp`}
+      confirmLabel={t('confirm', { count })}
       onConfirm={() => deleteJobs(jobs.map((job) => job.id))}
       onDeleted={onDeleted}
     />

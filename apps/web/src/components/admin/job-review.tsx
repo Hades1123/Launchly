@@ -3,32 +3,35 @@
 import Link from 'next/link';
 import { useEffect, useState, type ReactNode } from 'react';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { useFormatter, useTranslations } from 'next-intl';
 import { buildProcessView, type AdminJob } from '@launchly/shared';
-import { moderationDate } from '@/components/admin/pending-company-list';
+import { MODERATION_DATE_FORMAT } from '@/components/admin/pending-company-list';
 import { RejectDialog } from '@/components/admin/reject-dialog';
 import { CompanyNotes } from '@/components/jobs/company-notes';
 import { HiringProcessTimeline } from '@/components/jobs/hiring-process-timeline';
-import {
-  JobStatusBadge,
-  jobMetaText,
-  jobTitleText,
-  salaryText,
-} from '@/components/recruiter/job-status-badge';
+import { JobStatusBadge, useJobText } from '@/components/recruiter/job-status-badge';
 import { Button, buttonClasses } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { approveJob, getAdminJob, rejectJob } from '@/lib/api/admin-jobs';
 import { ApiError } from '@/lib/api/http';
-import { authErrorMessage } from '@/lib/auth-helpers';
+import { authErrorMessage, type ErrorTranslator } from '@/lib/auth-helpers';
 
-/** Readable Vietnamese text for a failed admin call; an invalid id only matters when loading. */
-function moderationErrorText(error: unknown, loading = false): string {
+type AdminTranslator = ReturnType<typeof useTranslations<'admin'>>;
+
+/** Readable text for a failed admin call; an invalid id only matters when loading. */
+function moderationErrorText(
+  error: unknown,
+  t: AdminTranslator,
+  tErrors: ErrorTranslator,
+  loading = false,
+): string {
   if (error instanceof ApiError) {
     if (error.code === 'NOT_FOUND' || (loading && error.code === 'VALIDATION_ERROR')) {
-      return 'Không tìm thấy tin tuyển dụng.';
+      return t('jobReview.notFound');
     }
-    if (error.code === 'FORBIDDEN') return 'Bạn không có quyền duyệt nội dung.';
+    if (error.code === 'FORBIDDEN') return t('moderation.forbidden');
   }
-  return authErrorMessage(error);
+  return authErrorMessage(error, tErrors);
 }
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
@@ -54,6 +57,10 @@ function List({ items }: { items: string[] }) {
 
 /** Everything a recruiter submitted for a job, as candidates will see it, with approve and reject. */
 export function JobReview({ id }: { id: string }) {
+  const t = useTranslations('admin');
+  const tErrors = useTranslations('errors');
+  const format = useFormatter();
+  const jobText = useJobText();
   const [job, setJob] = useState<AdminJob | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -72,7 +79,7 @@ export function JobReview({ id }: { id: string }) {
         const loaded = await getAdminJob(id);
         if (active) setJob(loaded);
       } catch (cause) {
-        if (active) setError(moderationErrorText(cause, true));
+        if (active) setError(moderationErrorText(cause, t, tErrors, true));
       }
     }
     void load();
@@ -83,12 +90,12 @@ export function JobReview({ id }: { id: string }) {
 
   /** Another admin decided first (E1): show what they decided. */
   async function showDecided() {
-    setNotice('Mục này đã được xử lý');
+    setNotice(t('moderation.decided'));
     setDecided(true);
     try {
       setJob(await getAdminJob(id));
     } catch (cause) {
-      setError(moderationErrorText(cause));
+      setError(moderationErrorText(cause, t, tErrors));
     }
   }
 
@@ -99,7 +106,7 @@ export function JobReview({ id }: { id: string }) {
       setJob(await approveJob(id));
     } catch (cause) {
       if (cause instanceof ApiError && cause.code === 'CONFLICT') await showDecided();
-      else setError(moderationErrorText(cause));
+      else setError(moderationErrorText(cause, t, tErrors));
     } finally {
       setBusy(false);
     }
@@ -113,7 +120,7 @@ export function JobReview({ id }: { id: string }) {
       setJob(await rejectJob(id, reason));
     } catch (cause) {
       if (cause instanceof ApiError && cause.code === 'CONFLICT') await showDecided();
-      else throw new Error(moderationErrorText(cause), { cause });
+      else throw new Error(moderationErrorText(cause, t, tErrors), { cause });
     } finally {
       setBusy(false);
     }
@@ -122,7 +129,7 @@ export function JobReview({ id }: { id: string }) {
   const back = (
     <Link href="/admin/moderation/jobs" className={buttonClasses('ghost', 'w-fit')}>
       <ArrowLeft className="size-4" aria-hidden />
-      Hàng chờ duyệt
+      {t('moderation.back')}
     </Link>
   );
 
@@ -158,12 +165,12 @@ export function JobReview({ id }: { id: string }) {
       {back}
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="font-display text-2xl font-bold text-foreground">
-          {jobTitleText(job.title)}
+          {jobText.title(job.title)}
         </h1>
         <JobStatusBadge status={job.status} />
       </div>
       <p className="text-sm text-muted-foreground">
-        {job.companyName} · {jobMetaText(job)}
+        {job.companyName} · {jobText.meta(job)}
       </p>
       {notice && (
         <p role="status" className="rounded-control bg-warning-subtle p-3 text-sm text-warning">
@@ -173,30 +180,34 @@ export function JobReview({ id }: { id: string }) {
       {job.moderationReason && (job.status === 'REJECTED' || job.status === 'PENDING') && (
         <p className="rounded-control bg-danger-subtle p-3 text-sm text-danger">
           {job.status === 'PENDING' && (
-            <span className="block font-semibold">Đã từ chối trước đó</span>
+            <span className="block font-semibold">{t('jobReview.rejectedBefore')}</span>
           )}
-          Lý do: {job.moderationReason}
+          {t('moderation.reason', { reason: job.moderationReason })}
         </p>
       )}
       <Card>
         <dl className="grid gap-4 sm:grid-cols-2">
-          <Field label="Lương">{salaryText(job.salary)}</Field>
-          <Field label="Lĩnh vực">{job.industry}</Field>
-          <Field label="Email nhà tuyển dụng">{job.creatorEmail}</Field>
+          <Field label={t('moderation.fields.salary')}>{jobText.salary(job.salary)}</Field>
+          <Field label={t('moderation.fields.industry')}>{job.industry}</Field>
+          <Field label={t('moderation.fields.recruiterEmail')}>{job.creatorEmail}</Field>
           {job.status === 'PENDING' ? (
-            <Field label="Gửi lúc">{moderationDate.format(new Date(job.updatedAt))}</Field>
+            <Field label={t('moderation.fields.submittedAt')}>
+              {format.dateTime(new Date(job.updatedAt), MODERATION_DATE_FORMAT)}
+            </Field>
           ) : (
-            <Field label="Xử lý lúc">
-              {job.reviewedAt ? moderationDate.format(new Date(job.reviewedAt)) : null}
+            <Field label={t('moderation.fields.reviewedAt')}>
+              {job.reviewedAt
+                ? format.dateTime(new Date(job.reviewedAt), MODERATION_DATE_FORMAT)
+                : null}
             </Field>
           )}
           <div className="sm:col-span-2">
-            <Field label="Mô tả">{job.description}</Field>
+            <Field label={t('moderation.fields.description')}>{job.description}</Field>
           </div>
-          <Field label="Yêu cầu">
+          <Field label={t('moderation.fields.requirements')}>
             <List items={job.requirements} />
           </Field>
-          <Field label="Quyền lợi">
+          <Field label={t('moderation.fields.benefits')}>
             <List items={job.benefits} />
           </Field>
         </dl>
@@ -210,10 +221,10 @@ export function JobReview({ id }: { id: string }) {
       )}
       {pending && (
         <div className="flex justify-end gap-2">
-          <RejectDialog heading="Từ chối tin tuyển dụng" disabled={busy} onSubmit={reject} />
+          <RejectDialog heading={t('jobReview.rejectHeading')} disabled={busy} onSubmit={reject} />
           <Button disabled={busy} onClick={() => void approve()}>
             <CheckCircle2 className="size-4" aria-hidden />
-            Duyệt
+            {t('moderation.approve')}
           </Button>
         </div>
       )}

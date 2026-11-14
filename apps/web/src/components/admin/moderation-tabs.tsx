@@ -1,17 +1,19 @@
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/cn';
 
 export type ModerationTab = 'companies' | 'jobs';
 
-const tabs: { id: ModerationTab; label: string; href: string }[] = [
-  { id: 'companies', label: 'Công ty', href: '/admin/moderation' },
-  { id: 'jobs', label: 'Tin tuyển dụng', href: '/admin/moderation/jobs' },
+const tabs: { id: ModerationTab; href: string }[] = [
+  { id: 'companies', href: '/admin/moderation' },
+  { id: 'jobs', href: '/admin/moderation/jobs' },
 ];
 
 /** Links between the moderation queues (page navigation, so a nav, not an ARIA tab widget). */
 export function ModerationTabs({ active }: { active: ModerationTab }) {
+  const t = useTranslations('admin.tabs');
   return (
-    <nav aria-label="Loại nội dung" className="flex gap-2 border-b border-border">
+    <nav aria-label={t('label')} className="flex gap-2 border-b border-border">
       {tabs.map((tab) => (
         <Link
           key={tab.id}
@@ -25,7 +27,7 @@ export function ModerationTabs({ active }: { active: ModerationTab }) {
               : 'border-transparent text-muted-foreground hover:text-foreground',
           )}
         >
-          {tab.label}
+          {t(tab.id)}
         </Link>
       ))}
     </nav>

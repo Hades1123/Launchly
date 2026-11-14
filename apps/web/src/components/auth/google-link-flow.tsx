@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { AuthFeedback, AuthHeading } from '@/components/auth/auth-ui';
 import { useAuth } from '@/lib/auth-context';
 import { authErrorMessage } from '@/lib/auth-helpers';
@@ -10,6 +11,8 @@ import { completeGoogleLink } from '@/lib/api/auth';
 import { ApiError } from '@/lib/api/http';
 
 export function GoogleLinkFlow({ token }: { token?: string }) {
+  const t = useTranslations('auth');
+  const tErrors = useTranslations('errors');
   const router = useRouter();
   const { acceptSession } = useAuth();
   const started = useRef(false);
@@ -17,9 +20,7 @@ export function GoogleLinkFlow({ token }: { token?: string }) {
   const [phase, setPhase] = useState<'pending' | 'error' | 'expired'>(
     token ? 'pending' : 'expired',
   );
-  const [error, setError] = useState<string | null>(
-    token ? null : 'Liên kết xác nhận bị thiếu. Hãy bắt đầu lại quá trình đăng nhập Google.',
-  );
+  const [error, setError] = useState<string | null>(token ? null : t('googleLink.missingToken'));
 
   useEffect(() => {
     if (!token || started.current) return;
@@ -37,27 +38,27 @@ export function GoogleLinkFlow({ token }: { token?: string }) {
         } else {
           setPhase('error');
         }
-        setError(authErrorMessage(cause));
+        setError(authErrorMessage(cause, tErrors));
       }
     })();
-  }, [acceptSession, attempt, router, token]);
+  }, [acceptSession, attempt, router, tErrors, token]);
 
   return (
     <section className="rounded-card bg-surface p-6 shadow-card sm:p-8">
       <AuthHeading
-        eyebrow="Tài khoản Google"
-        title={phase === 'pending' ? 'Đang xác nhận liên kết' : 'Liên kết không còn hiệu lực'}
+        eyebrow={t('googleLink.eyebrow')}
+        title={phase === 'pending' ? t('googleLink.pendingTitle') : t('googleLink.expiredTitle')}
         description={
           phase === 'pending'
-            ? 'Đang kiểm tra yêu cầu liên kết tài khoản.'
-            : 'Hãy bắt đầu lại quá trình đăng nhập Google để nhận liên kết mới.'
+            ? t('googleLink.pendingDescription')
+            : t('googleLink.expiredDescription')
         }
       />
       {error ? (
         <AuthFeedback tone="error">{error}</AuthFeedback>
       ) : phase === 'pending' ? (
         <p role="status" className="text-sm text-muted-foreground">
-          Vui lòng chờ trong giây lát…
+          {t('common.pleaseWait')}
         </p>
       ) : null}
       {phase === 'error' && (
@@ -71,14 +72,14 @@ export function GoogleLinkFlow({ token }: { token?: string }) {
           }}
           className="mt-4 min-h-12 w-full rounded-control bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
-          Thử xác nhận lại
+          {t('googleLink.retry')}
         </button>
       )}
       <Link
         href="/login"
         className="mt-5 block text-center text-sm font-semibold text-primary hover:text-primary-hover"
       >
-        Quay lại đăng nhập
+        {t('common.backToLogin')}
       </Link>
     </section>
   );

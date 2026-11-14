@@ -30,11 +30,11 @@ test('AC2: the detail page shows the job fields and hiring process', async ({ pa
     'href',
     /\/companies\/[0-9a-f-]{36}$/,
   );
-  await expect(page.getByRole('heading', { name: 'Requirements' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Yêu cầu' })).toBeVisible();
   await expect(page.getByText('TypeScript')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Benefits' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Quyền lợi' })).toBeVisible();
   await expect(page.getByText('Remote-first')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Hiring process' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Quy trình tuyển dụng' })).toBeVisible();
   await expect(page.getByText('Own the candidate-facing web app.')).toBeVisible();
   await expect(page.getByText('Junior', { exact: true })).toBeVisible();
   await expect(page.getByText('Remote', { exact: true })).toBeVisible();
@@ -44,7 +44,7 @@ test('AC2: the detail page shows the job fields and hiring process', async ({ pa
 test('AC2: a hidden salary shows as negotiable, never the stored range', async ({ page }) => {
   await openJobFromSearch(page, 'Thực tập sinh Frontend React');
 
-  await expect(page.getByText('Negotiable')).toBeVisible();
+  await expect(page.getByText('Thỏa thuận')).toBeVisible();
   await expect(page.getByText(/\$300/)).toHaveCount(0);
 });
 
@@ -54,17 +54,17 @@ test('AC2: empty requirements and benefits sections are hidden', async ({ page }
   await expect(
     page.getByRole('heading', { level: 1, name: 'Customer Support Intern' }),
   ).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Requirements' })).toHaveCount(0);
-  await expect(page.getByRole('heading', { name: 'Benefits' })).toHaveCount(0);
-  await expect(page.getByRole('heading', { name: 'Hiring process' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Yêu cầu' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Quyền lợi' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Quy trình tuyển dụng' })).toBeVisible();
 });
 
 test('AC3: an unknown job id shows the not-found page', async ({ page }) => {
   const res = await page.goto('/jobs/00000000-0000-4000-8000-0000000000ff');
 
   expect(res?.status()).toBe(404);
-  await expect(page.getByRole('heading', { name: 'Job not found' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Back to all jobs' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Không tìm thấy việc làm' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Quay lại danh sách việc làm' })).toBeVisible();
 });
 
 test('AC4: the detail page fits a phone width without horizontal scroll', async ({ page }) => {

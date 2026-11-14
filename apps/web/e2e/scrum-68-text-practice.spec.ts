@@ -62,7 +62,7 @@ test('AC1: start the full workflow from a job link and a single round from the j
 
   await test.step('the job page links to practice for that job', async () => {
     await page.goto(`/jobs/${job.id}`);
-    await page.getByRole('link', { name: 'Practice this interview' }).click();
+    await page.getByRole('link', { name: 'Luyện phỏng vấn cho vị trí này' }).click();
     await expect(page).toHaveURL(new RegExp(`/interview-practice\\?jobId=${job.id}$`));
     await expect(page.getByRole('heading', { level: 2, name: job.title })).toBeVisible();
   });

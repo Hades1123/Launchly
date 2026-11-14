@@ -1,0 +1,62 @@
+{
+  "header": {
+    "switchLanguage": "Chuyển ngôn ngữ sang {language}",
+    "notifications": "Thông báo tiến độ ({count} mới)"
+  },
+  "nav": {
+    "label": "Điều hướng chính",
+    "openMenu": "Mở menu",
+    "closeMenu": "Đóng menu",
+    "items": {
+      "jobs": "Việc làm",
+      "cvReview": "Đánh giá CV",
+      "interviewPractice": "Luyện phỏng vấn AI",
+      "applications": "Việc đã ứng tuyển",
+      "profile": "Hồ sơ của tôi"
+    }
+  },
+  "auth": {
+    "loadingSession": "Đang tải phiên đăng nhập",
+    "restoreFailed": "Không thể khôi phục phiên đăng nhập.",
+    "signIn": "Đăng nhập"
+  },
+  "userMenu": {
+    "trigger": "Tài khoản {name}",
+    "menu": "Tài khoản",
+    "signOut": "Đăng xuất",
+    "links": {
+      "recruiterJobs": "Quản lý tuyển dụng",
+      "adminModeration": "Duyệt nội dung",
+      "profile": "Hồ sơ của tôi",
+      "applications": "Việc đã ứng tuyển"
+    }
+  },
+  "footer": {
+    "tagline": "Nền tảng việc làm ứng dụng AI hỗ trợ định hướng, phỏng vấn thử và kết nối cơ hội việc làm chuẩn xác cho thế hệ tài năng trẻ.",
+    "features": {
+      "title": "Tính năng đột phá",
+      "jobs": "Khám phá việc làm Fresher & Intern",
+      "cvReview": "Phân tích & tối ưu hóa CV bằng AI",
+      "interviewPractice": "Luyện phỏng vấn AI",
+      "applications": "Theo dõi hồ sơ ứng tuyển"
+    },
+    "candidates": {
+      "title": "Dành cho ứng viên",
+      "screeningGuide": "Cẩm nang vượt qua vòng sơ tuyển",
+      "skillStandards": "Tiêu chuẩn đánh giá kỹ năng chuẩn hóa",
+      "salaryReport": "Báo cáo mức lương khởi điểm theo ngành",
+      "graduateSupport": "Hỗ trợ sinh viên tốt nghiệp"
+    },
+    "compliance": {
+      "title": "Cam kết pháp lý & bảo mật",
+      "badge": "Bảo vệ dữ liệu cá nhân",
+      "description": "Minh bạch quy trình tuyển dụng và mã hóa thông tin theo Nghị định 13/2023/NĐ-CP."
+    },
+    "copyright": "© {year} Launchly. Bảo lưu mọi quyền.",
+    "legal": {
+      "privacy": "Chính sách bảo mật",
+      "terms": "Điều khoản dịch vụ",
+      "dataProtection": "Quy chế bảo vệ dữ liệu"
+    }
+  }
+}

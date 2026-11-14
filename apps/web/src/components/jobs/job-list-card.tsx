@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTransition, type MouseEvent } from 'react';
+import { useTranslations } from 'next-intl';
 import { CompanyAvatar } from '@/components/jobs/company-avatar';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/cn';
@@ -24,10 +25,11 @@ type JobListCardProps = {
  * screens with a `panelHref` a plain click selects the job in the side panel instead.
  */
 export function JobListCard({ job, panelHref, selected = false }: JobListCardProps) {
+  const t = useTranslations('jobs');
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const initials = getInitials(job.company.name);
-  const salaryText = formatSalary(job.salary);
+  const salaryText = formatSalary(job.salary, t);
   const levelInfo = levelConfig[job.level];
 
   function handleClick(event: MouseEvent<HTMLAnchorElement>) {
@@ -64,7 +66,7 @@ export function JobListCard({ job, panelHref, selected = false }: JobListCardPro
           </div>
         </div>
         <Badge tone={levelInfo.tone} shape="pill">
-          {levelInfo.label}
+          {t(`levels.${job.level}`)}
         </Badge>
       </div>
 

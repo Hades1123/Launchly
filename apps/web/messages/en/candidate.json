@@ -1,0 +1,154 @@
+{
+  "applications": {
+    "metadata": {
+      "title": "My applications | Launchly"
+    },
+    "title": "My applications",
+    "subtitle": "Follow every application from Submitted to the final result.",
+    "list": {
+      "loading": "Loading…",
+      "logIn": "Log in to see your applications",
+      "candidatesOnly": "Only candidates have applications.",
+      "loadError": "Could not load your applications.",
+      "empty": "You haven't applied to any job yet.",
+      "browseJobs": "Browse jobs"
+    },
+    "row": {
+      "round": "Round: {name}",
+      "updated": "Updated {date}",
+      "showDetails": "Show details",
+      "hideDetails": "Hide details",
+      "loading": "Loading…",
+      "loadError": "Could not load the details."
+    },
+    "timeline": {
+      "statusHistory": "Status history",
+      "hiringRounds": "Hiring rounds",
+      "noRounds": "This job has no rounds yet.",
+      "currentRound": "Current round"
+    },
+    "status": {
+      "SUBMITTED": "Submitted",
+      "SCREENING": "Screening",
+      "INTERVIEW": "Interview",
+      "OFFER": "Offer",
+      "ACCEPTED": "Accepted",
+      "REJECTED": "Rejected",
+      "WITHDRAWN": "Withdrawn",
+      "final": "Final"
+    }
+  },
+  "cvReview": {
+    "metadata": {
+      "title": "CV fit check | Launchly"
+    },
+    "title": "Check your CV fit",
+    "subtitle": "Pick a CV and a job, and get a score with concrete ways to improve.",
+    "check": {
+      "loading": "Loading…",
+      "logIn": "Log in to check your CV",
+      "candidatesOnly": "The CV fit check is available to candidates only.",
+      "loadError": "Could not load your profile.",
+      "analysisError": "The analysis failed. Try again.",
+      "noCv": "Upload a CV first. <link>Go to your profile</link>",
+      "analysing": "Analysing your CV. This can take up to 30 seconds…"
+    },
+    "consent": {
+      "label": "AI consent",
+      "title": "Before we check your CV",
+      "body": "To score your CV, Launchly sends the text of the CV you pick and the job description to an AI service. Your name, photo and contact details are not part of the request. The result is saved to your account. You can withdraw by contacting support.",
+      "saveError": "Could not save your consent. Try again.",
+      "saving": "Saving…",
+      "agree": "I agree"
+    },
+    "form": {
+      "cv": "Your CV",
+      "compareAgainst": "Compare against",
+      "sourceJob": "A Launchly job",
+      "sourceText": "A pasted job description",
+      "jobDescription": "Job description",
+      "jobDescriptionPlaceholder": "Paste the job description here…",
+      "analyse": "Analyse",
+      "analysing": "Analysing…",
+      "changeJob": "Change job",
+      "searchJobs": "Search jobs",
+      "searchPlaceholder": "Search a Launchly job by title…",
+      "jobResults": "Job results"
+    },
+    "result": {
+      "label": "Analysis result",
+      "title": "Analysis result",
+      "summary": "{matched, plural, one {# matching point} other {# matching points}} · {missing, plural, one {# gap} other {# gaps}}",
+      "matches": "What matches",
+      "missing": "What is missing",
+      "required": "Required",
+      "niceToHave": "Nice to have",
+      "improve": "How to improve",
+      "evidence": "Evidence from your CV"
+    },
+    "gauge": {
+      "label": "Match score {score} out of 100",
+      "unit": "/ 100 PTS"
+    }
+  },
+  "profile": {
+    "title": "Candidate profile & CV",
+    "subtitle": "Manage your academic background, skills, and resume document so recruiters can evaluate your application.",
+    "loadingSession": "Loading your session...",
+    "signInPrompt": "Please <link>sign in</link> to manage your profile and CV.",
+    "candidatesOnly": "The profile and CV page is only available to candidate accounts.",
+    "loading": "Loading candidate profile...",
+    "loadError": "An unexpected error occurred.",
+    "notFound": "Candidate profile not found.",
+    "backgroundTitle": "Personal background & competencies",
+    "resumeTitle": "Resume document",
+    "form": {
+      "fullName": "Full name",
+      "fullNamePlaceholder": "e.g. John Doe",
+      "headline": "Professional headline",
+      "headlinePlaceholder": "e.g. Fresher Frontend Developer",
+      "location": "Location",
+      "locationPlaceholder": "e.g. Ho Chi Minh City, Vietnam",
+      "schoolMajor": "University or major",
+      "schoolMajorPlaceholder": "e.g. Computer Science - HCMUT",
+      "bio": "Bio summary",
+      "bioPlaceholder": "Brief introduction about your technical background and career aspirations...",
+      "skills": "Skills & competencies",
+      "skillsPlaceholder": "e.g. React, TypeScript, Next.js",
+      "addSkill": "Add",
+      "removeSkill": "Remove skill {skill}",
+      "projects": "Key projects and extracurricular activities",
+      "projectsPlaceholder": "Detail personal projects, hackathons, academic achievements, or leadership roles...",
+      "fullNameRequired": "Full name cannot be empty.",
+      "saved": "Profile saved successfully.",
+      "saveError": "An error occurred while saving.",
+      "saving": "Saving changes...",
+      "save": "Save profile"
+    },
+    "uploader": {
+      "invalidType": "Invalid file format. Only PDF documents are accepted.",
+      "tooLarge": "File size exceeds the 5 MB limit.",
+      "uploadError": "An error occurred during upload.",
+      "choose": "Choose a PDF file or drag and drop",
+      "hint": "PDF only, maximum 5 MB",
+      "uploading": "Uploading document...",
+      "replace": "Replace current CV",
+      "upload": "Upload CV",
+      "cancel": "Cancel"
+    },
+    "viewer": {
+      "uploadedAt": "Uploaded: {date}",
+      "deleteError": "An error occurred during deletion.",
+      "downloadError": "Failed to download CV.",
+      "downloading": "Downloading...",
+      "download": "Download CV",
+      "replace": "Replace",
+      "delete": "Delete",
+      "confirmTitle": "Confirm CV deletion",
+      "confirmBody": "Are you sure you want to delete this CV? This action will permanently remove the file from private storage and cannot be undone.",
+      "cancel": "Cancel",
+      "deleting": "Deleting...",
+      "confirmDelete": "Delete CV"
+    }
+  }
+}

@@ -1,0 +1,434 @@
+{
+  "metadata": {
+    "title": "Quản lý tuyển dụng · Launchly"
+  },
+  "pages": {
+    "jobsBack": "Tin tuyển dụng",
+    "new": {
+      "title": "Đăng tin tuyển dụng",
+      "description": "Mô tả công việc, quy trình và những lưu ý để ứng viên biết chính xác cách bạn tuyển người."
+    },
+    "edit": {
+      "title": "Chỉnh sửa tin tuyển dụng"
+    },
+    "rounds": {
+      "back": "Chi tiết tin",
+      "title": "Quy trình tuyển dụng",
+      "description": "Thêm, sắp xếp và xóa các vòng tuyển dụng cho tin này. Ứng viên sẽ thấy các vòng theo đúng thứ tự."
+    }
+  },
+  "shell": {
+    "companyStatus": {
+      "APPROVED": "Đã duyệt",
+      "PENDING": "Chờ duyệt",
+      "REJECTED": "Bị từ chối"
+    },
+    "nav": {
+      "label": "Quản lý tuyển dụng",
+      "jobs": "Tin tuyển dụng",
+      "newJob": "Đăng tin mới",
+      "applicants": "Ứng viên",
+      "companyPage": "Trang công ty",
+      "comingSoon": "Sắp ra mắt"
+    },
+    "company": {
+      "none": "Chưa có công ty",
+      "register": "Đăng ký công ty",
+      "reason": "Lý do: {reason}",
+      "registerOther": "Đăng ký công ty khác",
+      "loadError": "Không thể tải thông tin công ty.",
+      "rejected": "{name}: bị từ chối"
+    },
+    "guard": {
+      "loading": "Đang tải…",
+      "signInPrompt": "Vui lòng đăng nhập bằng tài khoản nhà tuyển dụng.",
+      "signIn": "Đăng nhập",
+      "recruitersOnly": "Khu vực dành cho nhà tuyển dụng",
+      "noAccess": "Tài khoản của bạn không có quyền truy cập trang quản lý tuyển dụng.",
+      "backToJobs": "Về trang việc làm"
+    },
+    "eyebrow": "Nhà tuyển dụng",
+    "backToJobs": "Về trang việc làm",
+    "logout": "Đăng xuất",
+    "jobsPage": "Trang việc làm"
+  },
+  "job": {
+    "untitled": "Bản nháp chưa đặt tên",
+    "noMeta": "Chưa chọn cấp bậc và địa điểm",
+    "levels": {
+      "INTERN": "Intern",
+      "FRESHER": "Fresher",
+      "JUNIOR": "Junior"
+    },
+    "statuses": {
+      "DRAFT": "Bản nháp",
+      "PENDING": "Chờ duyệt",
+      "PUBLISHED": "Đã duyệt",
+      "REJECTED": "Bị từ chối",
+      "CLOSED": "Đã đóng"
+    },
+    "salary": {
+      "hidden": "Thỏa thuận (ẩn với ứng viên)",
+      "range": "${min, number} – ${max, number} / tháng",
+      "from": "Từ ${min, number} / tháng",
+      "upTo": "Đến ${max, number} / tháng",
+      "empty": "Chưa nhập"
+    }
+  },
+  "deleteDraft": {
+    "errors": {
+      "conflict": "Có tin đã được gửi duyệt nên không thể xóa.",
+      "notFound": "Có bản nháp không còn tồn tại. Hãy tải lại trang.",
+      "forbidden": "Bạn không có quyền xóa tin tuyển dụng này.",
+      "generic": "Không thể xóa bản nháp. Vui lòng thử lại."
+    },
+    "cancel": "Hủy",
+    "one": {
+      "label": "Xóa",
+      "triggerLabel": "Xóa bản nháp {title}",
+      "heading": "Xóa bản nháp?",
+      "body": "Bản nháp “{title}” cùng các vòng tuyển dụng và ghi chú sẽ bị xóa vĩnh viễn. Bạn không thể hoàn tác thao tác này.",
+      "confirm": "Xóa bản nháp"
+    },
+    "many": {
+      "trigger": "Xóa {count} bản nháp",
+      "triggerLabel": "Xóa {count} bản nháp đã chọn",
+      "heading": "Xóa {count} bản nháp?",
+      "body": "Các bản nháp sau cùng vòng tuyển dụng và ghi chú sẽ bị xóa vĩnh viễn. Bạn không thể hoàn tác thao tác này.",
+      "more": "và {count} bản nháp khác.",
+      "confirm": "Xóa {count} bản nháp"
+    }
+  },
+  "detail": {
+    "title": "Chi tiết tin tuyển dụng",
+    "status": {
+      "DRAFT": "Bản nháp chỉ bạn nhìn thấy.",
+      "PENDING": "Tin đang chờ quản trị viên duyệt và sẽ hiển thị cho ứng viên sau khi được duyệt.",
+      "PUBLISHED": "Tin đang hiển thị cho ứng viên.",
+      "REJECTED": "Tin đã bị quản trị viên từ chối. Hãy sửa theo góp ý rồi gửi duyệt lại.",
+      "CLOSED": "Tin đã đóng."
+    },
+    "reason": "Lý do: {reason}",
+    "errors": {
+      "forbidden": "Bạn không có quyền xem tin tuyển dụng này.",
+      "notFound": "Không tìm thấy tin tuyển dụng.",
+      "generic": "Không thể tải tin tuyển dụng. Vui lòng thử lại."
+    },
+    "actions": {
+      "deleteDraft": "Xóa bản nháp",
+      "edit": "Chỉnh sửa",
+      "fixAndResubmit": "Sửa và gửi lại",
+      "editRounds": "Sửa quy trình",
+      "viewPublic": "Xem tin công khai"
+    },
+    "sections": {
+      "description": "Mô tả công việc",
+      "noDescription": "Chưa có mô tả.",
+      "requirements": "Yêu cầu",
+      "noRequirements": "Chưa có yêu cầu.",
+      "benefits": "Quyền lợi",
+      "noBenefits": "Chưa có quyền lợi.",
+      "rounds": "Quy trình tuyển dụng",
+      "noRounds": "Chưa có vòng tuyển dụng.",
+      "untitledRound": "Chưa đặt tên",
+      "noFormat": "Chưa chọn hình thức",
+      "minutes": "{count} phút",
+      "notes": "Ghi chú cho ứng viên",
+      "noNotes": "Chưa có ghi chú."
+    },
+    "info": {
+      "title": "Thông tin",
+      "level": "Cấp bậc",
+      "location": "Địa điểm",
+      "industry": "Ngành nghề",
+      "salary": "Mức lương",
+      "createdAt": "Ngày tạo",
+      "updatedAt": "Cập nhật",
+      "notSet": "Chưa chọn"
+    }
+  },
+  "list": {
+    "title": "Tin tuyển dụng",
+    "description": "Theo dõi trạng thái duyệt và tiếp tục hoàn thiện các bản nháp của bạn.",
+    "newJob": "Đăng tin mới",
+    "allTab": "Tất cả",
+    "flash": {
+      "deletedOne": "Đã xóa bản nháp “{title}”.",
+      "deletedMany": "Đã xóa {count} bản nháp.",
+      "deleted": "Đã xóa bản nháp.",
+      "submittedOne": "Đã gửi tin “{title}”. Tin đang chờ quản trị viên duyệt.",
+      "submitted": "Đã gửi tin. Tin đang chờ quản trị viên duyệt."
+    },
+    "filters": {
+      "status": "Lọc theo trạng thái",
+      "search": "Tìm theo vị trí",
+      "searchPlaceholder": "Tìm theo vị trí tuyển dụng…",
+      "level": "Lọc theo cấp bậc",
+      "allLevels": "Mọi cấp bậc"
+    },
+    "loadError": "Không thể tải danh sách tin tuyển dụng. Vui lòng thử lại.",
+    "loading": "Đang tải",
+    "empty": {
+      "title": "Bạn chưa có tin tuyển dụng nào",
+      "body": "Đăng tin đầu tiên với quy trình tuyển dụng rõ ràng để ứng viên biết chính xác điều gì đang chờ họ."
+    },
+    "selection": {
+      "selected": "Đã chọn {count} bản nháp",
+      "selectAll": "Chọn tất cả bản nháp trên trang ({count})",
+      "clear": "Bỏ chọn"
+    },
+    "columns": {
+      "title": "Vị trí tuyển dụng",
+      "status": "Trạng thái",
+      "applicants": "Ứng viên",
+      "updated": "Cập nhật",
+      "actions": "Thao tác"
+    },
+    "noMatch": "Không có tin nào khớp với bộ lọc hiện tại.",
+    "noJobs": "Không có tin tuyển dụng nào.",
+    "row": {
+      "select": "Chọn {title}",
+      "rejectedReason": "Lý do từ chối: {reason}",
+      "applicants": "Ứng viên:",
+      "viewApplicants": "Xem ứng viên",
+      "viewApplicantsLabel": "Xem ứng viên của {title}",
+      "continueEditingLabel": "Tiếp tục chỉnh sửa {title}",
+      "fixAndResubmit": "Sửa & gửi lại",
+      "edit": "Chỉnh sửa",
+      "viewDetail": "Xem chi tiết",
+      "viewDetailLabel": "Xem chi tiết {title}"
+    },
+    "pagination": {
+      "label": "Phân trang",
+      "summary": "Hiển thị {from}–{to} trong {total} tin",
+      "previous": "Trang trước",
+      "page": "Trang {page}",
+      "next": "Trang sau"
+    }
+  },
+  "rounds": {
+    "formats": {
+      "ONLINE": "Trực tuyến",
+      "ONSITE": "Tại văn phòng",
+      "PHONE": "Điện thoại",
+      "ASSIGNMENT": "Bài tập"
+    },
+    "errors": {
+      "name": "Tên vòng là bắt buộc.",
+      "format": "Hãy chọn hình thức.",
+      "duration": "Nhập số phút từ {min} đến {max}."
+    },
+    "round": "Vòng {n}",
+    "dragHandle": "Kéo để sắp xếp vòng {n}",
+    "moveUp": "Chuyển vòng {n} lên",
+    "moveDown": "Chuyển vòng {n} xuống",
+    "remove": "Xóa vòng {n}",
+    "fields": {
+      "name": "Tên vòng",
+      "namePlaceholder": "Ví dụ: Phỏng vấn kỹ thuật",
+      "format": "Hình thức",
+      "choose": "Chọn…",
+      "duration": "Thời lượng (phút)"
+    },
+    "suggestions": {
+      "label": "Gợi ý:",
+      "screening": "Sàng lọc hồ sơ",
+      "takeHome": "Bài tập về nhà",
+      "technical": "Phỏng vấn kỹ thuật",
+      "manager": "Phỏng vấn với quản lý"
+    },
+    "summary": {
+      "none": "Chưa có vòng nào",
+      "count": "{count} vòng",
+      "withTime": "{count} vòng · khoảng {time}",
+      "hours": "{count} giờ",
+      "minutes": "{count} phút"
+    },
+    "empty": {
+      "title": "Chưa có vòng tuyển dụng nào",
+      "body": "Thêm từng vòng theo thứ tự ứng viên sẽ trải qua, hoặc chọn nhanh một gợi ý bên dưới."
+    },
+    "dragHint": "Kéo biểu tượng này để đổi thứ tự các vòng.",
+    "announcements": {
+      "dragStart": "Đã nhấc vòng {n}.",
+      "dragOver": "Vòng {n} đang ở vị trí {position}.",
+      "dragEnd": "Đã thả vòng {n} vào vị trí {position}.",
+      "dragEndNoTarget": "Đã thả vòng {n}.",
+      "dragCancel": "Đã hủy kéo vòng {n}.",
+      "instructions": "Nhấn Space để nhấc vòng, dùng phím mũi tên lên hoặc xuống để di chuyển, nhấn Space để thả hoặc Esc để hủy."
+    },
+    "add": "Thêm vòng",
+    "max": "Tối đa {max} vòng.",
+    "builder": {
+      "saved": "Đã lưu quy trình tuyển dụng.",
+      "loading": "Đang tải quy trình…",
+      "signInPrompt": "Vui lòng đăng nhập bằng tài khoản nhà tuyển dụng.",
+      "save": "Lưu quy trình",
+      "genericError": "Đã xảy ra lỗi. Vui lòng thử lại."
+    }
+  },
+  "postingForm": {
+    "levelHints": {
+      "INTERN": "Sinh viên, thực tập",
+      "FRESHER": "Mới tốt nghiệp, dưới 1 năm",
+      "JUNIOR": "Có kinh nghiệm thực tế, 1–2 năm"
+    },
+    "errors": {
+      "notesLimit": "Tối đa {max} ghi chú.",
+      "salaryRange": "Nhập số nguyên từ 0 đến {max, number}.",
+      "salaryOrder": "Lương tối đa phải lớn hơn hoặc bằng lương tối thiểu.",
+      "salaryRequired": "Nhập mức lương hoặc chọn lương thỏa thuận.",
+      "tooLong": "Tối đa {max} ký tự.",
+      "titleRequired": "Vị trí tuyển dụng là bắt buộc.",
+      "descriptionRequired": "Mô tả công việc là bắt buộc.",
+      "level": "Hãy chọn cấp bậc.",
+      "location": "Hãy chọn địa điểm.",
+      "industry": "Hãy chọn ngành nghề.",
+      "lines": "Tối đa 20 dòng, mỗi dòng tối đa 300 ký tự.",
+      "rounds": "Thêm ít nhất một vòng tuyển dụng.",
+      "noteTooLong": "Mỗi ghi chú tối đa {max} ký tự."
+    },
+    "saveErrors": {
+      "forbidden": "Bạn không thể đăng tin: công ty chưa được duyệt hoặc tin này không thuộc về bạn.",
+      "conflict": "Tin này đã được gửi duyệt nên không thể sửa nữa.",
+      "validation": "Vui lòng kiểm tra các trường được đánh dấu.",
+      "generic": "Đã xảy ra lỗi. Vui lòng thử lại."
+    },
+    "loadErrors": {
+      "forbidden": "Bạn không có quyền sửa tin tuyển dụng này.",
+      "notFound": "Không tìm thấy tin tuyển dụng."
+    },
+    "sections": {
+      "basics": "Thông tin cơ bản",
+      "description": "Mô tả công việc",
+      "salary": "Mức lương",
+      "rounds": "Quy trình tuyển dụng",
+      "notes": "Ghi chú cho ứng viên"
+    },
+    "saved": {
+      "draft": "Đã lưu bản nháp.",
+      "rejected": "Đã lưu thay đổi. Tin vẫn ở trạng thái Bị từ chối cho đến khi bạn gửi duyệt lại."
+    },
+    "company": {
+      "none": "Bạn cần đăng ký thông tin công ty trước khi đăng tin tuyển dụng.",
+      "register": "Đăng ký công ty",
+      "pending": "Công ty {name} đang chờ quản trị viên duyệt. Bạn chỉ có thể đăng tin sau khi công ty được duyệt.",
+      "rejected": "Hồ sơ công ty {name} đã bị từ chối. Bạn chỉ có thể đăng tin sau khi công ty được duyệt."
+    },
+    "rejectedBanner": {
+      "title": "Tin đã bị quản trị viên từ chối.",
+      "reason": "Lý do: {reason}",
+      "help": "Hãy sửa theo góp ý rồi nhấn “Gửi duyệt lại” để quản trị viên xem xét lần nữa."
+    },
+    "fields": {
+      "title": "Vị trí tuyển dụng",
+      "titleHint": "Tên vị trí rõ ràng, ví dụ kèm công nghệ chính hoặc nhóm làm việc.",
+      "titlePlaceholder": "Ví dụ: Thực tập sinh Backend Node.js",
+      "level": "Cấp bậc",
+      "location": "Địa điểm",
+      "locationPlaceholder": "Chọn địa điểm…",
+      "industry": "Ngành nghề",
+      "industryPlaceholder": "Chọn ngành nghề…",
+      "description": "Mô tả công việc",
+      "descriptionPlaceholder": "Ứng viên sẽ làm gì hằng ngày, làm cùng ai và tạo ra kết quả gì?",
+      "items": "{count} mục",
+      "requirements": "Yêu cầu",
+      "requirementsHint": "Mỗi dòng là một yêu cầu.",
+      "requirementsPlaceholder": "Biết Node.js hoặc Java\nĐọc hiểu tài liệu tiếng Anh",
+      "benefits": "Quyền lợi",
+      "benefitsHint": "Mỗi dòng là một quyền lợi.",
+      "benefitsPlaceholder": "Phụ cấp hằng tháng\nMentor 1-1",
+      "salaryHidden": "Lương thỏa thuận",
+      "salaryHiddenHint": "Ẩn mức lương với ứng viên; hệ thống không lưu con số nào.",
+      "salaryMin": "Lương tối thiểu (USD/tháng)",
+      "salaryMax": "Lương tối đa (USD/tháng)",
+      "perMonth": "/ tháng",
+      "roundsDescription": "Ứng viên sẽ thấy các vòng theo đúng thứ tự này. {summary}.",
+      "notesDescription": "Những điều ứng viên cần biết hoặc chuẩn bị trước khi ứng tuyển.",
+      "notesEmpty": "Chưa có ghi chú. Ví dụ: “Mang theo laptop khi phỏng vấn tại văn phòng.”",
+      "note": "Ghi chú {n}",
+      "removeNote": "Xóa ghi chú {n}",
+      "addNote": "Thêm ghi chú"
+    },
+    "step": "Bước {step}",
+    "stepOptional": "Bước {step} · Không bắt buộc",
+    "sidebar": {
+      "title": "Đăng tin",
+      "newJob": "Tin mới",
+      "readiness": "Sẵn sàng gửi duyệt",
+      "readyCount": "{ready}/{total} mục",
+      "progressLabel": "Mức độ hoàn thiện để gửi duyệt",
+      "sectionsNav": "Các mục của tin",
+      "optional": "Tùy chọn",
+      "done": "Đã có",
+      "missing": "Còn thiếu",
+      "submit": "Gửi duyệt",
+      "resubmit": "Gửi duyệt lại",
+      "saveDraft": "Lưu nháp",
+      "saveChanges": "Lưu thay đổi",
+      "cancel": "Hủy",
+      "deleteDraft": "Xóa bản nháp",
+      "lastSaved": "Lưu lần cuối lúc {time}.",
+      "help": "Bạn có thể lưu nháp bất cứ lúc nào, kể cả khi chưa điền đủ; bản nháp chỉ bạn nhìn thấy. Khi gửi duyệt, tin cần đủ các mục bắt buộc và sẽ ở trạng thái Chờ duyệt cho đến khi quản trị viên duyệt."
+    },
+    "preview": {
+      "title": "Xem trước với ứng viên",
+      "titlePlaceholder": "Vị trí tuyển dụng",
+      "negotiable": "Thỏa thuận",
+      "invalidSalary": "Mức lương chưa hợp lệ"
+    },
+    "loading": "Đang tải"
+  },
+  "applicants": {
+    "title": "Ứng viên",
+    "titleWithJob": "Ứng viên · {job}",
+    "count": "{count} hồ sơ ứng tuyển",
+    "loadErrors": {
+      "forbidden": "Bạn không có quyền xem ứng viên của tin tuyển dụng này.",
+      "notFound": "Không tìm thấy tin tuyển dụng.",
+      "generic": "Không thể tải danh sách ứng viên. Vui lòng thử lại."
+    },
+    "resumeError": "Không thể mở CV của {name}.",
+    "moved": "Đã chuyển {name} sang {status}.",
+    "filter": "Lọc theo trạng thái",
+    "all": "Tất cả",
+    "empty": {
+      "none": "Chưa có ứng viên nào ứng tuyển.",
+      "noMatch": "Không có ứng viên nào ở trạng thái này."
+    },
+    "columns": {
+      "candidate": "Ứng viên",
+      "skills": "Kỹ năng",
+      "submitted": "Ngày nộp",
+      "round": "Vòng hiện tại",
+      "status": "Trạng thái",
+      "actions": "Thao tác"
+    },
+    "viewCv": "Xem CV",
+    "viewCvLabel": "Xem CV của {name}",
+    "update": "Cập nhật",
+    "updateLabel": "Cập nhật trạng thái của {name}",
+    "statuses": {
+      "SUBMITTED": "Đã nộp",
+      "SCREENING": "Sàng lọc",
+      "INTERVIEW": "Phỏng vấn",
+      "OFFER": "Mời nhận việc",
+      "ACCEPTED": "Đã nhận việc",
+      "REJECTED": "Bị từ chối",
+      "WITHDRAWN": "Đã rút hồ sơ"
+    },
+    "form": {
+      "chooseStatus": "Hãy chọn trạng thái mới.",
+      "sameStatus": "Ứng viên đã ở trạng thái này.",
+      "forbidden": "Bạn không có quyền cập nhật ứng viên này.",
+      "generic": "Không thể cập nhật trạng thái. Vui lòng thử lại.",
+      "newStatus": "Trạng thái mới",
+      "choose": "Chọn…",
+      "round": "Vòng (tùy chọn)",
+      "keepRound": "Giữ nguyên",
+      "note": "Ghi chú (tùy chọn)",
+      "save": "Lưu thay đổi",
+      "cancel": "Hủy"
+    }
+  }
+}

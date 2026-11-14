@@ -1,8 +1,11 @@
 import Link from 'next/link';
 import { ArrowUpRight, Rocket } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
+import { LanguageSwitcher } from '@/components/layout/language-switcher';
 
 export function AuthShell({ children }: { children: ReactNode }) {
+  const t = useTranslations('auth.shell');
   return (
     <div className="min-h-screen bg-background lg:grid lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
       <aside className="relative hidden min-h-screen overflow-hidden bg-primary p-10 text-primary-foreground lg:flex lg:flex-col lg:justify-between xl:p-14">
@@ -16,12 +19,12 @@ export function AuthShell({ children }: { children: ReactNode }) {
 
         <div className="relative z-10 max-w-md pb-10">
           <p className="mb-4 text-sm font-medium tracking-wide text-primary-foreground/70">
-            Tài khoản Launchly
+            {t('eyebrow')}
           </p>
           <h1 className="font-display text-4xl leading-tight font-bold xl:text-5xl">
-            Bước tiếp theo
+            {t('headlineLine1')}
             <br />
-            bắt đầu từ đây.
+            {t('headlineLine2')}
           </h1>
         </div>
 
@@ -40,24 +43,27 @@ export function AuthShell({ children }: { children: ReactNode }) {
       </aside>
 
       <main className="flex min-h-screen flex-col bg-background px-5 py-6 sm:px-8 lg:px-12 lg:py-12">
-        <div className="mb-10 flex items-center justify-between lg:hidden">
+        <div className="mb-10 flex items-center justify-between lg:mb-0 lg:justify-end">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 rounded-control font-display text-lg font-bold tracking-tight text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            className="inline-flex items-center gap-2 rounded-control font-display text-lg font-bold tracking-tight text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none lg:hidden"
           >
             <span className="flex size-8 items-center justify-center rounded-control bg-primary text-primary-foreground">
               <Rocket className="size-5" strokeWidth={1.75} aria-hidden />
             </span>
             Launchly
           </Link>
-          <Link
-            href="/"
-            className="rounded-control px-2 py-1 text-sm font-medium text-muted-foreground hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-          >
-            Trang chủ
-          </Link>
+          <div className="flex items-center gap-1">
+            <Link
+              href="/"
+              className="rounded-control px-2 py-1 text-sm font-medium text-muted-foreground hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none lg:hidden"
+            >
+              {t('home')}
+            </Link>
+            <LanguageSwitcher />
+          </div>
         </div>
-        <div className="flex flex-1 items-center justify-center lg:min-h-screen">
+        <div className="flex flex-1 items-center justify-center">
           <div className="w-full max-w-md">{children}</div>
         </div>
       </main>

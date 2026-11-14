@@ -2,27 +2,30 @@
 
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { LoaderCircle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { validateRoundDrafts, type RoundFormat } from '@launchly/shared';
 import { Button } from '@/components/ui/button';
 import {
-  ROUND_ERROR_TEXT,
   RoundRowsEditor,
+  roundErrorText,
   roundRowsFrom,
   type RoundRow,
   type RoundRowErrors,
+  type RoundsTranslator,
 } from '@/components/recruiter/round-rows-editor';
 import { getJobRounds, replaceJobRounds } from '@/lib/api/job-rounds';
 import { useAuth } from '@/lib/auth-context';
 
-function validateRows(rows: RoundRow[]): RoundRowErrors[] {
+function validateRows(rows: RoundRow[], t: RoundsTranslator): RoundRowErrors[] {
   return validateRoundDrafts(rows).map((errors) => ({
-    ...(errors.name && { name: ROUND_ERROR_TEXT.name }),
-    ...(errors.format && { format: ROUND_ERROR_TEXT.format }),
-    ...(errors.duration && { duration: ROUND_ERROR_TEXT.duration }),
+    ...(errors.name && { name: roundErrorText('name', t) }),
+    ...(errors.format && { format: roundErrorText('format', t) }),
+    ...(errors.duration && { duration: roundErrorText('duration', t) }),
   }));
 }
 
 export function RoundsBuilder({ jobId }: { jobId: string }) {
+  const t = useTranslations('recruiter.rounds');
   const { status } = useAuth();
   const [rows, setRows] = useState<RoundRow[]>([]);
   const [errors, setErrors] = useState<RoundRowErrors[]>([]);
@@ -40,17 +43,17 @@ export function RoundsBuilder({ jobId }: { jobId: string }) {
         setRows(roundRowsFrom(rounds));
       } catch (error) {
         loadedFor.current = null;
-        setMessage({ tone: 'danger', text: errorMessage(error) });
+        setMessage({ tone: 'danger', text: errorMessage(error, t) });
       } finally {
         setLoading(false);
       }
     })();
-  }, [jobId, status]);
+  }, [jobId, status, t]);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setMessage(null);
-    const found = validateRows(rows);
+    const found = validateRows(rows, t);
     if (found.some((e) => Object.keys(e).length > 0)) {
       setErrors(found);
       return;
@@ -67,26 +70,22 @@ export function RoundsBuilder({ jobId }: { jobId: string }) {
         })),
       });
       setRows(roundRowsFrom(rounds));
-      setMessage({ tone: 'success', text: 'Đã lưu quy trình tuyển dụng.' });
+      setMessage({ tone: 'success', text: t('builder.saved') });
     } catch (error) {
-      setMessage({ tone: 'danger', text: errorMessage(error) });
+      setMessage({ tone: 'danger', text: errorMessage(error, t) });
     } finally {
       setSaving(false);
     }
   }
 
   if (status === 'loading') {
-    return <p className="text-sm text-muted-foreground">Đang tải quy trình…</p>;
+    return <p className="text-sm text-muted-foreground">{t('builder.loading')}</p>;
   }
   if (status !== 'authenticated') {
-    return (
-      <p className="text-sm text-muted-foreground">
-        Vui lòng đăng nhập bằng tài khoản nhà tuyển dụng.
-      </p>
-    );
+    return <p className="text-sm text-muted-foreground">{t('builder.signInPrompt')}</p>;
   }
   if (loading) {
-    return <p className="text-sm text-muted-foreground">Đang tải quy trình…</p>;
+    return <p className="text-sm text-muted-foreground">{t('builder.loading')}</p>;
   }
 
   return (
@@ -101,7 +100,8 @@ export function RoundsBuilder({ jobId }: { jobId: string }) {
       />
       <div className="flex flex-wrap items-center gap-3">
         <Button type="submit" disabled={saving}>
-          {saving && <LoaderCircle className="size-4 animate-spin" aria-hidden />} Lưu quy trình
+          {saving && <LoaderCircle className="size-4 animate-spin" aria-hidden />}{' '}
+          {t('builder.save')}
         </Button>
         {message && (
           <p
@@ -116,6 +116,6 @@ export function RoundsBuilder({ jobId }: { jobId: string }) {
   );
 }
 
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : 'Đã xảy ra lỗi. Vui lòng thử lại.';
+function errorMessage(error: unknown, t: RoundsTranslator): string {
+  return error instanceof Error ? error.message : t('builder.genericError');
 }

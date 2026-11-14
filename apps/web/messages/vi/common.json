@@ -1,0 +1,11 @@
+{
+  "languages": {
+    "vi": "Tiếng Việt",
+    "en": "English"
+  },
+  "roles": {
+    "CANDIDATE": "Ứng viên",
+    "RECRUITER": "Nhà tuyển dụng",
+    "ADMIN": "Quản trị viên"
+  }
+}

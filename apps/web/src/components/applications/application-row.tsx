@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
+import { useFormatter, useTranslations } from 'next-intl';
 import type { CandidateApplicationDetail, CandidateApplicationItem } from '@launchly/shared';
-import { ApplicationTimeline, formatDate } from '@/components/applications/application-timeline';
+import { ApplicationTimeline, DATE_FORMAT } from '@/components/applications/application-timeline';
 import { StatusBadge } from '@/components/applications/status-badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -23,6 +24,8 @@ export function ApplicationRow({
   application: CandidateApplicationItem;
   initiallyOpen?: boolean;
 }) {
+  const t = useTranslations('candidate.applications.row');
+  const format = useFormatter();
   const [open, setOpen] = useState(initiallyOpen);
   const [details, setDetails] = useState<Details>({ state: initiallyOpen ? 'loading' : 'closed' });
 
@@ -34,10 +37,10 @@ export function ApplicationRow({
     } catch (cause) {
       setDetails({
         state: 'error',
-        message: cause instanceof ApiError ? cause.message : 'Could not load the details.',
+        message: cause instanceof ApiError ? cause.message : t('loadError'),
       });
     }
-  }, [applicationId]);
+  }, [applicationId, t]);
 
   // A row opened from `?application=` loads its history on mount.
   useEffect(() => {
@@ -72,16 +75,20 @@ export function ApplicationRow({
 
         <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
           <div className="flex flex-wrap gap-x-4 gap-y-1">
-            <span>Round: {application.currentStageName ?? '—'}</span>
-            <span>Updated {formatDate(application.updatedAt)}</span>
+            <span>{t('round', { name: application.currentStageName ?? '—' })}</span>
+            <span>
+              {t('updated', {
+                date: format.dateTime(new Date(application.updatedAt), DATE_FORMAT),
+              })}
+            </span>
           </div>
           <Button variant="soft" aria-expanded={open} onClick={toggle}>
-            {open ? 'Hide details' : 'Show details'}
+            {open ? t('hideDetails') : t('showDetails')}
           </Button>
         </div>
 
         {open && details.state === 'loading' && (
-          <p className="text-sm text-muted-foreground">Loading…</p>
+          <p className="text-sm text-muted-foreground">{t('loading')}</p>
         )}
         {open && details.state === 'error' && (
           <p role="alert" className="text-sm text-danger">

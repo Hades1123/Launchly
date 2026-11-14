@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 import { Inter, JetBrains_Mono, Plus_Jakarta_Sans } from 'next/font/google';
+import { NextIntlClientProvider } from 'next-intl';
+import { getLocale } from 'next-intl/server';
 import { AuthProvider } from '@/lib/auth-context';
 import './globals.css';
 
@@ -25,14 +27,17 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata = { title: 'Launchly' };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const locale = await getLocale();
   return (
     <html
-      lang="vi"
+      lang={locale}
       className={`${inter.variable} ${plusJakarta.variable} ${jetbrainsMono.variable}`}
     >
       <body className="bg-background font-sans text-foreground antialiased">
-        <AuthProvider>{children}</AuthProvider>
+        <NextIntlClientProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

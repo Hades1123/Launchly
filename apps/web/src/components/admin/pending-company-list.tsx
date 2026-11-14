@@ -3,24 +3,26 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Building2 } from 'lucide-react';
+import { useFormatter, useTranslations } from 'next-intl';
 import type { AdminCompany } from '@launchly/shared';
 import { Card } from '@/components/ui/card';
 import { listAdminCompanies } from '@/lib/api/admin-companies';
 import { authErrorMessage } from '@/lib/auth-helpers';
 
-export const moderationDate = new Intl.DateTimeFormat('vi-VN', {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-});
+/** How the moderation screens show when an item was submitted or reviewed. */
+export const MODERATION_DATE_FORMAT = { dateStyle: 'medium', timeStyle: 'short' } as const;
 
 type State =
   | { kind: 'loading' }
-  | { kind: 'error'; text: string }
+  | { kind: 'error'; error: unknown }
   | { kind: 'ready'; companies: AdminCompany[] };
 
 /** Pending companies, oldest first, each linking to its review page. */
 export function PendingCompanyList() {
   const [state, setState] = useState<State>({ kind: 'loading' });
+  const t = useTranslations('admin');
+  const tErrors = useTranslations('errors');
+  const format = useFormatter();
 
   useEffect(() => {
     let active = true;
@@ -29,7 +31,7 @@ export function PendingCompanyList() {
         const companies = await listAdminCompanies('PENDING');
         if (active) setState({ kind: 'ready', companies });
       } catch (error) {
-        if (active) setState({ kind: 'error', text: authErrorMessage(error) });
+        if (active) setState({ kind: 'error', error });
       }
     }
     void load();
@@ -44,14 +46,14 @@ export function PendingCompanyList() {
   if (state.kind === 'error') {
     return (
       <p role="alert" className="text-sm text-danger">
-        {state.text}
+        {authErrorMessage(state.error, tErrors)}
       </p>
     );
   }
   if (state.companies.length === 0) {
     return (
       <Card>
-        <p className="text-sm text-muted-foreground">Không có mục nào cần duyệt</p>
+        <p className="text-sm text-muted-foreground">{t('moderation.empty')}</p>
       </Card>
     );
   }
@@ -59,7 +61,7 @@ export function PendingCompanyList() {
   return (
     <section aria-labelledby="pending-companies" className="space-y-3">
       <h2 id="pending-companies" className="font-display text-lg font-semibold text-foreground">
-        Công ty chờ duyệt
+        {t('pendingCompanies.heading')}
       </h2>
       <ul className="space-y-3">
         {state.companies.map((company) => (
@@ -80,7 +82,9 @@ export function PendingCompanyList() {
                 </p>
               </div>
               <p className="shrink-0 text-xs text-subtle-foreground">
-                Gửi lúc {moderationDate.format(new Date(company.createdAt))}
+                {t('moderation.submittedAt', {
+                  date: format.dateTime(new Date(company.createdAt), MODERATION_DATE_FORMAT),
+                })}
               </p>
             </Card>
           </li>

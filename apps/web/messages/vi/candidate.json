@@ -1,0 +1,154 @@
+{
+  "applications": {
+    "metadata": {
+      "title": "Việc đã ứng tuyển | Launchly"
+    },
+    "title": "Việc đã ứng tuyển",
+    "subtitle": "Theo dõi mọi đơn ứng tuyển từ lúc nộp đến kết quả cuối cùng.",
+    "list": {
+      "loading": "Đang tải…",
+      "logIn": "Đăng nhập để xem các đơn ứng tuyển của bạn",
+      "candidatesOnly": "Chỉ ứng viên mới có đơn ứng tuyển.",
+      "loadError": "Không thể tải danh sách đơn ứng tuyển của bạn.",
+      "empty": "Bạn chưa ứng tuyển công việc nào.",
+      "browseJobs": "Xem việc làm"
+    },
+    "row": {
+      "round": "Vòng: {name}",
+      "updated": "Cập nhật {date}",
+      "showDetails": "Xem chi tiết",
+      "hideDetails": "Ẩn chi tiết",
+      "loading": "Đang tải…",
+      "loadError": "Không thể tải chi tiết."
+    },
+    "timeline": {
+      "statusHistory": "Lịch sử trạng thái",
+      "hiringRounds": "Các vòng tuyển dụng",
+      "noRounds": "Công việc này chưa có vòng tuyển dụng nào.",
+      "currentRound": "Vòng hiện tại"
+    },
+    "status": {
+      "SUBMITTED": "Đã nộp",
+      "SCREENING": "Sàng lọc",
+      "INTERVIEW": "Phỏng vấn",
+      "OFFER": "Mời nhận việc",
+      "ACCEPTED": "Đã nhận việc",
+      "REJECTED": "Bị từ chối",
+      "WITHDRAWN": "Đã rút hồ sơ",
+      "final": "Kết thúc"
+    }
+  },
+  "cvReview": {
+    "metadata": {
+      "title": "Kiểm tra độ phù hợp của CV | Launchly"
+    },
+    "title": "Kiểm tra độ phù hợp của CV",
+    "subtitle": "Chọn một CV và một công việc để nhận điểm số cùng gợi ý cải thiện cụ thể.",
+    "check": {
+      "loading": "Đang tải…",
+      "logIn": "Đăng nhập để kiểm tra CV của bạn",
+      "candidatesOnly": "Tính năng kiểm tra độ phù hợp của CV chỉ dành cho ứng viên.",
+      "loadError": "Không thể tải hồ sơ của bạn.",
+      "analysisError": "Phân tích thất bại. Vui lòng thử lại.",
+      "noCv": "Hãy tải CV lên trước. <link>Đến hồ sơ của bạn</link>",
+      "analysing": "Đang phân tích CV của bạn. Quá trình này có thể mất đến 30 giây…"
+    },
+    "consent": {
+      "label": "Đồng ý sử dụng AI",
+      "title": "Trước khi kiểm tra CV của bạn",
+      "body": "Để chấm điểm CV, Launchly gửi nội dung văn bản của CV bạn chọn và mô tả công việc tới một dịch vụ AI. Họ tên, ảnh và thông tin liên hệ của bạn không nằm trong yêu cầu này. Kết quả được lưu vào tài khoản của bạn. Bạn có thể rút lại sự đồng ý bằng cách liên hệ bộ phận hỗ trợ.",
+      "saveError": "Không thể lưu sự đồng ý của bạn. Vui lòng thử lại.",
+      "saving": "Đang lưu…",
+      "agree": "Tôi đồng ý"
+    },
+    "form": {
+      "cv": "CV của bạn",
+      "compareAgainst": "So sánh với",
+      "sourceJob": "Một công việc trên Launchly",
+      "sourceText": "Một mô tả công việc tự dán",
+      "jobDescription": "Mô tả công việc",
+      "jobDescriptionPlaceholder": "Dán mô tả công việc vào đây…",
+      "analyse": "Phân tích",
+      "analysing": "Đang phân tích…",
+      "changeJob": "Đổi công việc",
+      "searchJobs": "Tìm việc làm",
+      "searchPlaceholder": "Tìm một công việc trên Launchly theo tên…",
+      "jobResults": "Kết quả tìm việc"
+    },
+    "result": {
+      "label": "Kết quả phân tích",
+      "title": "Kết quả phân tích",
+      "summary": "{matched} điểm phù hợp · {missing} điểm còn thiếu",
+      "matches": "Điểm phù hợp",
+      "missing": "Còn thiếu",
+      "required": "Bắt buộc",
+      "niceToHave": "Nên có",
+      "improve": "Cách cải thiện",
+      "evidence": "Dẫn chứng từ CV của bạn"
+    },
+    "gauge": {
+      "label": "Điểm phù hợp {score} trên 100",
+      "unit": "/ 100 ĐIỂM"
+    }
+  },
+  "profile": {
+    "title": "Hồ sơ ứng viên & CV",
+    "subtitle": "Quản lý học vấn, kỹ năng và CV của bạn để nhà tuyển dụng có thể đánh giá hồ sơ ứng tuyển.",
+    "loadingSession": "Đang tải phiên đăng nhập...",
+    "signInPrompt": "Vui lòng <link>đăng nhập</link> để quản lý hồ sơ và CV của bạn.",
+    "candidatesOnly": "Trang hồ sơ và CV chỉ dành cho tài khoản ứng viên.",
+    "loading": "Đang tải hồ sơ ứng viên...",
+    "loadError": "Đã xảy ra lỗi không mong muốn.",
+    "notFound": "Không tìm thấy hồ sơ ứng viên.",
+    "backgroundTitle": "Thông tin cá nhân & năng lực",
+    "resumeTitle": "CV của bạn",
+    "form": {
+      "fullName": "Họ và tên",
+      "fullNamePlaceholder": "Ví dụ: Nguyễn Văn A",
+      "headline": "Chức danh nghề nghiệp",
+      "headlinePlaceholder": "Ví dụ: Fresher Frontend Developer",
+      "location": "Địa điểm",
+      "locationPlaceholder": "Ví dụ: TP. Hồ Chí Minh, Việt Nam",
+      "schoolMajor": "Trường hoặc chuyên ngành",
+      "schoolMajorPlaceholder": "Ví dụ: Khoa học Máy tính - ĐH Bách khoa TP.HCM",
+      "bio": "Giới thiệu bản thân",
+      "bioPlaceholder": "Giới thiệu ngắn về nền tảng kỹ thuật và định hướng nghề nghiệp của bạn...",
+      "skills": "Kỹ năng & năng lực",
+      "skillsPlaceholder": "Ví dụ: React, TypeScript, Next.js",
+      "addSkill": "Thêm",
+      "removeSkill": "Xóa kỹ năng {skill}",
+      "projects": "Dự án nổi bật và hoạt động ngoại khóa",
+      "projectsPlaceholder": "Mô tả dự án cá nhân, hackathon, thành tích học tập hoặc vai trò lãnh đạo...",
+      "fullNameRequired": "Họ và tên không được để trống.",
+      "saved": "Đã lưu hồ sơ thành công.",
+      "saveError": "Đã xảy ra lỗi khi lưu.",
+      "saving": "Đang lưu thay đổi...",
+      "save": "Lưu hồ sơ"
+    },
+    "uploader": {
+      "invalidType": "Định dạng tệp không hợp lệ. Chỉ chấp nhận tài liệu PDF.",
+      "tooLarge": "Kích thước tệp vượt quá giới hạn 5 MB.",
+      "uploadError": "Đã xảy ra lỗi khi tải lên.",
+      "choose": "Chọn tệp PDF hoặc kéo thả vào đây",
+      "hint": "Chỉ PDF, tối đa 5 MB",
+      "uploading": "Đang tải tài liệu lên...",
+      "replace": "Thay CV hiện tại",
+      "upload": "Tải CV lên",
+      "cancel": "Hủy"
+    },
+    "viewer": {
+      "uploadedAt": "Đã tải lên: {date}",
+      "deleteError": "Đã xảy ra lỗi khi xóa.",
+      "downloadError": "Không thể tải CV xuống.",
+      "downloading": "Đang tải xuống...",
+      "download": "Tải CV xuống",
+      "replace": "Thay thế",
+      "delete": "Xóa",
+      "confirmTitle": "Xác nhận xóa CV",
+      "confirmBody": "Bạn có chắc muốn xóa CV này? Thao tác này sẽ xóa vĩnh viễn tệp khỏi kho lưu trữ riêng tư và không thể hoàn tác.",
+      "cancel": "Hủy",
+      "deleting": "Đang xóa...",
+      "confirmDelete": "Xóa CV"
+    }
+  }
+}

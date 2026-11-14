@@ -95,7 +95,7 @@ test('AC2: the review page shows details, rounds and notes in order', async ({ p
     'Sàng lọc CV',
     'Phỏng vấn kỹ thuật',
   ]);
-  await expect(page.getByText('Online · 15 min')).toBeVisible();
+  await expect(page.getByText('Trực tuyến · 15 phút')).toBeVisible();
   await expect(page.getByText('Mang laptop khi phỏng vấn')).toBeVisible();
   await expect(page.getByText('Phản hồi trong 3 ngày')).toBeVisible();
 });
@@ -146,7 +146,7 @@ test('E1: a job decided by another admin shows its status without buttons', asyn
 
 test('E3: a job without notes shows no notes section', async ({ page }) => {
   await openJob(page, SEEDED_PENDING);
-  await expect(page.getByText('Notes from the company')).toHaveCount(0);
+  await expect(page.getByText('Ghi chú từ công ty')).toHaveCount(0);
 });
 
 test('E2: an empty queue shows the empty state', async ({ page }) => {

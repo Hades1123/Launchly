@@ -31,7 +31,7 @@ test('AC1: rows show job link, company, status, round and last update, with no m
   await signIn(page, CANDIDATE);
   await page.goto('/applications');
 
-  await expect(page.getByRole('heading', { level: 1, name: 'My applications' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Việc đã ứng tuyển' })).toBeVisible();
   await expect(page.getByText('Dữ liệu minh họa')).toHaveCount(0);
   const item = row(page, INTERVIEW_JOB);
   await expect(item.getByRole('link', { name: INTERVIEW_JOB })).toHaveAttribute(
@@ -39,16 +39,16 @@ test('AC1: rows show job link, company, status, round and last update, with no m
     /\/jobs\/[0-9a-f-]{36}$/,
   );
   await expect(item.getByText('Nimbus Labs')).toBeVisible();
-  await expect(item.getByText('Interview', { exact: true })).toBeVisible();
-  await expect(item.getByText(/^Round:/)).toBeVisible();
-  await expect(item.getByText(/^Updated /)).toBeVisible();
+  await expect(item.getByText('Phỏng vấn', { exact: true })).toBeVisible();
+  await expect(item.getByText(/^Vòng:/)).toBeVisible();
+  await expect(item.getByText(/^Cập nhật /)).toBeVisible();
 });
 
 test('AC5: an applied job appears with status Submitted', async ({ page }) => {
   await signIn(page, CANDIDATE);
   await page.goto('/applications');
 
-  await expect(row(page, SUBMITTED_JOB).getByText('Submitted', { exact: true })).toBeVisible();
+  await expect(row(page, SUBMITTED_JOB).getByText('Đã nộp', { exact: true })).toBeVisible();
 });
 
 test('AC2: a status change by a recruiter shows after reload', async ({ page, request }) => {
@@ -67,7 +67,7 @@ test('AC2: a status change by a recruiter shows after reload', async ({ page, re
 
   await signIn(page, CANDIDATE);
   await page.goto('/applications');
-  await expect(row(page, FLOW_JOB).getByText('Submitted', { exact: true })).toBeVisible();
+  await expect(row(page, FLOW_JOB).getByText('Đã nộp', { exact: true })).toBeVisible();
 
   const recruiterAuth = await apiLogin(request, RECRUITER);
   const changed = await request.patch(`${API}/applications/${id}/status`, {
@@ -77,7 +77,7 @@ test('AC2: a status change by a recruiter shows after reload', async ({ page, re
   expect(changed.ok()).toBe(true);
   await page.reload();
 
-  await expect(row(page, FLOW_JOB).getByText('Screening', { exact: true })).toBeVisible();
+  await expect(row(page, FLOW_JOB).getByText('Sàng lọc', { exact: true })).toBeVisible();
 });
 
 test('AC3: a rejected application is shown as a final state', async ({ page }) => {
@@ -85,8 +85,8 @@ test('AC3: a rejected application is shown as a final state', async ({ page }) =
   await page.goto('/applications');
 
   const item = row(page, REJECTED_JOB);
-  await expect(item.getByText('Rejected', { exact: true })).toBeVisible();
-  await expect(item.getByText('Final')).toBeVisible();
+  await expect(item.getByText('Bị từ chối', { exact: true })).toBeVisible();
+  await expect(item.getByText('Kết thúc')).toBeVisible();
 });
 
 test('AC3: expanding a row shows the status stepper and the current round', async ({ page }) => {
@@ -94,19 +94,19 @@ test('AC3: expanding a row shows the status stepper and the current round', asyn
   await page.goto('/applications');
 
   const item = row(page, INTERVIEW_JOB);
-  await item.getByRole('button', { name: 'Show details' }).click();
+  await item.getByRole('button', { name: 'Xem chi tiết' }).click();
 
-  const history = item.getByRole('list', { name: 'Status history' });
+  const history = item.getByRole('list', { name: 'Lịch sử trạng thái' });
   await expect(history.getByRole('listitem')).toHaveCount(3);
   // The stepper marks where the application stands now: the last step is the current one.
   await expect(history.getByRole('listitem').last()).toHaveAttribute('aria-current', 'step');
   await expect(history.getByRole('listitem').first()).not.toHaveAttribute('aria-current', 'step');
-  await expect(history.getByText('Submitted')).toBeVisible();
-  await expect(history.getByText('Screening')).toBeVisible();
-  await expect(history.getByText('Interview')).toBeVisible();
-  const rounds = item.getByRole('list', { name: 'Hiring rounds' });
+  await expect(history.getByText('Đã nộp')).toBeVisible();
+  await expect(history.getByText('Sàng lọc')).toBeVisible();
+  await expect(history.getByText('Phỏng vấn')).toBeVisible();
+  const rounds = item.getByRole('list', { name: 'Các vòng tuyển dụng' });
   await expect(rounds.getByRole('listitem').first()).toBeVisible();
-  await expect(rounds.getByText('Current round')).toHaveCount(1);
+  await expect(rounds.getByText('Vòng hiện tại')).toHaveCount(1);
 });
 
 test('AC4: a candidate with no applications sees the empty state linking to jobs', async ({
@@ -116,8 +116,8 @@ test('AC4: a candidate with no applications sees the empty state linking to jobs
   await page.route('**/api/applications/me', (route) => route.fulfill({ json: { data: [] } }));
   await page.goto('/applications');
 
-  await expect(page.getByText("You haven't applied to any job yet.")).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Browse jobs' })).toHaveAttribute('href', '/jobs');
+  await expect(page.getByText('Bạn chưa ứng tuyển công việc nào.')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Xem việc làm' })).toHaveAttribute('href', '/jobs');
 });
 
 test('AC4: the list fits a phone width without horizontal scroll', async ({ page }) => {
@@ -125,7 +125,7 @@ test('AC4: the list fits a phone width without horizontal scroll', async ({ page
   await signIn(page, CANDIDATE);
   await page.goto('/applications');
   await expect(row(page, INTERVIEW_JOB)).toBeVisible();
-  await row(page, INTERVIEW_JOB).getByRole('button', { name: 'Show details' }).click();
+  await row(page, INTERVIEW_JOB).getByRole('button', { name: 'Xem chi tiết' }).click();
 
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import type { CandidateProfile, CvMetadata } from '@launchly/shared';
 import { SiteHeader } from '@/components/layout/site-header';
 import { SiteFooter } from '@/components/layout/site-footer';
@@ -13,6 +14,7 @@ import { getCandidateProfile } from '@/lib/api/candidate';
 import { useAuth } from '@/lib/auth-context';
 
 export default function CandidateProfilePage() {
+  const t = useTranslations('candidate.profile');
   const { status, user } = useAuth();
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,7 +33,7 @@ export default function CandidateProfilePage() {
         if (active) setProfile(data);
       } catch (cause) {
         if (active) {
-          setError(cause instanceof Error ? cause.message : 'An unexpected error occurred.');
+          setError(cause instanceof Error ? cause.message : t('loadError'));
         }
       } finally {
         if (active) setIsLoading(false);
@@ -42,7 +44,7 @@ export default function CandidateProfilePage() {
     return () => {
       active = false;
     };
-  }, [isCandidate]);
+  }, [isCandidate, t]);
 
   const handleProfileUpdated = (updated: CandidateProfile) => {
     setProfile(updated);
@@ -76,45 +78,42 @@ export default function CandidateProfilePage() {
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <header className="mb-8">
             <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-              Candidate profile & CV
+              {t('title')}
             </h1>
-            <p className="mt-2 text-xs text-muted-foreground sm:text-sm">
-              Manage your academic background, skills, and resume document so recruiters can
-              evaluate your application.
-            </p>
+            <p className="mt-2 text-xs text-muted-foreground sm:text-sm">{t('subtitle')}</p>
           </header>
 
           {status === 'loading' ? (
             <Card className="py-12 text-center">
-              <p className="text-sm text-muted-foreground">Loading your session...</p>
+              <p className="text-sm text-muted-foreground">{t('loadingSession')}</p>
             </Card>
           ) : status !== 'authenticated' ? (
             <Card className="py-12 text-center">
               <p className="text-sm text-muted-foreground">
-                Please{' '}
-                <Link
-                  href="/login?next=/profile"
-                  className="font-semibold text-primary hover:underline"
-                >
-                  sign in
-                </Link>{' '}
-                to manage your profile and CV.
+                {t.rich('signInPrompt', {
+                  link: (chunks) => (
+                    <Link
+                      href="/login?next=/profile"
+                      className="font-semibold text-primary hover:underline"
+                    >
+                      {chunks}
+                    </Link>
+                  ),
+                })}
               </p>
             </Card>
           ) : !isCandidate ? (
             <Card className="py-12 text-center">
-              <p className="text-sm text-muted-foreground">
-                The profile and CV page is only available to candidate accounts.
-              </p>
+              <p className="text-sm text-muted-foreground">{t('candidatesOnly')}</p>
             </Card>
           ) : isLoading ? (
             <Card className="py-12 text-center">
-              <p className="text-sm text-muted-foreground">Loading candidate profile...</p>
+              <p className="text-sm text-muted-foreground">{t('loading')}</p>
             </Card>
           ) : error || !profile ? (
             <Card className="py-12 text-center">
               <div className="rounded-control border border-danger/20 bg-danger-subtle p-6 text-sm text-danger">
-                {error || 'Candidate profile not found.'}
+                {error || t('notFound')}
               </div>
             </Card>
           ) : (
@@ -123,7 +122,7 @@ export default function CandidateProfilePage() {
               <section className="lg:col-span-2">
                 <Card>
                   <h2 className="mb-4 text-base font-semibold text-foreground">
-                    Personal background & competencies
+                    {t('backgroundTitle')}
                   </h2>
                   <ProfileForm initialProfile={profile} onProfileUpdated={handleProfileUpdated} />
                 </Card>
@@ -132,7 +131,9 @@ export default function CandidateProfilePage() {
               {/* Sidebar Column: CV Management */}
               <section className="space-y-6 lg:col-span-1">
                 <Card>
-                  <h2 className="mb-4 text-base font-semibold text-foreground">Resume document</h2>
+                  <h2 className="mb-4 text-base font-semibold text-foreground">
+                    {t('resumeTitle')}
+                  </h2>
 
                   {profile.cvOriginalFileName && !isReplacingCv ? (
                     <CvViewer

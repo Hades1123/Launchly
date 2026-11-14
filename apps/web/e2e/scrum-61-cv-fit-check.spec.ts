@@ -16,8 +16,8 @@ async function openJob(page: Page) {
 }
 
 async function agree(page: Page) {
-  await page.getByRole('button', { name: 'I agree' }).click();
-  await expect(page.getByRole('button', { name: 'Analyse' })).toBeVisible();
+  await page.getByRole('button', { name: 'Tôi đồng ý' }).click();
+  await expect(page.getByRole('button', { name: 'Phân tích' })).toBeVisible();
 }
 
 test.beforeEach(async ({ page }) => {
@@ -28,7 +28,9 @@ test.beforeEach(async ({ page }) => {
 test('AC1: no mock data remains on the CV review page', async ({ page }) => {
   await page.goto('/cv-review');
 
-  await expect(page.getByRole('heading', { level: 1, name: 'Check your CV fit' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Kiểm tra độ phù hợp của CV' }),
+  ).toBeVisible();
   await expect(page.getByText('Dữ liệu minh họa')).toHaveCount(0);
   await expect(page.getByText('Nguyen_Minh_Anh')).toHaveCount(0);
 });
@@ -38,56 +40,56 @@ test('AC2: analysis is blocked until the candidate agrees, and consent persists 
 }) => {
   await page.goto('/cv-review');
 
-  await expect(page.getByRole('region', { name: 'AI consent' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Analyse' })).toHaveCount(0);
+  await expect(page.getByRole('region', { name: 'Đồng ý sử dụng AI' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Phân tích' })).toHaveCount(0);
 
   await agree(page);
   await page.reload();
 
-  await expect(page.getByRole('region', { name: 'AI consent' })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Analyse' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Đồng ý sử dụng AI' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Phân tích' })).toBeVisible();
 });
 
 test('AC3: Check my CV fit on the job page opens the review with the job preselected', async ({
   page,
 }) => {
   await openJob(page);
-  await page.getByRole('link', { name: 'Check my CV fit' }).click();
+  await page.getByRole('link', { name: 'Kiểm tra độ phù hợp CV' }).click();
 
   await expect(page).toHaveURL(/\/cv-review\?jobId=[0-9a-f-]{36}$/);
   await agree(page);
   await expect(page.getByText(JOB_TITLE)).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Change job' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Đổi công việc' })).toBeVisible();
 });
 
 test('AC4: a consenting candidate analyses a CV against a job and sees the score', async ({
   page,
 }) => {
   await openJob(page);
-  await page.getByRole('link', { name: 'Check my CV fit' }).click();
+  await page.getByRole('link', { name: 'Kiểm tra độ phù hợp CV' }).click();
   await agree(page);
-  await expect(page.getByRole('button', { name: 'Change job' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Đổi công việc' })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Analyse' }).click();
+  await page.getByRole('button', { name: 'Phân tích' }).click();
 
-  await expect(page.getByRole('region', { name: 'Analysis result' })).toBeVisible({
+  await expect(page.getByRole('region', { name: 'Kết quả phân tích' })).toBeVisible({
     timeout: 35_000,
   });
   await expect(page.getByRole('img', { name: /Điểm phù hợp \d+ trên 100/ })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'How to improve' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Cách cải thiện' })).toBeVisible();
 });
 
 test('AC4: a pasted job description can be analysed too', async ({ page }) => {
   await page.goto('/cv-review');
   await agree(page);
 
-  await page.getByLabel('A pasted job description').check();
+  await page.getByLabel('Một mô tả công việc tự dán').check();
   await page
-    .getByRole('textbox', { name: 'Job description' })
+    .getByRole('textbox', { name: 'Mô tả công việc' })
     .fill('React developer with TypeScript experience.');
-  await page.getByRole('button', { name: 'Analyse' }).click();
+  await page.getByRole('button', { name: 'Phân tích' }).click();
 
-  await expect(page.getByRole('region', { name: 'Analysis result' })).toBeVisible({
+  await expect(page.getByRole('region', { name: 'Kết quả phân tích' })).toBeVisible({
     timeout: 35_000,
   });
 });
@@ -107,9 +109,9 @@ test('AC6: an API error is shown with its message', async ({ page }) => {
   );
   await page.goto('/cv-review');
   await agree(page);
-  await page.getByLabel('A pasted job description').check();
-  await page.getByRole('textbox', { name: 'Job description' }).fill('Any job description.');
-  await page.getByRole('button', { name: 'Analyse' }).click();
+  await page.getByLabel('Một mô tả công việc tự dán').check();
+  await page.getByRole('textbox', { name: 'Mô tả công việc' }).fill('Any job description.');
+  await page.getByRole('button', { name: 'Phân tích' }).click();
 
   await expect(
     page.getByRole('alert').filter({ hasText: 'The AI could not check your CV' }),

@@ -1,7 +1,11 @@
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import { VerifyEmailFlow } from '@/components/auth/verify-email-flow';
 
-export const metadata: Metadata = { title: 'Xác minh email | Launchly' };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('auth.metadata');
+  return { title: t('verifyEmail') };
+}
 
 type VerifyEmailPageProps = {
   searchParams: Promise<{ token?: string }>;

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useFormatter, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { FileText, Download, RefreshCw, Trash2, AlertTriangle } from 'lucide-react';
 import { deleteCv, downloadCv } from '@/lib/api/candidate';
@@ -18,13 +19,15 @@ export function CvViewer({
   onCvDeleted,
   onStartReplace,
 }: CvViewerProps) {
+  const t = useTranslations('candidate.profile.viewer');
+  const format = useFormatter();
   const [isDeleting, setIsDeleting] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
   const formattedDate = uploadedAt
-    ? new Date(uploadedAt).toLocaleDateString('en-US', {
+    ? format.dateTime(new Date(uploadedAt), {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
@@ -42,7 +45,7 @@ export function CvViewer({
       setShowConfirmModal(false);
       onCvDeleted();
     } catch (err: unknown) {
-      setDeleteError(err instanceof Error ? err.message : 'An error occurred during deletion.');
+      setDeleteError(err instanceof Error ? err.message : t('deleteError'));
     } finally {
       setIsDeleting(false);
     }
@@ -60,7 +63,7 @@ export function CvViewer({
       link.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (err: unknown) {
-      setDeleteError(err instanceof Error ? err.message : 'Failed to download CV.');
+      setDeleteError(err instanceof Error ? err.message : t('downloadError'));
     } finally {
       setIsDownloading(false);
     }
@@ -83,7 +86,9 @@ export function CvViewer({
             {originalFileName}
           </p>
           {formattedDate && (
-            <p className="mt-0.5 text-xs text-muted-foreground">Uploaded: {formattedDate}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {t('uploadedAt', { date: formattedDate })}
+            </p>
           )}
         </div>
       </div>
@@ -97,13 +102,13 @@ export function CvViewer({
           className="w-full text-xs"
         >
           <Download className="size-3.5" />
-          <span>{isDownloading ? 'Downloading...' : 'Download CV'}</span>
+          <span>{isDownloading ? t('downloading') : t('download')}</span>
         </Button>
 
         <div className="flex gap-2">
           <Button variant="soft" onClick={onStartReplace} className="flex-1 text-xs">
             <RefreshCw className="size-3" />
-            <span>Replace</span>
+            <span>{t('replace')}</span>
           </Button>
 
           <Button
@@ -112,7 +117,7 @@ export function CvViewer({
             className="text-xs text-danger hover:bg-danger-subtle hover:text-danger"
           >
             <Trash2 className="size-3" />
-            <span>Delete</span>
+            <span>{t('delete')}</span>
           </Button>
         </div>
       </div>
@@ -122,12 +127,9 @@ export function CvViewer({
           <div className="w-full max-w-sm rounded-card border border-border bg-surface p-6 shadow-card">
             <div className="flex items-center gap-3 text-warning">
               <AlertTriangle className="size-6 shrink-0" />
-              <h3 className="text-sm font-semibold text-foreground">Confirm CV deletion</h3>
+              <h3 className="text-sm font-semibold text-foreground">{t('confirmTitle')}</h3>
             </div>
-            <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-              Are you sure you want to delete this CV? This action will permanently remove the file
-              from private storage and cannot be undone.
-            </p>
+            <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{t('confirmBody')}</p>
             <div className="mt-6 flex justify-end gap-2">
               <Button
                 variant="ghost"
@@ -135,7 +137,7 @@ export function CvViewer({
                 onClick={() => setShowConfirmModal(false)}
                 disabled={isDeleting}
               >
-                Cancel
+                {t('cancel')}
               </Button>
               <Button
                 type="button"
@@ -143,7 +145,7 @@ export function CvViewer({
                 disabled={isDeleting}
                 className="bg-danger text-primary-foreground hover:bg-danger/90"
               >
-                {isDeleting ? 'Deleting...' : 'Delete CV'}
+                {isDeleting ? t('deleting') : t('confirmDelete')}
               </Button>
             </div>
           </div>

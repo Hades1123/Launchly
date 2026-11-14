@@ -1,57 +1,56 @@
 import Link from 'next/link';
 import { ShieldCheck } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { BrandLogo } from '@/components/layout/brand-logo';
 
-type FooterLink = { label: string; href?: string };
-
-const columns: Array<{ title: string; links: FooterLink[] }> = [
+// Message keys under `layout.footer`.
+const columns = [
   {
-    title: 'Tính năng đột phá',
+    title: 'features.title',
     links: [
-      { label: 'Khám phá việc làm Fresher & Intern', href: '/jobs' },
-      { label: 'Phân tích & tối ưu hóa CV bằng AI', href: '/cv-review' },
-      { label: 'Luyện phỏng vấn AI', href: '/interview-practice' },
-      { label: 'Theo dõi hồ sơ ứng tuyển', href: '/applications' },
+      { label: 'features.jobs', href: '/jobs' },
+      { label: 'features.cvReview', href: '/cv-review' },
+      { label: 'features.interviewPractice', href: '/interview-practice' },
+      { label: 'features.applications', href: '/applications' },
     ],
   },
   {
-    title: 'Dành cho ứng viên',
+    title: 'candidates.title',
     links: [
-      { label: 'Cẩm nang vượt qua vòng sơ tuyển' },
-      { label: 'Tiêu chuẩn đánh giá kỹ năng chuẩn hóa' },
-      { label: 'Báo cáo mức lương khởi điểm theo ngành' },
-      { label: 'Hỗ trợ sinh viên tốt nghiệp' },
+      { label: 'candidates.screeningGuide' },
+      { label: 'candidates.skillStandards' },
+      { label: 'candidates.salaryReport' },
+      { label: 'candidates.graduateSupport' },
     ],
   },
-];
+] as const;
 
-const legalLinks = ['Chính sách bảo mật', 'Điều khoản dịch vụ', 'Quy chế bảo vệ dữ liệu'];
+const legalLinks = ['legal.privacy', 'legal.terms', 'legal.dataProtection'] as const;
 
 export function SiteFooter() {
+  const t = useTranslations('layout.footer');
+
   return (
     <footer className="w-full bg-surface">
       <div className="mx-auto max-w-page px-4 py-12 md:px-8">
         <div className="mb-8 grid grid-cols-1 gap-8 md:grid-cols-4">
           <div className="space-y-4">
             <BrandLogo />
-            <p className="text-xs leading-relaxed text-muted-foreground">
-              Nền tảng việc làm ứng dụng AI hỗ trợ định hướng, phỏng vấn thử và kết nối cơ hội việc
-              làm chuẩn xác cho thế hệ tài năng trẻ.
-            </p>
+            <p className="text-xs leading-relaxed text-muted-foreground">{t('tagline')}</p>
           </div>
 
           {columns.map((column) => (
             <div key={column.title}>
-              <h2 className="mb-4 font-display text-sm font-semibold">{column.title}</h2>
+              <h2 className="mb-4 font-display text-sm font-semibold">{t(column.title)}</h2>
               <ul className="space-y-2 text-xs text-muted-foreground">
                 {column.links.map((link) => (
                   <li key={link.label}>
-                    {link.href ? (
+                    {'href' in link ? (
                       <Link href={link.href} className="transition-colors hover:text-primary">
-                        {link.label}
+                        {t(link.label)}
                       </Link>
                     ) : (
-                      <span>{link.label}</span>
+                      <span>{t(link.label)}</span>
                     )}
                   </li>
                 ))}
@@ -60,24 +59,22 @@ export function SiteFooter() {
           ))}
 
           <div>
-            <h2 className="mb-4 font-display text-sm font-semibold">Cam kết pháp lý & bảo mật</h2>
+            <h2 className="mb-4 font-display text-sm font-semibold">{t('compliance.title')}</h2>
             <div className="space-y-1 rounded-card bg-surface-muted p-4">
               <div className="flex items-center gap-1 font-display text-sm font-semibold text-success">
                 <ShieldCheck className="size-4" strokeWidth={1.75} aria-hidden />
-                Bảo vệ dữ liệu cá nhân
+                {t('compliance.badge')}
               </div>
-              <p className="text-xs text-muted-foreground">
-                Minh bạch quy trình tuyển dụng và mã hóa thông tin theo Nghị định 13/2023/NĐ-CP.
-              </p>
+              <p className="text-xs text-muted-foreground">{t('compliance.description')}</p>
             </div>
           </div>
         </div>
 
         <div className="flex flex-col items-center justify-between gap-4 pt-6 text-xs text-subtle-foreground md:flex-row">
-          <p>© {new Date().getFullYear()} Launchly. Bảo lưu mọi quyền.</p>
+          <p>{t('copyright', { year: new Date().getFullYear() })}</p>
           <div className="flex items-center gap-6">
             {legalLinks.map((label) => (
-              <span key={label}>{label}</span>
+              <span key={label}>{t(label)}</span>
             ))}
           </div>
         </div>

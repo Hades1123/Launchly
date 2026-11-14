@@ -20,6 +20,7 @@ import {
   Trash2,
   type LucideIcon,
 } from 'lucide-react';
+import { useFormatter, useTranslations } from 'next-intl';
 import {
   JOB_INDUSTRIES,
   JOB_LEVELS,
@@ -42,22 +43,17 @@ import { Button, buttonClasses } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
   Field,
-  ROUND_ERROR_TEXT,
   RoundRowsEditor,
   fieldClass,
+  roundErrorText,
   roundRowsFrom,
   roundsSummary,
   type RoundRow,
   type RoundRowErrors,
+  type RoundsTranslator,
 } from '@/components/recruiter/round-rows-editor';
 import { DeleteDraftButton } from '@/components/recruiter/delete-draft-button';
-import {
-  JOB_LEVEL_LABELS,
-  JobStatusBadge,
-  jobMetaText,
-  jobTitleText,
-  salaryText,
-} from '@/components/recruiter/job-status-badge';
+import { JobStatusBadge, useJobText } from '@/components/recruiter/job-status-badge';
 import { useRecruiterCompany } from '@/components/recruiter/recruiter-shell';
 import { ApiError } from '@/lib/api/http';
 import { createJob, getMyJob, updateJob } from '@/lib/api/recruiter-jobs';
@@ -90,13 +86,8 @@ type FormErrors = Partial<
   notes?: string;
 };
 
-const NOTES_LIMIT_TEXT = `Tối đa ${MAX_JOB_NOTES} ghi chú.`;
-
-const LEVEL_HINTS: Record<JobLevel, string> = {
-  INTERN: 'Sinh viên, thực tập',
-  FRESHER: 'Mới tốt nghiệp, dưới 1 năm',
-  JUNIOR: 'Có kinh nghiệm thực tế, 1–2 năm',
-};
+/** Translator for the `recruiter.postingForm` namespace. */
+type FormTranslator = ReturnType<typeof useTranslations<'recruiter.postingForm'>>;
 
 const emptyForm = (): FormState => ({
   title: '',
@@ -170,16 +161,16 @@ function toPayload(form: FormState, action: SaveJobAction) {
   return { payload, sentRounds };
 }
 
-function salaryError(form: FormState, key: 'min' | 'max'): string {
+function salaryError(form: FormState, key: 'min' | 'max', t: FormTranslator): string {
   const raw = key === 'min' ? form.salaryMin : form.salaryMax;
   const value = amount(raw);
   if (value !== null && (!Number.isInteger(value) || value < 0 || value > MAX_JOB_SALARY)) {
-    return `Nhập số nguyên từ 0 đến ${MAX_JOB_SALARY.toLocaleString('vi-VN')}.`;
+    return t('errors.salaryRange', { max: MAX_JOB_SALARY });
   }
   if (key === 'max' && value !== null && amount(form.salaryMin) !== null) {
-    return 'Lương tối đa phải lớn hơn hoặc bằng lương tối thiểu.';
+    return t('errors.salaryOrder');
   }
-  return 'Nhập mức lương hoặc chọn lương thỏa thuận.';
+  return t('errors.salaryRequired');
 }
 
 const roundFieldByPath: Record<string, keyof RoundRowErrors> = {
@@ -193,6 +184,8 @@ function toFormErrors(
   issues: { path: PropertyKey[] }[],
   form: FormState,
   sentRounds: RoundRow[],
+  t: FormTranslator,
+  tRounds: RoundsTranslator,
 ): FormErrors {
   const errors: FormErrors = {};
   for (const issue of issues) {
@@ -201,30 +194,30 @@ function toFormErrors(
     switch (head) {
       case 'title':
         errors.title = form.title.trim()
-          ? `Tối đa ${MAX_JOB_TITLE_LENGTH} ký tự.`
-          : 'Vị trí tuyển dụng là bắt buộc.';
+          ? t('errors.tooLong', { max: MAX_JOB_TITLE_LENGTH })
+          : t('errors.titleRequired');
         break;
       case 'description':
         errors.description = form.description.trim()
-          ? `Tối đa ${MAX_JOB_DESCRIPTION_LENGTH} ký tự.`
-          : 'Mô tả công việc là bắt buộc.';
+          ? t('errors.tooLong', { max: MAX_JOB_DESCRIPTION_LENGTH })
+          : t('errors.descriptionRequired');
         break;
       case 'level':
-        errors.level = 'Hãy chọn cấp bậc.';
+        errors.level = t('errors.level');
         break;
       case 'location':
-        errors.location = 'Hãy chọn địa điểm.';
+        errors.location = t('errors.location');
         break;
       case 'industry':
-        errors.industry = 'Hãy chọn ngành nghề.';
+        errors.industry = t('errors.industry');
         break;
       case 'requirements':
       case 'benefits':
-        errors[head] = 'Tối đa 20 dòng, mỗi dòng tối đa 300 ký tự.';
+        errors[head] = t('errors.lines');
         break;
       case 'salary':
-        if (index === 'min') errors.salaryMin = salaryError(form, 'min');
-        if (index === 'max') errors.salaryMax = salaryError(form, 'max');
+        if (index === 'min') errors.salaryMin = salaryError(form, 'min', t);
+        if (index === 'max') errors.salaryMax = salaryError(form, 'max', t);
         break;
       case 'rounds': {
         const row = index === undefined ? undefined : sentRounds[Number(index)];
@@ -232,34 +225,38 @@ function toFormErrors(
         if (row && key) {
           errors.roundRows = {
             ...errors.roundRows,
-            [row.key]: { ...errors.roundRows?.[row.key], [key]: ROUND_ERROR_TEXT[key] },
+            [row.key]: { ...errors.roundRows?.[row.key], [key]: roundErrorText(key, tRounds) },
           };
         } else {
-          errors.rounds = 'Thêm ít nhất một vòng tuyển dụng.';
+          errors.rounds = t('errors.rounds');
         }
         break;
       }
       case 'notes':
         errors.notes =
           index === undefined
-            ? NOTES_LIMIT_TEXT
-            : `Mỗi ghi chú tối đa ${MAX_JOB_NOTE_LENGTH} ký tự.`;
+            ? t('errors.notesLimit', { max: MAX_JOB_NOTES })
+            : t('errors.noteTooLong', { max: MAX_JOB_NOTE_LENGTH });
         break;
     }
   }
   return errors;
 }
 
-function saveErrorText(error: unknown): string {
+function saveErrorText(error: unknown, t: FormTranslator): string {
   if (error instanceof ApiError) {
-    if (error.code === 'FORBIDDEN') {
-      return 'Bạn không thể đăng tin: công ty chưa được duyệt hoặc tin này không thuộc về bạn.';
-    }
-    if (error.code === 'CONFLICT') return 'Tin này đã được gửi duyệt nên không thể sửa nữa.';
-    if (error.code === 'VALIDATION_ERROR') return 'Vui lòng kiểm tra các trường được đánh dấu.';
+    if (error.code === 'FORBIDDEN') return t('saveErrors.forbidden');
+    if (error.code === 'CONFLICT') return t('saveErrors.conflict');
+    if (error.code === 'VALIDATION_ERROR') return t('saveErrors.validation');
     return error.message;
   }
-  return 'Đã xảy ra lỗi. Vui lòng thử lại.';
+  return t('saveErrors.generic');
+}
+
+function loadErrorText(error: unknown, t: FormTranslator): string {
+  if (error instanceof ApiError && error.code === 'FORBIDDEN') return t('loadErrors.forbidden');
+  if (error instanceof ApiError && error.code === 'NOT_FOUND') return t('loadErrors.notFound');
+  return saveErrorText(error, t);
 }
 
 type SectionId = 'basics' | 'description' | 'salary' | 'rounds' | 'notes';
@@ -273,33 +270,33 @@ type SectionInfo = {
   hasError: boolean;
 };
 
-/** The form's sections in order, with what "Gửi duyệt" still needs from each. */
-function sectionsOf(form: FormState, errors: FormErrors): SectionInfo[] {
+/** The form's sections in order, with what "Gửi duyệt" (submit) still needs from each. */
+function sectionsOf(form: FormState, errors: FormErrors, t: FormTranslator): SectionInfo[] {
   return [
     {
       id: 'basics',
-      title: 'Thông tin cơ bản',
+      title: t('sections.basics'),
       icon: BriefcaseBusiness,
       done: Boolean(form.title.trim() && form.level && form.location && form.industry),
       hasError: Boolean(errors.title || errors.level || errors.location || errors.industry),
     },
     {
       id: 'description',
-      title: 'Mô tả công việc',
+      title: t('sections.description'),
       icon: FileText,
       done: Boolean(form.description.trim()),
       hasError: Boolean(errors.description || errors.requirements || errors.benefits),
     },
     {
       id: 'salary',
-      title: 'Mức lương',
+      title: t('sections.salary'),
       icon: Banknote,
       done: form.salaryHidden || Boolean(form.salaryMin.trim() && form.salaryMax.trim()),
       hasError: Boolean(errors.salaryMin || errors.salaryMax),
     },
     {
       id: 'rounds',
-      title: 'Quy trình tuyển dụng',
+      title: t('sections.rounds'),
       icon: ListOrdered,
       done:
         form.rounds.length > 0 &&
@@ -308,7 +305,7 @@ function sectionsOf(form: FormState, errors: FormErrors): SectionInfo[] {
     },
     {
       id: 'notes',
-      title: 'Ghi chú cho ứng viên',
+      title: t('sections.notes'),
       icon: MessageSquareText,
       done: null,
       hasError: Boolean(errors.notes),
@@ -318,9 +315,7 @@ function sectionsOf(form: FormState, errors: FormErrors): SectionInfo[] {
 
 const sectionAnchor = (id: SectionId) => `job-section-${id}`;
 
-const timeFormat = new Intl.DateTimeFormat('vi-VN', { timeStyle: 'short' });
-
-type Loaded = { kind: 'loading' } | { kind: 'error'; text: string } | { kind: 'ready' };
+type Loaded = { kind: 'loading' } | { kind: 'error'; error: unknown } | { kind: 'ready' };
 
 type Saved = { status: JobPublicationStatus; reason: string | null; at: string };
 
@@ -330,6 +325,10 @@ type Saved = { status: JobPublicationStatus; reason: string | null; at: string }
  * and loaded the company. A draft saves whatever has been typed; submit checks everything.
  */
 export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved?: boolean }) {
+  const t = useTranslations('recruiter.postingForm');
+  const tRounds = useTranslations('recruiter.rounds');
+  const jobText = useJobText();
+  const format = useFormatter();
   const router = useRouter();
   const company = useRecruiterCompany();
   const formRef = useRef<HTMLFormElement>(null);
@@ -342,7 +341,7 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
   const [errors, setErrors] = useState<FormErrors>({});
   const [saving, setSaving] = useState<SaveJobAction | null>(null);
   const [message, setMessage] = useState<{ tone: 'success' | 'danger'; text: string } | null>(
-    justSaved ? { tone: 'success', text: 'Đã lưu bản nháp.' } : null,
+    justSaved ? { tone: 'success', text: t('saved.draft') } : null,
   );
 
   useEffect(() => {
@@ -359,13 +358,7 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
         setLoaded({ kind: 'ready' });
       } catch (error) {
         if (!active) return;
-        const text =
-          error instanceof ApiError && error.code === 'FORBIDDEN'
-            ? 'Bạn không có quyền sửa tin tuyển dụng này.'
-            : error instanceof ApiError && error.code === 'NOT_FOUND'
-              ? 'Không tìm thấy tin tuyển dụng.'
-              : saveErrorText(error);
-        setLoaded({ kind: 'error', text });
+        setLoaded({ kind: 'error', error });
       }
     }
     void load(jobId);
@@ -397,7 +390,7 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
 
   function addNote() {
     if (form.notes.length >= MAX_JOB_NOTES) {
-      setErrors({ notes: NOTES_LIMIT_TEXT });
+      setErrors({ notes: t('errors.notesLimit', { max: MAX_JOB_NOTES }) });
       return;
     }
     patch({ notes: [...form.notes, { key: crypto.randomUUID(), content: '' }] });
@@ -408,8 +401,8 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
     const { payload, sentRounds } = toPayload(form, action);
     const parsed = saveJobSchema.safeParse(payload);
     if (!parsed.success) {
-      showErrors(toFormErrors(parsed.error.issues, form, sentRounds));
-      setMessage({ tone: 'danger', text: 'Vui lòng kiểm tra các trường được đánh dấu.' });
+      showErrors(toFormErrors(parsed.error.issues, form, sentRounds, t, tRounds));
+      setMessage({ tone: 'danger', text: t('saveErrors.validation') });
       return;
     }
     setSaving(action);
@@ -428,16 +421,13 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
       setSaved({ status: job.status, reason: job.moderationReason, at: job.updatedAt });
       setMessage({
         tone: 'success',
-        text:
-          job.status === 'REJECTED'
-            ? 'Đã lưu thay đổi. Tin vẫn ở trạng thái Bị từ chối cho đến khi bạn gửi duyệt lại.'
-            : 'Đã lưu bản nháp.',
+        text: job.status === 'REJECTED' ? t('saved.rejected') : t('saved.draft'),
       });
     } catch (error) {
       if (error instanceof ApiError && error.details) {
-        showErrors(toFormErrors(error.details as ErrorDetail[], form, sentRounds));
+        showErrors(toFormErrors(error.details as ErrorDetail[], form, sentRounds, t, tRounds));
       }
-      setMessage({ tone: 'danger', text: saveErrorText(error) });
+      setMessage({ tone: 'danger', text: saveErrorText(error, t) });
     } finally {
       setSaving(null);
     }
@@ -448,15 +438,17 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
     void save('SUBMIT');
   }
 
-  if (loaded.kind === 'error') return <Notice tone="danger">{loaded.text}</Notice>;
+  if (loaded.kind === 'error') {
+    return <Notice tone="danger">{loadErrorText(loaded.error, t)}</Notice>;
+  }
   if (company.kind === 'error') return <Notice tone="danger">{company.text}</Notice>;
   if (loaded.kind === 'loading' || company.kind === 'loading') return <FormSkeleton />;
   if (company.kind === 'none') {
     return (
       <Notice>
-        Bạn cần đăng ký thông tin công ty trước khi đăng tin tuyển dụng.{' '}
+        {t('company.none')}{' '}
         <Link href="/company/register" className="font-semibold text-primary hover:underline">
-          Đăng ký công ty
+          {t('company.register')}
         </Link>
       </Notice>
     );
@@ -466,14 +458,15 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
     return (
       <Notice tone="warning">
         {moderationStatus === 'PENDING'
-          ? `Công ty ${companyName} đang chờ quản trị viên duyệt. Bạn chỉ có thể đăng tin sau khi công ty được duyệt.`
-          : `Hồ sơ công ty ${companyName} đã bị từ chối. Bạn chỉ có thể đăng tin sau khi công ty được duyệt.`}
+          ? t('company.pending', { name: companyName })
+          : t('company.rejected', { name: companyName })}
       </Notice>
     );
   }
 
   const roundErrors = form.rounds.map((r) => errors.roundRows?.[r.key] ?? {});
-  const sections = sectionsOf(form, errors);
+  const sections = sectionsOf(form, errors, t);
+  const summary = roundsSummary(form.rounds, tRounds);
   const sectionById = Object.fromEntries(sections.map((s) => [s.id, s])) as Record<
     SectionId,
     SectionInfo
@@ -493,9 +486,9 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
         >
           <CircleAlert className="mt-0.5 size-5 shrink-0" aria-hidden />
           <div className="space-y-1">
-            <p className="font-semibold">Tin đã bị quản trị viên từ chối.</p>
-            {saved?.reason && <p>Lý do: {saved.reason}</p>}
-            <p>Hãy sửa theo góp ý rồi nhấn “Gửi duyệt lại” để quản trị viên xem xét lần nữa.</p>
+            <p className="font-semibold">{t('rejectedBanner.title')}</p>
+            {saved?.reason && <p>{t('rejectedBanner.reason', { reason: saved.reason })}</p>}
+            <p>{t('rejectedBanner.help')}</p>
           </div>
         </div>
       )}
@@ -503,15 +496,15 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
       <div className="space-y-6 lg:col-span-8">
         <FormSection step={1} info={sectionById.basics}>
           <Field
-            label={<Required>Vị trí tuyển dụng</Required>}
+            label={<Required>{t('fields.title')}</Required>}
             error={errors.title}
-            hint="Tên vị trí rõ ràng, ví dụ kèm công nghệ chính hoặc nhóm làm việc."
+            hint={t('fields.titleHint')}
           >
             <input
               className={cn(fieldClass(errors.title), 'min-h-12 text-base font-medium')}
               value={form.title}
               maxLength={MAX_JOB_TITLE_LENGTH}
-              placeholder="Ví dụ: Thực tập sinh Backend Node.js"
+              placeholder={t('fields.titlePlaceholder')}
               onChange={(e) => patch({ title: e.target.value })}
               aria-invalid={Boolean(errors.title)}
             />
@@ -519,7 +512,7 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
 
           <fieldset className="space-y-1.5">
             <legend className="mb-1.5 text-sm font-semibold text-foreground">
-              <Required>Cấp bậc</Required>
+              <Required>{t('fields.level')}</Required>
             </legend>
             <div className="grid gap-2 sm:grid-cols-3">
               {JOB_LEVELS.map((level) => (
@@ -529,8 +522,8 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
                   checked={form.level === level}
                   invalid={Boolean(errors.level)}
                   onSelect={() => patch({ level })}
-                  title={JOB_LEVEL_LABELS[level]}
-                  hint={LEVEL_HINTS[level]}
+                  title={jobText.level(level)}
+                  hint={t(`levelHints.${level}`)}
                 />
               ))}
             </div>
@@ -542,14 +535,14 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
           </fieldset>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label={<Required>Địa điểm</Required>} error={errors.location}>
+            <Field label={<Required>{t('fields.location')}</Required>} error={errors.location}>
               <select
                 className={fieldClass(errors.location)}
                 value={form.location}
                 onChange={(e) => patch({ location: e.target.value })}
                 aria-invalid={Boolean(errors.location)}
               >
-                <option value="">Chọn địa điểm…</option>
+                <option value="">{t('fields.locationPlaceholder')}</option>
                 {JOB_LOCATIONS.map((location) => (
                   <option key={location} value={location}>
                     {location}
@@ -557,14 +550,14 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
                 ))}
               </select>
             </Field>
-            <Field label={<Required>Ngành nghề</Required>} error={errors.industry}>
+            <Field label={<Required>{t('fields.industry')}</Required>} error={errors.industry}>
               <select
                 className={fieldClass(errors.industry)}
                 value={form.industry}
                 onChange={(e) => patch({ industry: e.target.value })}
                 aria-invalid={Boolean(errors.industry)}
               >
-                <option value="">Chọn ngành nghề…</option>
+                <option value="">{t('fields.industryPlaceholder')}</option>
                 {JOB_INDUSTRIES.map((industry) => (
                   <option key={industry} value={industry}>
                     {industry}
@@ -579,7 +572,7 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
           <Field
             label={
               <LabelRow aside={`${form.description.length}/${MAX_JOB_DESCRIPTION_LENGTH}`}>
-                <Required>Mô tả công việc</Required>
+                <Required>{t('fields.description')}</Required>
               </LabelRow>
             }
             error={errors.description}
@@ -588,33 +581,41 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
               className={cn(fieldClass(errors.description), 'min-h-40 py-3 leading-relaxed')}
               value={form.description}
               maxLength={MAX_JOB_DESCRIPTION_LENGTH}
-              placeholder="Ứng viên sẽ làm gì hằng ngày, làm cùng ai và tạo ra kết quả gì?"
+              placeholder={t('fields.descriptionPlaceholder')}
               onChange={(e) => patch({ description: e.target.value })}
               aria-invalid={Boolean(errors.description)}
             />
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field
-              label={<LabelRow aside={`${requirementCount} mục`}>Yêu cầu</LabelRow>}
-              hint="Mỗi dòng là một yêu cầu."
+              label={
+                <LabelRow aside={t('fields.items', { count: requirementCount })}>
+                  {t('fields.requirements')}
+                </LabelRow>
+              }
+              hint={t('fields.requirementsHint')}
               error={errors.requirements}
             >
               <textarea
                 className={cn(fieldClass(errors.requirements), 'min-h-32 py-3 leading-relaxed')}
                 value={form.requirements}
-                placeholder={'Biết Node.js hoặc Java\nĐọc hiểu tài liệu tiếng Anh'}
+                placeholder={t('fields.requirementsPlaceholder')}
                 onChange={(e) => patch({ requirements: e.target.value })}
               />
             </Field>
             <Field
-              label={<LabelRow aside={`${benefitCount} mục`}>Quyền lợi</LabelRow>}
-              hint="Mỗi dòng là một quyền lợi."
+              label={
+                <LabelRow aside={t('fields.items', { count: benefitCount })}>
+                  {t('fields.benefits')}
+                </LabelRow>
+              }
+              hint={t('fields.benefitsHint')}
               error={errors.benefits}
             >
               <textarea
                 className={cn(fieldClass(errors.benefits), 'min-h-32 py-3 leading-relaxed')}
                 value={form.benefits}
-                placeholder={'Phụ cấp hằng tháng\nMentor 1-1'}
+                placeholder={t('fields.benefitsPlaceholder')}
                 onChange={(e) => patch({ benefits: e.target.value })}
               />
             </Field>
@@ -630,9 +631,11 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
             )}
           >
             <span>
-              <span className="block text-sm font-semibold text-foreground">Lương thỏa thuận</span>
+              <span className="block text-sm font-semibold text-foreground">
+                {t('fields.salaryHidden')}
+              </span>
               <span className="block text-xs text-muted-foreground">
-                Ẩn mức lương với ứng viên; hệ thống không lưu con số nào.
+                {t('fields.salaryHiddenHint')}
               </span>
             </span>
             <input
@@ -660,14 +663,14 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
           {!form.salaryHidden && (
             <div className="grid gap-4 sm:grid-cols-2">
               <MoneyField
-                label="Lương tối thiểu (USD/tháng)"
+                label={t('fields.salaryMin')}
                 value={form.salaryMin}
                 error={errors.salaryMin}
                 placeholder="300"
                 onChange={(salaryMin) => patch({ salaryMin })}
               />
               <MoneyField
-                label="Lương tối đa (USD/tháng)"
+                label={t('fields.salaryMax')}
                 value={form.salaryMax}
                 error={errors.salaryMax}
                 placeholder="500"
@@ -680,7 +683,7 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
         <FormSection
           step={4}
           info={sectionById.rounds}
-          description={`Ứng viên sẽ thấy các vòng theo đúng thứ tự này. ${roundsSummary(form.rounds)}.`}
+          description={t('fields.roundsDescription', { summary })}
         >
           <RoundRowsEditor
             rows={form.rounds}
@@ -698,11 +701,11 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
           step={5}
           info={sectionById.notes}
           badge={`${form.notes.length}/${MAX_JOB_NOTES}`}
-          description="Những điều ứng viên cần biết hoặc chuẩn bị trước khi ứng tuyển."
+          description={t('fields.notesDescription')}
         >
           {form.notes.length === 0 ? (
             <p className="rounded-control bg-surface-muted p-4 text-sm text-muted-foreground">
-              Chưa có ghi chú. Ví dụ: “Mang theo laptop khi phỏng vấn tại văn phòng.”
+              {t('fields.notesEmpty')}
             </p>
           ) : (
             <ol className="space-y-3">
@@ -717,7 +720,7 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
                   <Field
                     label={
                       <LabelRow aside={`${note.content.length}/${MAX_JOB_NOTE_LENGTH}`}>
-                        {`Ghi chú ${index + 1}`}
+                        {t('fields.note', { n: index + 1 })}
                       </LabelRow>
                     }
                     className="flex-1"
@@ -738,7 +741,7 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
                   <Button
                     variant="danger-ghost"
                     className="mt-7 p-2.5"
-                    aria-label={`Xóa ghi chú ${index + 1}`}
+                    aria-label={t('fields.removeNote', { n: index + 1 })}
                     onClick={() => patch({ notes: form.notes.filter((n) => n.key !== note.key) })}
                   >
                     <Trash2 className="size-4" aria-hidden />
@@ -748,7 +751,7 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
             </ol>
           )}
           <Button variant="soft" onClick={addNote}>
-            <Plus className="size-4" aria-hidden /> Thêm ghi chú
+            <Plus className="size-4" aria-hidden /> {t('fields.addNote')}
           </Button>
           {errors.notes && (
             <p role="alert" data-form-error className="text-sm text-danger">
@@ -762,7 +765,9 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
         <Card className="space-y-5 p-5">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <h2 className="font-display text-lg font-semibold text-foreground">Đăng tin</h2>
+              <h2 className="font-display text-lg font-semibold text-foreground">
+                {t('sidebar.title')}
+              </h2>
               <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
                 <Building2 className="size-4 shrink-0" aria-hidden /> {companyName}
               </p>
@@ -771,21 +776,21 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
               <JobStatusBadge status={saved.status} />
             ) : (
               <span className="rounded-full bg-surface-muted px-2.5 py-1 text-xs font-semibold text-subtle-foreground">
-                Tin mới
+                {t('sidebar.newJob')}
               </span>
             )}
           </div>
 
           <div className="space-y-2">
             <div className="flex items-baseline justify-between text-sm">
-              <span className="font-semibold text-foreground">Sẵn sàng gửi duyệt</span>
+              <span className="font-semibold text-foreground">{t('sidebar.readiness')}</span>
               <span className="text-muted-foreground">
-                {ready}/{required.length} mục
+                {t('sidebar.readyCount', { ready, total: required.length })}
               </span>
             </div>
             <div
               role="progressbar"
-              aria-label="Mức độ hoàn thiện để gửi duyệt"
+              aria-label={t('sidebar.progressLabel')}
               aria-valuemin={0}
               aria-valuemax={required.length}
               aria-valuenow={ready}
@@ -801,7 +806,7 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
             </div>
           </div>
 
-          <nav aria-label="Các mục của tin">
+          <nav aria-label={t('sidebar.sectionsNav')}>
             <ul className="-mx-2 space-y-0.5">
               {sections.map((section, index) => (
                 <li key={section.id}>
@@ -823,7 +828,11 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
                       {section.title}
                     </span>
                     <span className="text-xs text-subtle-foreground">
-                      {section.done === null ? 'Tùy chọn' : section.done ? 'Đã có' : 'Còn thiếu'}
+                      {section.done === null
+                        ? t('sidebar.optional')
+                        : section.done
+                          ? t('sidebar.done')
+                          : t('sidebar.missing')}
                     </span>
                   </a>
                 </li>
@@ -838,7 +847,7 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
               ) : (
                 <Send className="size-4" aria-hidden />
               )}{' '}
-              {rejected ? 'Gửi duyệt lại' : 'Gửi duyệt'}
+              {rejected ? t('sidebar.resubmit') : t('sidebar.submit')}
             </Button>
             <Button variant="soft" disabled={saving !== null} onClick={() => void save('DRAFT')}>
               {saving === 'DRAFT' ? (
@@ -846,17 +855,17 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
               ) : (
                 <Save className="size-4" aria-hidden />
               )}{' '}
-              {rejected ? 'Lưu thay đổi' : 'Lưu nháp'}
+              {rejected ? t('sidebar.saveChanges') : t('sidebar.saveDraft')}
             </Button>
             <div className="flex items-center justify-between gap-2">
               <Link href="/recruiter/jobs" className={buttonClasses('ghost')}>
-                Hủy
+                {t('sidebar.cancel')}
               </Link>
               {jobId && saved?.status === 'DRAFT' && (
                 <DeleteDraftButton
                   jobId={jobId}
-                  title={jobTitleText(form.title)}
-                  label="Xóa bản nháp"
+                  title={jobText.title(form.title)}
+                  label={t('sidebar.deleteDraft')}
                   onDeleted={() => router.push('/recruiter/jobs?deleted=1')}
                 />
               )}
@@ -883,18 +892,16 @@ export function JobPostingForm({ jobId, justSaved }: { jobId?: string; justSaved
           )}
           {saved && (
             <p className="text-xs text-subtle-foreground">
-              Lưu lần cuối lúc {timeFormat.format(new Date(saved.at))}.
+              {t('sidebar.lastSaved', {
+                time: format.dateTime(new Date(saved.at), { timeStyle: 'short' }),
+              })}
             </p>
           )}
         </Card>
 
         <JobPreview form={form} companyName={companyName} />
 
-        <p className="px-1 text-xs leading-relaxed text-subtle-foreground">
-          Bạn có thể lưu nháp bất cứ lúc nào, kể cả khi chưa điền đủ; bản nháp chỉ bạn nhìn thấy.
-          Khi gửi duyệt, tin cần đủ các mục bắt buộc và sẽ ở trạng thái Chờ duyệt cho đến khi quản
-          trị viên duyệt.
-        </p>
+        <p className="px-1 text-xs leading-relaxed text-subtle-foreground">{t('sidebar.help')}</p>
       </aside>
     </form>
   );
@@ -958,6 +965,7 @@ function FormSection({
   badge?: string;
   children: ReactNode;
 }) {
+  const t = useTranslations('recruiter.postingForm');
   const Icon = info.icon;
   return (
     <section
@@ -973,8 +981,7 @@ function FormSection({
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-semibold tracking-wide text-subtle-foreground uppercase">
-            Bước {step}
-            {info.done === null && ' · Không bắt buộc'}
+            {info.done === null ? t('stepOptional', { step }) : t('step', { step })}
           </p>
           <h2 className="font-display text-lg font-semibold text-foreground">{info.title}</h2>
           {description && <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>}
@@ -1058,6 +1065,7 @@ function MoneyField({
   placeholder: string;
   onChange: (value: string) => void;
 }) {
+  const t = useTranslations('recruiter.postingForm.fields');
   return (
     <Field label={label} error={error}>
       <span className="relative block">
@@ -1079,7 +1087,7 @@ function MoneyField({
           aria-hidden
           className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-subtle-foreground"
         >
-          / tháng
+          {t('perMonth')}
         </span>
       </span>
     </Field>
@@ -1088,6 +1096,9 @@ function MoneyField({
 
 /** Roughly how the job card will read to candidates once it is approved. */
 function JobPreview({ form, companyName }: { form: FormState; companyName: string }) {
+  const t = useTranslations('recruiter.postingForm.preview');
+  const tRounds = useTranslations('recruiter.rounds');
+  const jobText = useJobText();
   const salary = {
     hidden: form.salaryHidden,
     min: amount(form.salaryMin),
@@ -1099,7 +1110,7 @@ function JobPreview({ form, companyName }: { form: FormState; companyName: strin
   return (
     <Card className="space-y-3 p-5">
       <p className="text-xs font-semibold tracking-wide text-subtle-foreground uppercase">
-        Xem trước với ứng viên
+        {t('title')}
       </p>
       <div className="space-y-3 rounded-control border border-border p-4">
         <div className="flex items-start gap-3">
@@ -1113,7 +1124,7 @@ function JobPreview({ form, companyName }: { form: FormState; companyName: strin
                 form.title.trim() ? 'text-foreground' : 'text-subtle-foreground italic',
               )}
             >
-              {form.title.trim() || 'Vị trí tuyển dụng'}
+              {form.title.trim() || t('titlePlaceholder')}
             </p>
             <p className="truncate text-sm text-muted-foreground">{companyName}</p>
           </div>
@@ -1121,20 +1132,20 @@ function JobPreview({ form, companyName }: { form: FormState; companyName: strin
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <MapPin className="size-3.5" aria-hidden />
-            {jobMetaText({ level: form.level || null, location: form.location })}
+            {jobText.meta({ level: form.level || null, location: form.location })}
           </span>
           <span className="flex items-center gap-1">
             <Banknote className="size-3.5" aria-hidden />
             {validSalary
               ? salary.hidden
-                ? 'Thỏa thuận'
-                : salaryText(salary)
-              : 'Mức lương chưa hợp lệ'}
+                ? t('negotiable')
+                : jobText.salary(salary)
+              : t('invalidSalary')}
           </span>
         </div>
         {form.rounds.length > 0 && (
           <p className="flex items-center gap-1 text-xs text-muted-foreground">
-            <ListOrdered className="size-3.5" aria-hidden /> {roundsSummary(form.rounds)}
+            <ListOrdered className="size-3.5" aria-hidden /> {roundsSummary(form.rounds, tRounds)}
           </p>
         )}
       </div>
@@ -1143,8 +1154,9 @@ function JobPreview({ form, companyName }: { form: FormState; companyName: strin
 }
 
 function FormSkeleton() {
+  const t = useTranslations('recruiter.postingForm');
   return (
-    <div className="grid gap-6 lg:grid-cols-12" aria-busy aria-label="Đang tải">
+    <div className="grid gap-6 lg:grid-cols-12" aria-busy aria-label={t('loading')}>
       <div className="space-y-6 lg:col-span-8">
         {[0, 1, 2].map((i) => (
           <div key={i} className="h-56 animate-pulse rounded-card bg-surface shadow-card" />

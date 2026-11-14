@@ -1,0 +1,127 @@
+{
+  "metadata": {
+    "admin": "Quản trị · Launchly",
+    "moderation": "Duyệt nội dung · Launchly",
+    "jobModeration": "Duyệt tin tuyển dụng · Launchly",
+    "companyReview": "Duyệt công ty · Launchly",
+    "jobReview": "Duyệt tin tuyển dụng · Launchly"
+  },
+  "shell": {
+    "loading": "Đang tải…",
+    "unavailable": "Không kết nối được máy chủ. Vui lòng thử lại sau.",
+    "signInPrompt": "Vui lòng đăng nhập bằng tài khoản quản trị.",
+    "signIn": "Đăng nhập",
+    "forbiddenTitle": "Khu vực dành cho quản trị viên",
+    "forbiddenBody": "Tài khoản của bạn không có quyền truy cập trang này.",
+    "backToJobs": "Về trang việc làm",
+    "badge": "Quản trị"
+  },
+  "tabs": {
+    "label": "Loại nội dung",
+    "companies": "Công ty",
+    "jobs": "Tin tuyển dụng"
+  },
+  "moderation": {
+    "heading": "Duyệt nội dung",
+    "back": "Hàng chờ duyệt",
+    "empty": "Không có mục nào cần duyệt",
+    "submittedAt": "Gửi lúc {date}",
+    "decided": "Mục này đã được xử lý",
+    "forbidden": "Bạn không có quyền duyệt nội dung.",
+    "approve": "Duyệt",
+    "reason": "Lý do: {reason}",
+    "status": {
+      "PENDING": "Chờ duyệt",
+      "APPROVED": "Đã duyệt",
+      "REJECTED": "Bị từ chối"
+    },
+    "fields": {
+      "address": "Địa chỉ",
+      "industry": "Lĩnh vực",
+      "companySize": "Quy mô",
+      "website": "Website",
+      "recruiterEmail": "Email nhà tuyển dụng",
+      "submittedAt": "Gửi lúc",
+      "reviewedAt": "Xử lý lúc",
+      "description": "Mô tả",
+      "salary": "Lương",
+      "requirements": "Yêu cầu",
+      "benefits": "Quyền lợi"
+    }
+  },
+  "pendingCompanies": {
+    "heading": "Công ty chờ duyệt"
+  },
+  "pendingJobs": {
+    "heading": "Tin tuyển dụng chờ duyệt"
+  },
+  "companyReview": {
+    "notFound": "Không tìm thấy công ty.",
+    "logoAlt": "Logo {name}",
+    "rejectHeading": "Từ chối công ty"
+  },
+  "jobReview": {
+    "notFound": "Không tìm thấy tin tuyển dụng.",
+    "rejectedBefore": "Đã từ chối trước đó",
+    "rejectHeading": "Từ chối tin tuyển dụng"
+  },
+  "rejectDialog": {
+    "open": "Từ chối",
+    "reasonLabel": "Lý do từ chối",
+    "reasonHint": "Lý do sẽ được gửi cho nhà tuyển dụng qua email.",
+    "failed": "Không thể từ chối. Vui lòng thử lại.",
+    "cancel": "Hủy",
+    "confirm": "Xác nhận từ chối"
+  },
+  "companyRegister": {
+    "heading": "Đăng ký thông tin Công ty",
+    "intro": "Tạo hồ sơ doanh nghiệp trên Launchly để bắt đầu tuyển dụng ứng viên.",
+    "success": "Đăng ký công ty thành công! Hồ sơ đang ở trạng thái chờ duyệt (Pending).",
+    "failed": "Đăng ký công ty thất bại.",
+    "logo": {
+      "label": "Logo công ty (Tối đa 2MB, PNG/JPG)",
+      "previewAlt": "Xem trước logo",
+      "empty": "Chưa có logo",
+      "invalidType": "Logo phải là định dạng PNG hoặc JPG.",
+      "tooLarge": "Dung lượng logo phải nhỏ hơn 2MB."
+    },
+    "name": {
+      "label": "Tên công ty",
+      "placeholder": "Ví dụ: Launchly Corp",
+      "required": "Tên công ty là bắt buộc."
+    },
+    "address": {
+      "label": "Địa chỉ văn phòng",
+      "placeholder": "Ví dụ: 123 Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh",
+      "required": "Địa chỉ công ty là bắt buộc."
+    },
+    "industry": {
+      "label": "Lĩnh vực hoạt động",
+      "options": {
+        "software": "Công nghệ thông tin / Phần mềm",
+        "fintech": "Tài chính công nghệ (Fintech)",
+        "ecommerce": "Thương mại điện tử",
+        "marketing": "Truyền thông / Tiếp thị",
+        "other": "Khác"
+      }
+    },
+    "companySize": {
+      "label": "Quy mô công ty",
+      "options": {
+        "small": "1 - 50 nhân viên",
+        "medium": "51 - 200 nhân viên",
+        "large": "201 - 500 nhân viên",
+        "enterprise": "Trên 500 nhân viên"
+      }
+    },
+    "website": {
+      "label": "Website công ty"
+    },
+    "description": {
+      "label": "Mô tả công ty",
+      "placeholder": "Giới thiệu sứ mệnh, môi trường làm việc..."
+    },
+    "submit": "Hoàn tất Đăng ký Công ty",
+    "submitting": "Đang gửi thông tin..."
+  }
+}

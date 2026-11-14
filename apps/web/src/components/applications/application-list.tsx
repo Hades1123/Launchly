@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { CandidateApplicationItem } from '@launchly/shared';
 import { ApplicationRow } from '@/components/applications/application-row';
 import { buttonClasses } from '@/components/ui/button';
@@ -15,6 +16,7 @@ function Notice({ children }: { children: React.ReactNode }) {
 }
 
 export function ApplicationList({ openId }: { openId?: string }) {
+  const t = useTranslations('candidate.applications.list');
   const { status, user } = useAuth();
   const [items, setItems] = useState<CandidateApplicationItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -27,35 +29,33 @@ export function ApplicationList({ openId }: { openId?: string }) {
     listMyApplications()
       .then((list) => active && setItems(list.data))
       .catch(
-        (cause) =>
-          active &&
-          setError(cause instanceof ApiError ? cause.message : 'Could not load your applications.'),
+        (cause) => active && setError(cause instanceof ApiError ? cause.message : t('loadError')),
       );
     return () => {
       active = false;
     };
-  }, [isCandidate]);
+  }, [isCandidate, t]);
 
-  if (status === 'loading') return <Notice>Loading…</Notice>;
+  if (status === 'loading') return <Notice>{t('loading')}</Notice>;
   if (status !== 'authenticated') {
     return (
       <Notice>
         <Link href="/login?next=%2Fapplications" className={buttonClasses('primary')}>
-          Log in to see your applications
+          {t('logIn')}
         </Link>
       </Notice>
     );
   }
-  if (!isCandidate) return <Notice>Only candidates have applications.</Notice>;
+  if (!isCandidate) return <Notice>{t('candidatesOnly')}</Notice>;
   if (error) return <Notice>{error}</Notice>;
-  if (!items) return <Notice>Loading…</Notice>;
+  if (!items) return <Notice>{t('loading')}</Notice>;
 
   if (items.length === 0) {
     return (
       <Notice>
-        <p>You haven&apos;t applied to any job yet.</p>
+        <p>{t('empty')}</p>
         <Link href="/jobs" className={buttonClasses('primary')}>
-          Browse jobs
+          {t('browseJobs')}
         </Link>
       </Notice>
     );

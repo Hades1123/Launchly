@@ -1,0 +1,62 @@
+{
+  "header": {
+    "switchLanguage": "Switch language to {language}",
+    "notifications": "Progress notifications ({count} new)"
+  },
+  "nav": {
+    "label": "Main navigation",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "items": {
+      "jobs": "Jobs",
+      "cvReview": "CV review",
+      "interviewPractice": "AI interview practice",
+      "applications": "My applications",
+      "profile": "My profile"
+    }
+  },
+  "auth": {
+    "loadingSession": "Loading your session",
+    "restoreFailed": "Could not restore your session.",
+    "signIn": "Sign in"
+  },
+  "userMenu": {
+    "trigger": "Account {name}",
+    "menu": "Account",
+    "signOut": "Sign out",
+    "links": {
+      "recruiterJobs": "Manage hiring",
+      "adminModeration": "Content moderation",
+      "profile": "My profile",
+      "applications": "My applications"
+    }
+  },
+  "footer": {
+    "tagline": "An AI-powered job platform that helps young talent find direction, practise interviews and connect with the right opportunities.",
+    "features": {
+      "title": "Key features",
+      "jobs": "Explore Fresher & Intern jobs",
+      "cvReview": "AI CV analysis & optimisation",
+      "interviewPractice": "AI interview practice",
+      "applications": "Track your applications"
+    },
+    "candidates": {
+      "title": "For candidates",
+      "screeningGuide": "Guide to passing the screening round",
+      "skillStandards": "Standardised skill assessment criteria",
+      "salaryReport": "Entry-level salary report by industry",
+      "graduateSupport": "Support for new graduates"
+    },
+    "compliance": {
+      "title": "Legal & security commitment",
+      "badge": "Personal data protection",
+      "description": "Transparent hiring and information encrypted under Decree 13/2023/ND-CP."
+    },
+    "copyright": "© {year} Launchly. All rights reserved.",
+    "legal": {
+      "privacy": "Privacy policy",
+      "terms": "Terms of service",
+      "dataProtection": "Data protection policy"
+    }
+  }
+}

@@ -1,0 +1,124 @@
+{
+  "metadata": {
+    "listTitle": "Discover Jobs | Launchly",
+    "detailTitle": "{title} · {company} | Launchly",
+    "detailFallback": "Job | Launchly"
+  },
+  "breadcrumb": "Breadcrumb",
+  "list": {
+    "home": "Home",
+    "current": "Explore Opportunities",
+    "positionsAvailable": "{count, plural, one {# position} other {# positions}} available",
+    "matchingJobs": "Matching Jobs",
+    "results": "{count, plural, one {# result} other {# results}}",
+    "empty": {
+      "title": "No matching jobs found",
+      "body": "We could not find any jobs matching your current search criteria.",
+      "hint": "Try broadening your keywords or removing some filters.",
+      "clear": "Clear all filters"
+    },
+    "pagination": {
+      "label": "Job list pagination",
+      "previous": "Previous",
+      "next": "Next",
+      "status": "Page {page} of {totalPages}"
+    }
+  },
+  "detailPage": {
+    "allJobs": "All jobs"
+  },
+  "filters": {
+    "label": "Job search and filters",
+    "title": "Search & Filters",
+    "reset": "Reset",
+    "keyword": "Keyword",
+    "keywordPlaceholder": "Job title or company...",
+    "level": "Career Level",
+    "allLevels": "All Levels",
+    "industry": "Industry",
+    "allIndustries": "All Industries",
+    "location": "Location",
+    "allLocations": "All Locations",
+    "submit": "Apply Filters"
+  },
+  "levels": {
+    "INTERN": "Intern",
+    "FRESHER": "Fresher",
+    "JUNIOR": "Junior"
+  },
+  "salary": {
+    "negotiable": "Negotiable",
+    "from": "From ${min}",
+    "upTo": "Up to ${max}"
+  },
+  "detail": {
+    "openJobPage": "Open job page",
+    "posted": "Posted {date}",
+    "checkCvFit": "Check my CV fit",
+    "practiceInterview": "Practice this interview",
+    "aboutRole": "About the role",
+    "requirements": "Requirements",
+    "benefits": "Benefits"
+  },
+  "process": {
+    "title": "Hiring process",
+    "empty": "Company has not provided the process",
+    "formats": {
+      "ONLINE": "Online",
+      "ONSITE": "On-site",
+      "PHONE": "Phone call",
+      "ASSIGNMENT": "Take-home assignment"
+    },
+    "minutes": "{count} min"
+  },
+  "notes": {
+    "title": "Notes from the company"
+  },
+  "panel": {
+    "label": "Job details",
+    "errorTitle": "Could not load this job",
+    "errorBody": "The job list still works. Try again, or open the job on its own page.",
+    "retry": "Try again",
+    "openJobPage": "Open job page"
+  },
+  "actions": {
+    "apply": "Apply",
+    "applied": "Applied",
+    "checkFailed": "Could not check your applications. Reload the page to try again.",
+    "sent": "Application sent.",
+    "viewApplications": "View my applications",
+    "needCv": "You need a CV to apply.",
+    "uploadCv": "Upload a CV in your profile"
+  },
+  "applyDialog": {
+    "title": "Apply to {title}",
+    "cv": "Your CV",
+    "coverLetter": "Cover letter (optional)",
+    "cancel": "Cancel",
+    "sending": "Sending…",
+    "submit": "Submit application",
+    "errors": {
+      "alreadyApplied": "You have already applied to this job.",
+      "closed": "This job is no longer open.",
+      "generic": "Could not send your application. Try again."
+    }
+  },
+  "matchScore": {
+    "strong": "{score}% Match CV",
+    "normal": "{score}% Match"
+  },
+  "company": {
+    "loadError": "Could not load the company details.",
+    "loading": "Loading company details...",
+    "notFoundTitle": "Company not found",
+    "notFoundBody": "This company profile does not exist or is still waiting for admin approval.",
+    "website": "Visit website ↗",
+    "about": "About us",
+    "noDescription": "No detailed description yet."
+  },
+  "notFound": {
+    "title": "Job not found",
+    "description": "This job does not exist or is no longer open for applications.",
+    "back": "Back to all jobs"
+  }
+}

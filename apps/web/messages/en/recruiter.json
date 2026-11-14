@@ -1,0 +1,434 @@
+{
+  "metadata": {
+    "title": "Recruitment management · Launchly"
+  },
+  "pages": {
+    "jobsBack": "Job posts",
+    "new": {
+      "title": "Post a job",
+      "description": "Describe the role, the hiring process and anything to keep in mind, so candidates know exactly how you hire."
+    },
+    "edit": {
+      "title": "Edit job post"
+    },
+    "rounds": {
+      "back": "Job details",
+      "title": "Hiring process",
+      "description": "Add, reorder and remove the hiring rounds for this job. Candidates see the rounds in this exact order."
+    }
+  },
+  "shell": {
+    "companyStatus": {
+      "APPROVED": "Approved",
+      "PENDING": "Pending review",
+      "REJECTED": "Rejected"
+    },
+    "nav": {
+      "label": "Recruitment management",
+      "jobs": "Job posts",
+      "newJob": "Post a job",
+      "applicants": "Applicants",
+      "companyPage": "Company page",
+      "comingSoon": "Coming soon"
+    },
+    "company": {
+      "none": "No company yet",
+      "register": "Register a company",
+      "reason": "Reason: {reason}",
+      "registerOther": "Register another company",
+      "loadError": "Could not load your company details.",
+      "rejected": "{name}: rejected"
+    },
+    "guard": {
+      "loading": "Loading…",
+      "signInPrompt": "Please sign in with a recruiter account.",
+      "signIn": "Sign in",
+      "recruitersOnly": "Recruiters only",
+      "noAccess": "Your account does not have access to recruitment management.",
+      "backToJobs": "Back to jobs"
+    },
+    "eyebrow": "Recruiter",
+    "backToJobs": "Back to jobs",
+    "logout": "Sign out",
+    "jobsPage": "Jobs"
+  },
+  "job": {
+    "untitled": "Untitled draft",
+    "noMeta": "No level or location yet",
+    "levels": {
+      "INTERN": "Intern",
+      "FRESHER": "Fresher",
+      "JUNIOR": "Junior"
+    },
+    "statuses": {
+      "DRAFT": "Draft",
+      "PENDING": "Pending review",
+      "PUBLISHED": "Approved",
+      "REJECTED": "Rejected",
+      "CLOSED": "Closed"
+    },
+    "salary": {
+      "hidden": "Negotiable (hidden from candidates)",
+      "range": "${min, number} – ${max, number} / month",
+      "from": "From ${min, number} / month",
+      "upTo": "Up to ${max, number} / month",
+      "empty": "Not set"
+    }
+  },
+  "deleteDraft": {
+    "errors": {
+      "conflict": "A job has already been submitted for review and cannot be deleted.",
+      "notFound": "A draft no longer exists. Please reload the page.",
+      "forbidden": "You do not have permission to delete this job post.",
+      "generic": "Could not delete the draft. Please try again."
+    },
+    "cancel": "Cancel",
+    "one": {
+      "label": "Delete",
+      "triggerLabel": "Delete draft {title}",
+      "heading": "Delete draft?",
+      "body": "The draft “{title}” and its hiring rounds and notes will be permanently deleted. This cannot be undone.",
+      "confirm": "Delete draft"
+    },
+    "many": {
+      "trigger": "Delete {count, plural, one {# draft} other {# drafts}}",
+      "triggerLabel": "Delete {count, plural, one {# selected draft} other {# selected drafts}}",
+      "heading": "Delete {count, plural, one {# draft} other {# drafts}}?",
+      "body": "The following drafts and their hiring rounds and notes will be permanently deleted. This cannot be undone.",
+      "more": "and {count, plural, one {# other draft} other {# other drafts}}.",
+      "confirm": "Delete {count, plural, one {# draft} other {# drafts}}"
+    }
+  },
+  "detail": {
+    "title": "Job post details",
+    "status": {
+      "DRAFT": "Only you can see this draft.",
+      "PENDING": "This job is waiting for admin review and will be shown to candidates once approved.",
+      "PUBLISHED": "This job is visible to candidates.",
+      "REJECTED": "An admin rejected this job. Update it based on the feedback and resubmit it.",
+      "CLOSED": "This job is closed."
+    },
+    "reason": "Reason: {reason}",
+    "errors": {
+      "forbidden": "You do not have permission to view this job post.",
+      "notFound": "Job post not found.",
+      "generic": "Could not load the job post. Please try again."
+    },
+    "actions": {
+      "deleteDraft": "Delete draft",
+      "edit": "Edit",
+      "fixAndResubmit": "Edit and resubmit",
+      "editRounds": "Edit process",
+      "viewPublic": "View public post"
+    },
+    "sections": {
+      "description": "Job description",
+      "noDescription": "No description yet.",
+      "requirements": "Requirements",
+      "noRequirements": "No requirements yet.",
+      "benefits": "Benefits",
+      "noBenefits": "No benefits yet.",
+      "rounds": "Hiring process",
+      "noRounds": "No hiring rounds yet.",
+      "untitledRound": "Untitled",
+      "noFormat": "No format chosen",
+      "minutes": "{count, plural, one {# minute} other {# minutes}}",
+      "notes": "Notes for candidates",
+      "noNotes": "No notes yet."
+    },
+    "info": {
+      "title": "Details",
+      "level": "Level",
+      "location": "Location",
+      "industry": "Industry",
+      "salary": "Salary",
+      "createdAt": "Created",
+      "updatedAt": "Updated",
+      "notSet": "Not set"
+    }
+  },
+  "list": {
+    "title": "Job posts",
+    "description": "Track review status and keep working on your drafts.",
+    "newJob": "Post a job",
+    "allTab": "All",
+    "flash": {
+      "deletedOne": "Deleted draft “{title}”.",
+      "deletedMany": "Deleted {count, plural, one {# draft} other {# drafts}}.",
+      "deleted": "Draft deleted.",
+      "submittedOne": "Submitted “{title}”. It is waiting for admin review.",
+      "submitted": "Job submitted. It is waiting for admin review."
+    },
+    "filters": {
+      "status": "Filter by status",
+      "search": "Search by position",
+      "searchPlaceholder": "Search by job position…",
+      "level": "Filter by level",
+      "allLevels": "All levels"
+    },
+    "loadError": "Could not load your job posts. Please try again.",
+    "loading": "Loading",
+    "empty": {
+      "title": "You have no job posts yet",
+      "body": "Post your first job with a clear hiring process so candidates know exactly what to expect."
+    },
+    "selection": {
+      "selected": "{count, plural, one {# draft selected} other {# drafts selected}}",
+      "selectAll": "Select all drafts on this page ({count})",
+      "clear": "Clear selection"
+    },
+    "columns": {
+      "title": "Position",
+      "status": "Status",
+      "applicants": "Applicants",
+      "updated": "Updated",
+      "actions": "Actions"
+    },
+    "noMatch": "No job posts match the current filters.",
+    "noJobs": "No job posts.",
+    "row": {
+      "select": "Select {title}",
+      "rejectedReason": "Rejection reason: {reason}",
+      "applicants": "Applicants:",
+      "viewApplicants": "View applicants",
+      "viewApplicantsLabel": "View applicants for {title}",
+      "continueEditingLabel": "Continue editing {title}",
+      "fixAndResubmit": "Edit & resubmit",
+      "edit": "Edit",
+      "viewDetail": "View details",
+      "viewDetailLabel": "View details of {title}"
+    },
+    "pagination": {
+      "label": "Pagination",
+      "summary": "Showing {from}–{to} of {total, plural, one {# job} other {# jobs}}",
+      "previous": "Previous page",
+      "page": "Page {page}",
+      "next": "Next page"
+    }
+  },
+  "rounds": {
+    "formats": {
+      "ONLINE": "Online",
+      "ONSITE": "On-site",
+      "PHONE": "Phone",
+      "ASSIGNMENT": "Assignment"
+    },
+    "errors": {
+      "name": "Round name is required.",
+      "format": "Choose a format.",
+      "duration": "Enter a number of minutes from {min} to {max}."
+    },
+    "round": "Round {n}",
+    "dragHandle": "Drag to reorder round {n}",
+    "moveUp": "Move round {n} up",
+    "moveDown": "Move round {n} down",
+    "remove": "Remove round {n}",
+    "fields": {
+      "name": "Round name",
+      "namePlaceholder": "e.g. Technical interview",
+      "format": "Format",
+      "choose": "Choose…",
+      "duration": "Duration (minutes)"
+    },
+    "suggestions": {
+      "label": "Suggestions:",
+      "screening": "CV screening",
+      "takeHome": "Take-home assignment",
+      "technical": "Technical interview",
+      "manager": "Interview with the manager"
+    },
+    "summary": {
+      "none": "No rounds yet",
+      "count": "{count, plural, one {# round} other {# rounds}}",
+      "withTime": "{count, plural, one {# round} other {# rounds}} · about {time}",
+      "hours": "{count, plural, one {# hour} other {# hours}}",
+      "minutes": "{count, plural, one {# minute} other {# minutes}}"
+    },
+    "empty": {
+      "title": "No hiring rounds yet",
+      "body": "Add each round in the order candidates go through them, or pick a suggestion below."
+    },
+    "dragHint": "Drag this icon to reorder the rounds.",
+    "announcements": {
+      "dragStart": "Picked up round {n}.",
+      "dragOver": "Round {n} is now at position {position}.",
+      "dragEnd": "Dropped round {n} at position {position}.",
+      "dragEndNoTarget": "Dropped round {n}.",
+      "dragCancel": "Cancelled dragging round {n}.",
+      "instructions": "Press Space to pick up a round, use the up or down arrow keys to move it, then press Space to drop it or Esc to cancel."
+    },
+    "add": "Add round",
+    "max": "Up to {max} rounds.",
+    "builder": {
+      "saved": "Hiring process saved.",
+      "loading": "Loading the hiring process…",
+      "signInPrompt": "Please sign in with a recruiter account.",
+      "save": "Save process",
+      "genericError": "Something went wrong. Please try again."
+    }
+  },
+  "postingForm": {
+    "levelHints": {
+      "INTERN": "Students, internships",
+      "FRESHER": "Recent graduates, under 1 year",
+      "JUNIOR": "Hands-on experience, 1–2 years"
+    },
+    "errors": {
+      "notesLimit": "Up to {max} notes.",
+      "salaryRange": "Enter a whole number from 0 to {max, number}.",
+      "salaryOrder": "The maximum salary must be greater than or equal to the minimum.",
+      "salaryRequired": "Enter a salary or choose negotiable salary.",
+      "tooLong": "Up to {max} characters.",
+      "titleRequired": "Job position is required.",
+      "descriptionRequired": "Job description is required.",
+      "level": "Choose a level.",
+      "location": "Choose a location.",
+      "industry": "Choose an industry.",
+      "lines": "Up to 20 lines, each up to 300 characters.",
+      "rounds": "Add at least one hiring round.",
+      "noteTooLong": "Each note can be up to {max} characters."
+    },
+    "saveErrors": {
+      "forbidden": "You cannot post this job: your company is not approved yet or this job is not yours.",
+      "conflict": "This job has already been submitted for review and can no longer be edited.",
+      "validation": "Please check the highlighted fields.",
+      "generic": "Something went wrong. Please try again."
+    },
+    "loadErrors": {
+      "forbidden": "You do not have permission to edit this job post.",
+      "notFound": "Job post not found."
+    },
+    "sections": {
+      "basics": "Basic information",
+      "description": "Job description",
+      "salary": "Salary",
+      "rounds": "Hiring process",
+      "notes": "Notes for candidates"
+    },
+    "saved": {
+      "draft": "Draft saved.",
+      "rejected": "Changes saved. The job stays Rejected until you resubmit it."
+    },
+    "company": {
+      "none": "You need to register your company before posting a job.",
+      "register": "Register a company",
+      "pending": "{name} is waiting for admin review. You can post jobs once the company is approved.",
+      "rejected": "The company profile for {name} was rejected. You can post jobs once the company is approved."
+    },
+    "rejectedBanner": {
+      "title": "An admin rejected this job.",
+      "reason": "Reason: {reason}",
+      "help": "Update it based on the feedback, then click “Resubmit” so an admin can review it again."
+    },
+    "fields": {
+      "title": "Job position",
+      "titleHint": "A clear position name, e.g. with the main technology or team.",
+      "titlePlaceholder": "e.g. Backend Node.js Intern",
+      "level": "Level",
+      "location": "Location",
+      "locationPlaceholder": "Choose a location…",
+      "industry": "Industry",
+      "industryPlaceholder": "Choose an industry…",
+      "description": "Job description",
+      "descriptionPlaceholder": "What will the candidate do day to day, who will they work with and what will they deliver?",
+      "items": "{count, plural, one {# item} other {# items}}",
+      "requirements": "Requirements",
+      "requirementsHint": "One requirement per line.",
+      "requirementsPlaceholder": "Knows Node.js or Java\nReads technical documents in English",
+      "benefits": "Benefits",
+      "benefitsHint": "One benefit per line.",
+      "benefitsPlaceholder": "Monthly allowance\n1:1 mentoring",
+      "salaryHidden": "Negotiable salary",
+      "salaryHiddenHint": "Hide the salary from candidates; no figures are stored.",
+      "salaryMin": "Minimum salary (USD/month)",
+      "salaryMax": "Maximum salary (USD/month)",
+      "perMonth": "/ month",
+      "roundsDescription": "Candidates see the rounds in this exact order. {summary}.",
+      "notesDescription": "What candidates need to know or prepare before applying.",
+      "notesEmpty": "No notes yet. For example: “Bring your laptop to the on-site interview.”",
+      "note": "Note {n}",
+      "removeNote": "Remove note {n}",
+      "addNote": "Add note"
+    },
+    "step": "Step {step}",
+    "stepOptional": "Step {step} · Optional",
+    "sidebar": {
+      "title": "Post job",
+      "newJob": "New job",
+      "readiness": "Ready to submit",
+      "readyCount": "{ready}/{total} sections",
+      "progressLabel": "Completeness for submitting",
+      "sectionsNav": "Job post sections",
+      "optional": "Optional",
+      "done": "Done",
+      "missing": "Missing",
+      "submit": "Submit for review",
+      "resubmit": "Resubmit",
+      "saveDraft": "Save draft",
+      "saveChanges": "Save changes",
+      "cancel": "Cancel",
+      "deleteDraft": "Delete draft",
+      "lastSaved": "Last saved at {time}.",
+      "help": "You can save a draft at any time, even before everything is filled in; only you can see drafts. To submit, the job needs every required section, and it stays Pending review until an admin approves it."
+    },
+    "preview": {
+      "title": "Candidate preview",
+      "titlePlaceholder": "Job position",
+      "negotiable": "Negotiable",
+      "invalidSalary": "Invalid salary"
+    },
+    "loading": "Loading"
+  },
+  "applicants": {
+    "title": "Applicants",
+    "titleWithJob": "Applicants · {job}",
+    "count": "{count, plural, one {# application} other {# applications}}",
+    "loadErrors": {
+      "forbidden": "You do not have permission to view the applicants for this job post.",
+      "notFound": "Job post not found.",
+      "generic": "Could not load the applicants. Please try again."
+    },
+    "resumeError": "Could not open {name}’s CV.",
+    "moved": "Moved {name} to {status}.",
+    "filter": "Filter by status",
+    "all": "All",
+    "empty": {
+      "none": "No one has applied yet.",
+      "noMatch": "No applicants with this status."
+    },
+    "columns": {
+      "candidate": "Candidate",
+      "skills": "Skills",
+      "submitted": "Submitted",
+      "round": "Current round",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "viewCv": "View CV",
+    "viewCvLabel": "View CV of {name}",
+    "update": "Update",
+    "updateLabel": "Update status of {name}",
+    "statuses": {
+      "SUBMITTED": "Submitted",
+      "SCREENING": "Screening",
+      "INTERVIEW": "Interview",
+      "OFFER": "Offer",
+      "ACCEPTED": "Accepted",
+      "REJECTED": "Rejected",
+      "WITHDRAWN": "Withdrawn"
+    },
+    "form": {
+      "chooseStatus": "Choose a new status.",
+      "sameStatus": "The applicant already has this status.",
+      "forbidden": "You do not have permission to update this applicant.",
+      "generic": "Could not update the status. Please try again.",
+      "newStatus": "New status",
+      "choose": "Choose…",
+      "round": "Round (optional)",
+      "keepRound": "Keep current",
+      "note": "Note (optional)",
+      "save": "Save changes",
+      "cancel": "Cancel"
+    }
+  }
+}
