@@ -170,7 +170,9 @@ test('AC3: informational rounds, exactly five text questions and no timer or med
 
   const questions = page.getByRole('list', { name: 'Questions' }).getByRole('listitem');
   await expect(questions).toHaveCount(5);
-  await expect(page.getByText(/^From the /)).toHaveCount(5);
+  // One question is on screen at a time.
+  await expect(page.getByText('Question 1 of 5')).toBeVisible();
+  await expect(page.getByText(/^From the /)).toHaveCount(1);
   await expect(page.getByText(/timer|countdown|microphone|recording|video/i)).toHaveCount(0);
   await expect(page.locator('audio, video')).toHaveCount(0);
 });
@@ -185,16 +187,19 @@ test('AC4: a saved answer survives a reload', async ({ page, request }) => {
   await waitForSession(page);
   await page.goto(`/interview-practice/${session.id}`);
 
-  const box = page.getByRole('textbox', { name: 'Answer to question 1' });
-  await box.fill('My saved answer');
-  await page.getByRole('button', { name: 'Save answer 1' }).click();
-  await expect(page.getByText('Saved', { exact: true })).toHaveCount(1);
+  await page.getByRole('textbox', { name: 'Answer to question 1' }).fill('My saved answer');
+  await page.getByRole('button', { name: 'Save and next' }).click();
+  await expect(page.getByRole('textbox', { name: 'Answer to question 2' })).toHaveValue('');
+  await expect(page.getByRole('button', { name: 'Question 1, answered' })).toBeVisible();
 
   await page.reload();
+  // The session resumes at the first unanswered question.
+  await expect(page.getByRole('textbox', { name: 'Answer to question 2' })).toHaveValue('');
+  await page.getByRole('button', { name: 'Question 1, answered' }).click();
   await expect(page.getByRole('textbox', { name: 'Answer to question 1' })).toHaveValue(
     'My saved answer',
   );
-  await expect(page.getByRole('textbox', { name: 'Answer to question 2' })).toHaveValue('');
+  await expect(page.getByText('Saved', { exact: true })).toBeVisible();
 });
 
 test('AC5: no score, rank or verdict and none of the old mock content', async ({
@@ -215,7 +220,8 @@ test('AC5: no score, rank or verdict and none of the old mock content', async ({
   await expect(page.getByText('Nguyễn Minh Anh')).toHaveCount(0);
 
   await page.goto(`/interview-practice/${session.id}`);
-  await expect(page.getByRole('textbox', { name: /Answer to question/ })).toHaveCount(5);
+  await expect(page.getByRole('list', { name: 'Questions' }).getByRole('listitem')).toHaveCount(5);
+  await expect(page.getByRole('textbox', { name: /Answer to question/ })).toHaveCount(1);
   await expect(page.getByText(/score|percentile|ranking|verdict|pass rate/i)).toHaveCount(0);
   await expect(page.getByText(/%/)).toHaveCount(0);
   await expect(page.getByText('VinTech Solutions')).toHaveCount(0);
