@@ -8,6 +8,7 @@ import {
   generatedPracticeQuestionsSchema,
   generatedPracticeSummarySchema,
   generatedRoundFeedbackSchema,
+  INTERACTIVE_ROUND_FORMATS,
   isInteractiveRoundFormat,
   practiceFeedbackBodySchema,
   type PracticeAnswerInput,
@@ -81,6 +82,20 @@ function buildSummaryPrompt(
   return `## Job\n${jobTitle}\n\n## Round feedback\n${parts.join('\n\n')}`;
 }
 
+/**
+ * What each practicable round format is for, so its questions differ from the other format's and
+ * from a general round. The round name still wins when it names a clearer focus.
+ */
+const ROUND_FOCUS: Record<(typeof INTERACTIVE_ROUND_FORMATS)[number], string> = {
+  PHONE:
+    'A short phone screen, usually with a recruiter or HR. Ask about motivation for this job and company, fit with the requirements, expectations and availability, and a brief walk-through of relevant experience. Keep questions conversational and answerable in a few sentences; no deep technical problems.',
+  ONLINE:
+    'A video interview with the hiring team. Ask about the skills, tools and responsibilities in the job description and requirements: how the candidate would handle realistic tasks, past projects that show those skills, and how they solve problems. Questions may go deeper and ask for concrete examples.',
+};
+
+const GENERAL_FOCUS =
+  'General interview. No round details are given: mix motivation, fit with the requirements and the main skills of the job, and tag every question JOB_DESCRIPTION or JOB_REQUIREMENTS.';
+
 /** `round` is null for a general round (QUICK scope, or a stage the recruiter later removed). */
 function buildQuestionsPrompt(
   job: { title: string; description: string; requirements: string[] },
@@ -89,9 +104,14 @@ function buildQuestionsPrompt(
   const requirements = job.requirements.length
     ? `\n\n## Requirements\n${job.requirements.map((r) => `- ${r}`).join('\n')}`
     : '';
+  const focus = round ? ROUND_FOCUS[round.format as keyof typeof ROUND_FOCUS] : undefined;
   const roundText = round
-    ? `${round.name} (${round.format})`
-    : 'General interview. No round details are given, so ask about the job itself and tag every question JOB_DESCRIPTION or JOB_REQUIREMENTS.';
+    ? [
+        `${round.name} (${round.format})`,
+        ...(focus ? [`Round focus: ${focus}`] : []),
+        'If the round name points to a different focus (for example HR or technical), follow the name.',
+      ].join('\n')
+    : GENERAL_FOCUS;
   return `## Job\n${job.title}\n\n## Description\n${job.description}${requirements}\n\n## Round\n${roundText}`;
 }
 

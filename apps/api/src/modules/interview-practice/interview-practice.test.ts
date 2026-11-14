@@ -564,6 +564,21 @@ describe('POST /:id/rounds/:roundId/questions', () => {
     expect(system).toMatch(/five/i);
   });
 
+  it.each([
+    ['ONLINE', /video interview with the hiring team/, /phone screen/],
+    ['PHONE', /phone screen/, /video interview with the hiring team/],
+  ])('gives a %s round its own focus', async (format, expected, other) => {
+    ctx.prisma.interviewPracticeRound.findFirst.mockResolvedValue(roundRow({ stage: { format } }));
+
+    await generate(ctx);
+
+    const { prompt } = ai.generateJson.mock.calls[0]![0];
+    expect(prompt).toMatch(expected);
+    expect(prompt).not.toMatch(other);
+    // The recruiter's round name can still steer the questions.
+    expect(prompt).toContain('follow the name');
+  });
+
   it('writes a general round from the job alone when the round has no stage', async () => {
     ctx.prisma.interviewPracticeRound.findFirst.mockResolvedValue(
       roundRow({ name: PRACTICE_GENERAL_ROUND_NAME, stage: null }),
