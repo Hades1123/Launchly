@@ -6,6 +6,9 @@ import { getStorageProvider, type StorageProvider } from '@/providers/storage';
 import { validateCvFile } from './cv-validator';
 import type { CandidateProfile, UpdateCandidateProfileInput, CvMetadata } from '@launchly/shared';
 
+/** Applications a recruiter is still working on; closed ones keep the CV they were decided on. */
+const OPEN_APPLICATION_STATUSES = ['SUBMITTED', 'SCREENING', 'INTERVIEW', 'OFFER'] as const;
+
 const withUsageCount = {
   include: { _count: { select: { applications: true, assessments: true } } },
 } as const;
@@ -204,19 +207,36 @@ export class CandidateService {
 
     const storageKey = await this.storage.save(fileBuffer, originalFileName);
 
-    const resume = await prisma.resume.create({
-      data: {
-        candidateId: profile.id,
-        fileName: originalFileName,
-        storageKey,
-        contentType: 'application/pdf',
-        sizeBytes: fileBuffer.length,
-      },
+    const oldIds = (profile.resumes ?? []).map((r) => r.id);
+
+    // The new CV and the move of the candidate's open applications onto it commit together, so a
+    // recruiter reviewing an open application opens the CV the candidate currently has.
+    const resume = await prisma.$transaction(async (tx) => {
+      const created = await tx.resume.create({
+        data: {
+          candidateId: profile.id,
+          fileName: originalFileName,
+          storageKey,
+          contentType: 'application/pdf',
+          sizeBytes: fileBuffer.length,
+        },
+      });
+      await tx.application.updateMany({
+        where: { candidateId: profile.id, status: { in: [...OPEN_APPLICATION_STATUSES] } },
+        data: { resumeId: created.id },
+      });
+      return created;
     });
 
-    // Drop the replaced CVs only after the new one is saved. One that an application or an AI
-    // check points at stays, with its file, because those rows must keep resolving to it.
-    for (const oldResume of profile.resumes ?? []) {
+    // Drop the replaced CVs only now. One that a closed application or an AI check still points
+    // at stays, with its file, because those rows must keep resolving to it.
+    const replaced = oldIds.length
+      ? await prisma.resume.findMany({
+          where: { id: { in: oldIds } },
+          include: withUsageCount.include,
+        })
+      : [];
+    for (const oldResume of replaced) {
       if (isReferenced(oldResume)) continue;
       await prisma.resume.delete({ where: { id: oldResume.id } });
       await this.storage.delete(oldResume.storageKey);

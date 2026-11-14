@@ -41,6 +41,7 @@ vi.mock('@/lib/prisma', () => {
     update: vi.fn(),
     delete: vi.fn(),
   };
+  const mockApplication = { updateMany: vi.fn() };
   const mockTransaction = vi.fn(async (operations) => {
     if (typeof operations === 'function') {
       return operations(prisma);
@@ -53,6 +54,7 @@ vi.mock('@/lib/prisma', () => {
       user: mockUser,
       candidateProfile: mockCandidateProfile,
       resume: mockResume,
+      application: mockApplication,
       $transaction: mockTransaction,
     },
   };
@@ -261,6 +263,13 @@ describe('Candidate Profile and CV Module', () => {
         ],
       } as any);
 
+      vi.mocked(prisma.resume.findMany).mockResolvedValueOnce([
+        {
+          id: 'old-resume-id',
+          storageKey: 'old-file-uuid.pdf',
+          _count: { applications: 0, assessments: 0 },
+        },
+      ] as any);
       vi.mocked(prisma.resume.delete).mockResolvedValueOnce({} as any);
 
       vi.mocked(prisma.resume.create).mockResolvedValueOnce({
@@ -320,6 +329,13 @@ describe('Candidate Profile and CV Module', () => {
           },
         ],
       } as any);
+      vi.mocked(prisma.resume.findMany).mockResolvedValueOnce([
+        {
+          id: 'applied-resume-id',
+          storageKey: 'applied-file.pdf',
+          _count: { applications: 1, assessments: 0 },
+        },
+      ] as any);
       vi.mocked(prisma.resume.create).mockResolvedValueOnce({
         id: '22222222-2222-2222-2222-222222222225',
         candidateId: '11111111-1111-1111-1111-111111111112',
@@ -340,6 +356,42 @@ describe('Candidate Profile and CV Module', () => {
       expect(prisma.resume.delete).not.toHaveBeenCalled();
     });
 
+    it('moves open applications onto the new CV so recruiters see it', async () => {
+      const validPdfBuffer = Buffer.from('%PDF-1.7\nUpdated valid content');
+      vi.mocked(prisma.candidateProfile.findUnique).mockResolvedValueOnce({
+        id: 'profile-1',
+        userId: testUserId,
+        resumes: [
+          { id: 'old-id', storageKey: 'old.pdf', _count: { applications: 2, assessments: 0 } },
+        ],
+      } as any);
+      vi.mocked(prisma.resume.create).mockResolvedValueOnce({
+        id: 'new-id',
+        fileName: 'new.pdf',
+        sizeBytes: validPdfBuffer.length,
+        createdAt: new Date(),
+      } as any);
+      // After the move only a closed (REJECTED) application still uses the old CV.
+      vi.mocked(prisma.resume.findMany).mockResolvedValueOnce([
+        { id: 'old-id', storageKey: 'old.pdf', _count: { applications: 1, assessments: 0 } },
+      ] as any);
+
+      const res = await request(app)
+        .post('/candidates/cv')
+        .set(auth)
+        .attach('cv', validPdfBuffer, 'new.pdf');
+
+      expect(res.status).toBe(201);
+      expect(prisma.application.updateMany).toHaveBeenCalledWith({
+        where: {
+          candidateId: 'profile-1',
+          status: { in: ['SUBMITTED', 'SCREENING', 'INTERVIEW', 'OFFER'] },
+        },
+        data: { resumeId: 'new-id' },
+      });
+      expect(prisma.resume.delete).not.toHaveBeenCalled();
+    });
+
     it('deletes the DB row before the stored file when replacing an unreferenced CV', async () => {
       const { CandidateService } = await import('./candidate.service');
       const order: string[] = [];
@@ -353,6 +405,9 @@ describe('Candidate Profile and CV Module', () => {
         id: 'p1',
         resumes: [{ id: 'r1', storageKey: 'old.pdf', _count: { applications: 0, assessments: 0 } }],
       } as any);
+      vi.mocked(prisma.resume.findMany).mockResolvedValueOnce([
+        { id: 'r1', storageKey: 'old.pdf', _count: { applications: 0, assessments: 0 } },
+      ] as any);
       vi.mocked(prisma.resume.delete).mockImplementationOnce((async () => {
         order.push('db');
       }) as any);
