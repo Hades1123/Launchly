@@ -52,3 +52,12 @@ test('a candidate keeps the full menu and the header has no notification bell', 
   await expect(mainNav(page).getByRole('link')).toHaveCount(5);
   await expect(page.getByRole('banner').getByRole('button', { name: /Thông báo/ })).toHaveCount(0);
 });
+
+test('signing out opens the login page', async ({ page }) => {
+  await signIn(page, CANDIDATE);
+  await page.goto('/jobs');
+  await waitForSession(page);
+  await page.getByRole('button', { name: /^Tài khoản/ }).click();
+  await page.getByRole('menuitem', { name: 'Đăng xuất' }).click();
+  await expect(page).toHaveURL(/\/login$/);
+});
