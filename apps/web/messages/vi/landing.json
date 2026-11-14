@@ -1,0 +1,103 @@
+{
+  "metadata": {
+    "title": "Launchly · Việc làm đầu tiên cho sinh viên và người mới ra trường",
+    "description": "Tìm việc thực tập, Fresher và Junior, xem trước từng vòng tuyển dụng và kiểm tra CV với từng tin tuyển dụng."
+  },
+  "hero": {
+    "openPositions": "{count} vị trí đang tuyển",
+    "title": "Việc làm đầu tiên cho sinh viên và người mới ra trường",
+    "subtitle": "Tìm việc thực tập, Fresher và Junior. Xem trước từng vòng tuyển dụng, kiểm tra CV với yêu cầu của tin rồi mới nộp hồ sơ.",
+    "searchLabel": "Tìm việc làm",
+    "searchPlaceholder": "Vị trí, kỹ năng hoặc tên công ty",
+    "searchButton": "Tìm việc",
+    "byLevel": "Theo cấp bậc:",
+    "levels": {
+      "intern": "Thực tập",
+      "fresher": "Fresher",
+      "junior": "Junior"
+    },
+    "register": "Tạo tài khoản"
+  },
+  "preview": {
+    "jobTitle": "Thực tập sinh Frontend",
+    "location": "TP. Hồ Chí Minh",
+    "process": "Quy trình tuyển dụng",
+    "rounds": {
+      "screening": {
+        "name": "Sàng lọc CV",
+        "note": "3 ngày làm việc"
+      },
+      "test": {
+        "name": "Bài test React",
+        "note": "Làm tại nhà, 90 phút"
+      },
+      "technical": {
+        "name": "Phỏng vấn kỹ thuật",
+        "note": "Online, 45 phút"
+      },
+      "culture": {
+        "name": "Phỏng vấn văn hoá",
+        "note": "Tại văn phòng"
+      }
+    },
+    "cvMatch": "CV của bạn khớp",
+    "testing": "Kiểm thử"
+  },
+  "latestJobs": {
+    "title": "Việc làm mới đăng",
+    "subtitle": "Tin mới nhất từ những công ty đã được Launchly duyệt.",
+    "viewAll": "Xem tất cả {total} việc làm",
+    "emptyTitle": "Chưa có tin tuyển dụng nào để hiển thị",
+    "emptyBody": "Hãy quay lại sau ít phút hoặc mở trang việc làm để tìm kiếm."
+  },
+  "features": {
+    "title": "Chuẩn bị kỹ trước khi nộp hồ sơ",
+    "subtitle": "Ba công cụ đi cùng bạn từ lúc đọc tin tuyển dụng đến buổi phỏng vấn.",
+    "cvReview": {
+      "title": "Đánh giá CV theo từng tin",
+      "body": "Chọn một tin tuyển dụng, AI so CV của bạn với yêu cầu và chỉ ra kỹ năng đã có, kỹ năng còn thiếu.",
+      "action": "Kiểm tra CV"
+    },
+    "interview": {
+      "title": "Luyện phỏng vấn với AI",
+      "body": "Trả lời câu hỏi sát với vị trí bạn nhắm tới và nhận nhận xét cho từng câu trả lời.",
+      "action": "Bắt đầu luyện tập",
+      "question": "Kể về một dự án bạn tự hào nhất?",
+      "answer": "Em làm đồ án quản lý thư viện bằng React..."
+    },
+    "process": {
+      "title": "Biết trước quy trình tuyển",
+      "body": "Mỗi tin ghi rõ các vòng tuyển và lưu ý của công ty. Sau khi nộp, bạn biết hồ sơ đang ở vòng nào.",
+      "action": "Xem việc đã ứng tuyển",
+      "steps": {
+        "cv": "CV",
+        "test": "Test",
+        "interview": "Phỏng vấn",
+        "offer": "Offer"
+      }
+    }
+  },
+  "howItWorks": {
+    "title": "Ba bước tới công việc đầu tiên",
+    "subtitle": "Không cần kinh nghiệm dày. Một bản CV và vài phút là đủ để bắt đầu.",
+    "steps": {
+      "profile": {
+        "title": "Tạo hồ sơ và tải CV",
+        "body": "Điền thông tin cơ bản, tải CV dạng PDF một lần và dùng lại cho mọi lần ứng tuyển."
+      },
+      "search": {
+        "title": "Tìm việc và kiểm tra CV",
+        "body": "Lọc theo cấp bậc, ngành và địa điểm. Kiểm tra CV với tin bạn thích trước khi nộp."
+      },
+      "apply": {
+        "title": "Ứng tuyển và theo dõi",
+        "body": "Nộp hồ sơ ngay trên tin tuyển dụng và xem trạng thái của từng đơn trong một trang."
+      }
+    }
+  },
+  "recruiter": {
+    "title": "Bạn đang tuyển thực tập sinh hoặc Fresher?",
+    "body": "Đăng tin, mô tả từng vòng tuyển và xem hồ sơ ứng viên ở cùng một nơi.",
+    "action": "Đăng tin tuyển dụng"
+  }
+}

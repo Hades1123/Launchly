@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { CircleAlert } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { PublicJobDetail } from '@launchly/shared';
 import { JobDetail } from '@/components/jobs/job-detail';
 import { RevealPanelTop } from '@/components/jobs/reveal-panel-top';
@@ -9,10 +10,11 @@ export type PanelJob = { kind: 'ok'; job: PublicJobDetail } | { kind: 'error'; j
 
 /** Right-hand panel of the jobs page (wide screens only): the selected job, or why it failed. */
 export function JobDetailPanel({ selected, retryHref }: { selected: PanelJob; retryHref: string }) {
+  const t = useTranslations('jobs.panel');
   return (
     <aside
       data-job-panel
-      aria-label="Job details"
+      aria-label={t('label')}
       className="hidden lg:panel-below-header lg:col-span-7 lg:block"
     >
       <RevealPanelTop />
@@ -25,17 +27,15 @@ export function JobDetailPanel({ selected, retryHref }: { selected: PanelJob; re
         >
           <CircleAlert className="size-8 text-danger" strokeWidth={1.5} aria-hidden />
           <h2 className="font-display text-base font-semibold text-foreground">
-            Could not load this job
+            {t('errorTitle')}
           </h2>
-          <p className="text-sm text-muted-foreground">
-            The job list still works. Try again, or open the job on its own page.
-          </p>
+          <p className="text-sm text-muted-foreground">{t('errorBody')}</p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link href={retryHref} className={buttonClasses('primary')}>
-              Try again
+              {t('retry')}
             </Link>
             <Link href={`/jobs/${selected.jobId}`} className={buttonClasses('soft')}>
-              Open job page
+              {t('openJobPage')}
             </Link>
           </div>
         </div>

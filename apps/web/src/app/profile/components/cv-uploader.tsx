@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import type { CvMetadata } from '@launchly/shared';
 import { Button } from '@/components/ui/button';
 import { UploadCloud } from 'lucide-react';
@@ -15,6 +16,7 @@ interface CvUploaderProps {
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
 export function CvUploader({ onCvUploaded, isReplacing, onCancelReplace }: CvUploaderProps) {
+  const t = useTranslations('candidate.profile.uploader');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,13 +28,13 @@ export function CvUploader({ onCvUploaded, isReplacing, onCancelReplace }: CvUpl
     if (!file) return;
 
     if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-      setError('Invalid file format. Only PDF documents are accepted.');
+      setError(t('invalidType'));
       setSelectedFile(null);
       return;
     }
 
     if (file.size > MAX_FILE_SIZE) {
-      setError('File size exceeds the 5 MB limit.');
+      setError(t('tooLarge'));
       setSelectedFile(null);
       return;
     }
@@ -54,7 +56,7 @@ export function CvUploader({ onCvUploaded, isReplacing, onCancelReplace }: CvUpl
       }
       onCvUploaded(metadata);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'An error occurred during upload.');
+      setError(err instanceof Error ? err.message : t('uploadError'));
     } finally {
       setIsUploading(false);
     }
@@ -74,9 +76,9 @@ export function CvUploader({ onCvUploaded, isReplacing, onCancelReplace }: CvUpl
       >
         <UploadCloud className="size-8 text-subtle-foreground transition-colors group-hover:text-primary" />
         <p className="mt-2 text-xs font-semibold text-foreground">
-          {selectedFile ? selectedFile.name : 'Choose a PDF file or drag and drop'}
+          {selectedFile ? selectedFile.name : t('choose')}
         </p>
-        <p className="mt-1 text-xs text-muted-foreground">PDF only, maximum 5 MB</p>
+        <p className="mt-1 text-xs text-muted-foreground">{t('hint')}</p>
 
         <input
           ref={fileInputRef}
@@ -94,12 +96,12 @@ export function CvUploader({ onCvUploaded, isReplacing, onCancelReplace }: CvUpl
           disabled={!selectedFile || isUploading}
           className="flex-1"
         >
-          {isUploading ? 'Uploading document...' : isReplacing ? 'Replace current CV' : 'Upload CV'}
+          {isUploading ? t('uploading') : isReplacing ? t('replace') : t('upload')}
         </Button>
 
         {isReplacing && onCancelReplace && (
           <Button variant="ghost" type="button" onClick={onCancelReplace}>
-            Cancel
+            {t('cancel')}
           </Button>
         )}
       </div>

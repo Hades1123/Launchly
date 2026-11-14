@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { CandidateProfile, UpdateCandidateProfileInput } from '@launchly/shared';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +14,7 @@ interface ProfileFormProps {
 }
 
 export function ProfileForm({ initialProfile, onProfileUpdated }: ProfileFormProps) {
+  const t = useTranslations('candidate.profile.form');
   const [fullName, setFullName] = useState(initialProfile.fullName);
   const [headline, setHeadline] = useState(initialProfile.headline || '');
   const [bio, setBio] = useState(initialProfile.bio || '');
@@ -46,7 +48,7 @@ export function ProfileForm({ initialProfile, onProfileUpdated }: ProfileFormPro
     setSuccessMessage(null);
 
     if (!fullName.trim()) {
-      setError('Full name cannot be empty.');
+      setError(t('fullNameRequired'));
       return;
     }
 
@@ -65,9 +67,9 @@ export function ProfileForm({ initialProfile, onProfileUpdated }: ProfileFormPro
 
       const updated = await updateCandidateProfile(payload);
       onProfileUpdated(updated);
-      setSuccessMessage('Profile saved successfully.');
+      setSuccessMessage(t('saved'));
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'An error occurred while saving.');
+      setError(err instanceof Error ? err.message : t('saveError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -90,14 +92,14 @@ export function ProfileForm({ initialProfile, onProfileUpdated }: ProfileFormPro
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label htmlFor="fullName" className="block text-xs font-semibold text-foreground">
-            Full name <span className="text-danger">*</span>
+            {t('fullName')} <span className="text-danger">*</span>
           </label>
           <input
             id="fullName"
             type="text"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
-            placeholder="e.g. John Doe"
+            placeholder={t('fullNamePlaceholder')}
             className="mt-1.5 block w-full rounded-control border border-input bg-surface-muted px-3.5 py-2.5 text-sm text-foreground transition-all focus:bg-surface focus:ring-2 focus:ring-ring focus:outline-none"
             required
           />
@@ -105,63 +107,63 @@ export function ProfileForm({ initialProfile, onProfileUpdated }: ProfileFormPro
 
         <div>
           <label htmlFor="headline" className="block text-xs font-semibold text-foreground">
-            Professional headline
+            {t('headline')}
           </label>
           <input
             id="headline"
             type="text"
             value={headline}
             onChange={(e) => setHeadline(e.target.value)}
-            placeholder="e.g. Fresher Frontend Developer"
+            placeholder={t('headlinePlaceholder')}
             className="mt-1.5 block w-full rounded-control border border-input bg-surface-muted px-3.5 py-2.5 text-sm text-foreground transition-all focus:bg-surface focus:ring-2 focus:ring-ring focus:outline-none"
           />
         </div>
 
         <div>
           <label htmlFor="location" className="block text-xs font-semibold text-foreground">
-            Location
+            {t('location')}
           </label>
           <input
             id="location"
             type="text"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            placeholder="e.g. Ho Chi Minh City, Vietnam"
+            placeholder={t('locationPlaceholder')}
             className="mt-1.5 block w-full rounded-control border border-input bg-surface-muted px-3.5 py-2.5 text-sm text-foreground transition-all focus:bg-surface focus:ring-2 focus:ring-ring focus:outline-none"
           />
         </div>
 
         <div className="sm:col-span-2">
           <label htmlFor="schoolMajor" className="block text-xs font-semibold text-foreground">
-            University or major
+            {t('schoolMajor')}
           </label>
           <input
             id="schoolMajor"
             type="text"
             value={schoolMajor}
             onChange={(e) => setSchoolMajor(e.target.value)}
-            placeholder="e.g. Computer Science - HCMUT"
+            placeholder={t('schoolMajorPlaceholder')}
             className="mt-1.5 block w-full rounded-control border border-input bg-surface-muted px-3.5 py-2.5 text-sm text-foreground transition-all focus:bg-surface focus:ring-2 focus:ring-ring focus:outline-none"
           />
         </div>
 
         <div className="sm:col-span-2">
           <label htmlFor="bio" className="block text-xs font-semibold text-foreground">
-            Bio summary
+            {t('bio')}
           </label>
           <textarea
             id="bio"
             rows={3}
             value={bio}
             onChange={(e) => setBio(e.target.value)}
-            placeholder="Brief introduction about your technical background and career aspirations..."
+            placeholder={t('bioPlaceholder')}
             className="mt-1.5 block w-full rounded-control border border-input bg-surface-muted px-3.5 py-2.5 text-sm text-foreground transition-all focus:bg-surface focus:ring-2 focus:ring-ring focus:outline-none"
           />
         </div>
 
         <div className="sm:col-span-2">
           <label htmlFor="skillInput" className="block text-xs font-semibold text-foreground">
-            Skills & competencies
+            {t('skills')}
           </label>
           <div className="mt-1.5 flex gap-2">
             <input
@@ -175,11 +177,11 @@ export function ProfileForm({ initialProfile, onProfileUpdated }: ProfileFormPro
                   handleAddSkill();
                 }
               }}
-              placeholder="e.g. React, TypeScript, Next.js"
+              placeholder={t('skillsPlaceholder')}
               className="block flex-1 rounded-control border border-input bg-surface-muted px-3.5 py-2.5 text-sm text-foreground transition-all focus:bg-surface focus:ring-2 focus:ring-ring focus:outline-none"
             />
             <Button variant="soft" type="button" onClick={handleAddSkill}>
-              Add
+              {t('addSkill')}
             </Button>
           </div>
 
@@ -196,7 +198,7 @@ export function ProfileForm({ initialProfile, onProfileUpdated }: ProfileFormPro
                     type="button"
                     onClick={() => handleRemoveSkill(skill)}
                     className="cursor-pointer text-muted-foreground hover:text-danger focus:outline-none"
-                    aria-label={`Remove skill ${skill}`}
+                    aria-label={t('removeSkill', { skill })}
                   >
                     <X className="size-3" strokeWidth={2} />
                   </button>
@@ -211,14 +213,14 @@ export function ProfileForm({ initialProfile, onProfileUpdated }: ProfileFormPro
             htmlFor="projectsActivities"
             className="block text-xs font-semibold text-foreground"
           >
-            Key projects and extracurricular activities
+            {t('projects')}
           </label>
           <textarea
             id="projectsActivities"
             rows={4}
             value={projectsActivities}
             onChange={(e) => setProjectsActivities(e.target.value)}
-            placeholder="Detail personal projects, hackathons, academic achievements, or leadership roles..."
+            placeholder={t('projectsPlaceholder')}
             className="mt-1.5 block w-full rounded-control border border-input bg-surface-muted px-3.5 py-2.5 text-sm text-foreground transition-all focus:bg-surface focus:ring-2 focus:ring-ring focus:outline-none"
           />
         </div>
@@ -226,7 +228,7 @@ export function ProfileForm({ initialProfile, onProfileUpdated }: ProfileFormPro
 
       <div className="flex justify-end pt-2">
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Saving changes...' : 'Save profile'}
+          {isSubmitting ? t('saving') : t('save')}
         </Button>
       </div>
     </form>

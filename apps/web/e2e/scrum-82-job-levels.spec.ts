@@ -7,7 +7,7 @@ const JUNIOR_JOB = 'Senior Frontend Engineer';
 test('AC2: the job filter offers Intern, Fresher and Junior and never Senior', async ({ page }) => {
   await page.goto('/jobs');
 
-  for (const label of ['Intern', 'Fresher', 'Junior']) {
+  for (const label of ['Thực tập', 'Fresher', 'Junior']) {
     await expect(page.getByText(label, { exact: true }).first()).toBeVisible();
   }
   await expect(page.getByText('Senior', { exact: true })).toHaveCount(0);

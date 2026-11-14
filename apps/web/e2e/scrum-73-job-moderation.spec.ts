@@ -45,7 +45,7 @@ async function adminHeaders(request: APIRequestContext) {
 
 test('AC1: an approved job becomes visible to candidates', async ({ page, request }) => {
   await page.goto(`/jobs/${PENDING_JOB}`);
-  await expect(page.getByRole('heading', { name: 'Job not found' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Không tìm thấy việc làm' })).toBeVisible();
 
   const headers = await adminHeaders(request);
   const approved = await request.post(`${API}/admin/jobs/${PENDING_JOB}/approve`, { headers });

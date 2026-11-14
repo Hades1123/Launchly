@@ -1,0 +1,18 @@
+{
+  "generic": "Something went wrong. Please try again.",
+  "INVALID_CREDENTIALS": "The email or password is incorrect.",
+  "EMAIL_NOT_VERIFIED": "This account is not verified yet. Check your email or resend the verification link.",
+  "ACCOUNT_LOCKED": "This account is locked. Please contact support.",
+  "EMAIL_ALREADY_REGISTERED": "This email is already registered. Sign in or use another email.",
+  "INVALID_OR_EXPIRED_TOKEN": "The link is invalid or has expired. Request a new one.",
+  "INVALID_GOOGLE_IDENTITY": "We could not verify your Google account. Please try again.",
+  "GOOGLE_SIGN_IN_UNAVAILABLE": "Google sign-in is not configured yet.",
+  "RATE_LIMITED": "Too many attempts. Please wait and try again.",
+  "EMAIL_DELIVERY_FAILED": "We cannot send email right now. Please try again later.",
+  "SESSION_EXPIRED": "Your session has expired. Please sign in again.",
+  "VALIDATION_ERROR": "Please check the information you entered.",
+  "fields": {
+    "email": "Please enter a valid email address.",
+    "password": "The password must be 8 to 128 characters."
+  }
+}

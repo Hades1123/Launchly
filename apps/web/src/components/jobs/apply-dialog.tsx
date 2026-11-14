@@ -1,22 +1,24 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { MAX_COVER_LETTER_LENGTH, type ResumeDto } from '@launchly/shared';
 import { Button } from '@/components/ui/button';
 import { createApplication } from '@/lib/api/applications';
 import { ApiError } from '@/lib/api/http';
+import type { JobsTranslator } from '@/lib/job-format';
 
 const fieldClasses =
   'w-full rounded-control border border-input bg-surface px-3 py-2 text-sm text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none';
 
 /** A duplicate or a closed job is the common failure; say so in plain words. */
-function applyErrorMessage(error: unknown): string {
+function applyErrorMessage(error: unknown, t: JobsTranslator): string {
   if (error instanceof ApiError) {
-    if (error.status === 409) return 'You have already applied to this job.';
-    if (error.status === 404) return 'This job is no longer open.';
+    if (error.status === 409) return t('applyDialog.errors.alreadyApplied');
+    if (error.status === 404) return t('applyDialog.errors.closed');
     return error.message;
   }
-  return 'Could not send your application. Try again.';
+  return t('applyDialog.errors.generic');
 }
 
 type ApplyDialogProps = {
@@ -31,6 +33,7 @@ type ApplyDialogProps = {
 
 /** Step 2 of applying: pick a CV, optionally add a cover letter, submit. */
 export function ApplyDialog({ jobId, jobTitle, resumes, onClose, onApplied }: ApplyDialogProps) {
+  const t = useTranslations('jobs');
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [resumeId, setResumeId] = useState(resumes[0]?.id ?? '');
   const [coverLetter, setCoverLetter] = useState('');
@@ -51,7 +54,7 @@ export function ApplyDialog({ jobId, jobTitle, resumes, onClose, onApplied }: Ap
       await createApplication({ jobId, resumeId, ...(letter ? { coverLetter: letter } : {}) });
       onApplied(false);
     } catch (cause) {
-      setError(applyErrorMessage(cause));
+      setError(applyErrorMessage(cause, t));
     } finally {
       setPending(false);
     }
@@ -66,12 +69,12 @@ export function ApplyDialog({ jobId, jobTitle, resumes, onClose, onApplied }: Ap
     >
       <form className="space-y-4" onSubmit={submit}>
         <h2 id="apply-dialog-title" className="font-display text-lg font-semibold break-words">
-          Apply to {jobTitle}
+          {t('applyDialog.title', { title: jobTitle })}
         </h2>
 
         <div className="space-y-1.5">
           <label htmlFor="apply-cv" className="text-sm font-semibold">
-            Your CV
+            {t('applyDialog.cv')}
           </label>
           <select
             id="apply-cv"
@@ -89,7 +92,7 @@ export function ApplyDialog({ jobId, jobTitle, resumes, onClose, onApplied }: Ap
 
         <div className="space-y-1.5">
           <label htmlFor="apply-letter" className="text-sm font-semibold">
-            Cover letter (optional)
+            {t('applyDialog.coverLetter')}
           </label>
           <textarea
             id="apply-letter"
@@ -115,10 +118,10 @@ export function ApplyDialog({ jobId, jobTitle, resumes, onClose, onApplied }: Ap
 
         <div className="flex flex-wrap justify-end gap-2">
           <Button variant="ghost" onClick={() => dialogRef.current?.close()}>
-            Cancel
+            {t('applyDialog.cancel')}
           </Button>
           <Button type="submit" disabled={pending || !resumeId}>
-            {pending ? 'Sending…' : 'Submit application'}
+            {pending ? t('applyDialog.sending') : t('applyDialog.submit')}
           </Button>
         </div>
       </form>

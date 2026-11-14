@@ -1,7 +1,11 @@
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import { ResetPasswordForm } from '@/components/auth/reset-password-form';
 
-export const metadata: Metadata = { title: 'Đặt lại mật khẩu | Launchly' };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('auth.metadata');
+  return { title: t('resetPassword') };
+}
 
 type ResetPasswordPageProps = {
   searchParams: Promise<{ token?: string }>;

@@ -11,6 +11,7 @@ import {
   Plus,
   Search,
 } from 'lucide-react';
+import { useFormatter, useTranslations } from 'next-intl';
 import {
   JOB_LEVELS,
   JOB_PUBLICATION_STATUSES,
@@ -23,13 +24,7 @@ import {
   type RecruiterJobStatusFilter,
 } from '@launchly/shared';
 import { DeleteDraftButton, DeleteDraftsButton } from '@/components/recruiter/delete-draft-button';
-import {
-  JOB_LEVEL_LABELS,
-  JobStatusBadge,
-  jobMetaText,
-  jobStatusLabel,
-  jobTitleText,
-} from '@/components/recruiter/job-status-badge';
+import { JobStatusBadge, useJobText } from '@/components/recruiter/job-status-badge';
 import { RecruiterPageHeader } from '@/components/recruiter/recruiter-shell';
 import { buttonClasses } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -48,11 +43,6 @@ type Flash =
   { kind: 'submitted'; id: string } | { kind: 'deleted'; title?: string; count?: number };
 
 const TABS: RecruiterJobStatusFilter[] = ['ALL', ...JOB_PUBLICATION_STATUSES];
-
-const dateFormat = new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' });
-
-const tabLabel = (tab: RecruiterJobStatusFilter) =>
-  tab === 'ALL' ? 'Tất cả' : jobStatusLabel(tab);
 
 /** The list URL for a set of filters; defaults are left out. */
 function listUrl(pathname: string, { status, q, level, page }: JobListFilters): string {
@@ -75,12 +65,14 @@ export function RecruiterJobList({
   submittedId?: string;
   deleted?: boolean;
 }) {
+  const t = useTranslations('recruiter.list');
+  const jobText = useJobText();
   const pathname = usePathname();
   const [filters, setFilters] = useState<JobListFilters>(initialFilters);
   const [searchText, setSearchText] = useState(initialFilters.q);
   const [data, setData] = useState<RecruiterJobListResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   /** Drafts ticked on the current page, for bulk delete. */
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
@@ -130,11 +122,11 @@ export function RecruiterJobList({
           const listed = new Set(result.jobs.map((job) => job.id));
           return new Set([...current].filter((id) => listed.has(id)));
         });
-        setError(null);
+        setError(false);
         setLoading(false);
       } catch {
         if (controller.signal.aborted) return;
-        setError('Không thể tải danh sách tin tuyển dụng. Vui lòng thử lại.');
+        setError(true);
         setLoading(false);
       }
     }
@@ -149,7 +141,7 @@ export function RecruiterJobList({
   }
 
   function onDeleted(job: RecruiterJobListItem) {
-    setFlash({ kind: 'deleted', title: jobTitleText(job.title) });
+    setFlash({ kind: 'deleted', title: jobText.title(job.title) });
     setReloadKey((k) => k + 1);
   }
 
@@ -176,15 +168,17 @@ export function RecruiterJobList({
   const pageDrafts = (jobs ?? []).filter((job) => isJobDeletable(job.status));
   const selectedDrafts = pageDrafts.filter((job) => selected.has(job.id));
   const allSelected = pageDrafts.length > 0 && selectedDrafts.length === pageDrafts.length;
+  const tabLabel = (tab: RecruiterJobStatusFilter) =>
+    tab === 'ALL' ? t('allTab') : jobText.status(tab);
 
   return (
     <>
       <RecruiterPageHeader
-        title="Tin tuyển dụng"
-        description="Theo dõi trạng thái duyệt và tiếp tục hoàn thiện các bản nháp của bạn."
+        title={t('title')}
+        description={t('description')}
         actions={
           <Link href="/recruiter/jobs/new" className={buttonClasses('primary')}>
-            <Plus className="size-4" aria-hidden /> Đăng tin mới
+            <Plus className="size-4" aria-hidden /> {t('newJob')}
           </Link>
         }
       />
@@ -197,19 +191,19 @@ export function RecruiterJobList({
           <CheckCircle2 className="size-5 shrink-0" aria-hidden />
           {flash.kind === 'deleted'
             ? flash.title
-              ? `Đã xóa bản nháp “${flash.title}”.`
+              ? t('flash.deletedOne', { title: flash.title })
               : flash.count
-                ? `Đã xóa ${flash.count} bản nháp.`
-                : 'Đã xóa bản nháp.'
+                ? t('flash.deletedMany', { count: flash.count })
+                : t('flash.deleted')
             : submittedTitle
-              ? `Đã gửi tin “${submittedTitle}”. Tin đang chờ quản trị viên duyệt.`
-              : 'Đã gửi tin. Tin đang chờ quản trị viên duyệt.'}
+              ? t('flash.submittedOne', { title: submittedTitle })
+              : t('flash.submitted')}
         </p>
       )}
 
       <div
         role="group"
-        aria-label="Lọc theo trạng thái"
+        aria-label={t('filters.status')}
         className="mb-4 flex gap-1 overflow-x-auto rounded-card bg-surface p-1 shadow-card"
       >
         {TABS.map((tab) => {
@@ -244,7 +238,7 @@ export function RecruiterJobList({
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row">
         <label className="relative flex-1">
-          <span className="sr-only">Tìm theo vị trí</span>
+          <span className="sr-only">{t('filters.search')}</span>
           <Search
             className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-subtle-foreground"
             aria-hidden
@@ -253,30 +247,32 @@ export function RecruiterJobList({
             type="search"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            placeholder="Tìm theo vị trí tuyển dụng…"
+            placeholder={t('filters.searchPlaceholder')}
             className="min-h-11 w-full rounded-control border border-input bg-surface pr-3 pl-9 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-ring/20"
           />
         </label>
         <label className="sm:w-48">
-          <span className="sr-only">Lọc theo cấp bậc</span>
+          <span className="sr-only">{t('filters.level')}</span>
           <select
             value={filters.level}
             onChange={(e) => update({ level: e.target.value as JobLevel | '' })}
             className="min-h-11 w-full rounded-control border border-input bg-surface px-3 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-ring/20"
           >
-            <option value="">Mọi cấp bậc</option>
+            <option value="">{t('filters.allLevels')}</option>
             {JOB_LEVELS.map((value) => (
               <option key={value} value={value}>
-                {JOB_LEVEL_LABELS[value]}
+                {jobText.level(value)}
               </option>
             ))}
           </select>
         </label>
       </div>
 
-      {error && <p className="rounded-card bg-danger-subtle p-4 text-sm text-danger">{error}</p>}
+      {error && (
+        <p className="rounded-card bg-danger-subtle p-4 text-sm text-danger">{t('loadError')}</p>
+      )}
       {!data && !error && (
-        <div className="space-y-2" aria-label="Đang tải">
+        <div className="space-y-2" aria-label={t('loading')}>
           {[0, 1, 2].map((i) => (
             <div key={i} className="h-20 animate-pulse rounded-card bg-surface shadow-card" />
           ))}
@@ -288,15 +284,10 @@ export function RecruiterJobList({
           <span className="flex size-12 items-center justify-center rounded-full bg-primary-subtle text-primary">
             <BriefcaseBusiness className="size-6" aria-hidden />
           </span>
-          <p className="font-display text-lg font-semibold text-foreground">
-            Bạn chưa có tin tuyển dụng nào
-          </p>
-          <p className="max-w-sm text-sm text-muted-foreground">
-            Đăng tin đầu tiên với quy trình tuyển dụng rõ ràng để ứng viên biết chính xác điều gì
-            đang chờ họ.
-          </p>
+          <p className="font-display text-lg font-semibold text-foreground">{t('empty.title')}</p>
+          <p className="max-w-sm text-sm text-muted-foreground">{t('empty.body')}</p>
           <Link href="/recruiter/jobs/new" className={buttonClasses('primary', 'mt-2')}>
-            <Plus className="size-4" aria-hidden /> Đăng tin mới
+            <Plus className="size-4" aria-hidden /> {t('newJob')}
           </Link>
         </Card>
       )}
@@ -322,8 +313,8 @@ export function RecruiterJobList({
                   }
                 />
                 {selectedDrafts.length > 0
-                  ? `Đã chọn ${selectedDrafts.length} bản nháp`
-                  : `Chọn tất cả bản nháp trên trang (${pageDrafts.length})`}
+                  ? t('selection.selected', { count: selectedDrafts.length })
+                  : t('selection.selectAll', { count: pageDrafts.length })}
               </label>
               {selectedDrafts.length > 0 && (
                 <div className="flex items-center gap-2">
@@ -332,7 +323,7 @@ export function RecruiterJobList({
                     onClick={() => setSelected(new Set())}
                     className={buttonClasses('ghost')}
                   >
-                    Bỏ chọn
+                    {t('selection.clear')}
                   </button>
                   <DeleteDraftsButton
                     jobs={selectedDrafts}
@@ -344,18 +335,16 @@ export function RecruiterJobList({
           )}
           <div className="hidden grid-cols-12 gap-4 bg-surface-muted px-5 py-3 text-xs font-semibold tracking-wide text-subtle-foreground uppercase md:grid">
             <span className={cn('col-span-4', pageDrafts.length > 0 && 'pl-11')}>
-              Vị trí tuyển dụng
+              {t('columns.title')}
             </span>
-            <span className="col-span-2">Trạng thái</span>
-            <span className="col-span-1">Ứng viên</span>
-            <span className="col-span-2">Cập nhật</span>
-            <span className="col-span-3 text-right">Thao tác</span>
+            <span className="col-span-2">{t('columns.status')}</span>
+            <span className="col-span-1">{t('columns.applicants')}</span>
+            <span className="col-span-2">{t('columns.updated')}</span>
+            <span className="col-span-3 text-right">{t('columns.actions')}</span>
           </div>
           {data.jobs.length === 0 ? (
             <p className="px-5 py-10 text-center text-sm text-muted-foreground">
-              {filtering
-                ? 'Không có tin nào khớp với bộ lọc hiện tại.'
-                : 'Không có tin tuyển dụng nào.'}
+              {filtering ? t('noMatch') : t('noJobs')}
             </p>
           ) : (
             <ul className="divide-y divide-border">
@@ -392,9 +381,12 @@ function JobRow({
   onToggle: () => void;
   onDeleted: () => void;
 }) {
+  const t = useTranslations('recruiter.list.row');
+  const jobText = useJobText();
+  const format = useFormatter();
   const editable = isJobEditable(job.status);
   const deletable = isJobDeletable(job.status);
-  const title = jobTitleText(job.title);
+  const title = jobText.title(job.title);
   /** Only published or closed jobs can have applicants; other rows show a dash and no link. */
   const hasApplicants = job.status === 'PUBLISHED' || job.status === 'CLOSED';
 
@@ -424,7 +416,7 @@ function JobRow({
               className="-my-2.5 -ml-3"
               checked={selected}
               onChange={onToggle}
-              aria-label={`Chọn ${title}`}
+              aria-label={t('select', { title })}
             />
           ) : (
             <span className="-ml-3 w-11 shrink-0" aria-hidden />
@@ -439,9 +431,11 @@ function JobRow({
           >
             {title}
           </Link>
-          <p className="mt-0.5 text-sm text-muted-foreground">{jobMetaText(job)}</p>
+          <p className="mt-0.5 text-sm text-muted-foreground">{jobText.meta(job)}</p>
           {job.status === 'REJECTED' && job.moderationReason && (
-            <p className="mt-1 text-sm text-danger">Lý do từ chối: {job.moderationReason}</p>
+            <p className="mt-1 text-sm text-danger">
+              {t('rejectedReason', { reason: job.moderationReason })}
+            </p>
           )}
         </div>
       </div>
@@ -451,26 +445,26 @@ function JobRow({
       <p className="text-sm text-muted-foreground md:col-span-1">
         {hasApplicants ? (
           <>
-            <span className="md:sr-only">Ứng viên: </span>
+            <span className="md:sr-only">{t('applicants')} </span>
             <span className="font-mono font-semibold text-foreground">{job.applicantCount}</span>
           </>
         ) : (
           <>
-            <span className="md:sr-only">Ứng viên: </span>—
+            <span className="md:sr-only">{t('applicants')} </span>—
           </>
         )}
       </p>
       <p className="text-sm text-muted-foreground md:col-span-2">
-        {dateFormat.format(new Date(job.updatedAt))}
+        {format.dateTime(new Date(job.updatedAt), { dateStyle: 'medium', timeStyle: 'short' })}
       </p>
       <div className="flex flex-wrap gap-2 md:col-span-3 md:justify-end">
         {hasApplicants && (
           <Link
             href={`/recruiter/jobs/${job.id}/applicants`}
             className={buttonClasses('soft')}
-            aria-label={`Xem ứng viên của ${title}`}
+            aria-label={t('viewApplicantsLabel', { title })}
           >
-            Xem ứng viên
+            {t('viewApplicants')}
           </Link>
         )}
         {editable ? (
@@ -478,9 +472,9 @@ function JobRow({
             <Link
               href={`/recruiter/jobs/${job.id}/edit`}
               className={buttonClasses('soft')}
-              aria-label={`Tiếp tục chỉnh sửa ${title}`}
+              aria-label={t('continueEditingLabel', { title })}
             >
-              {job.status === 'REJECTED' ? 'Sửa & gửi lại' : 'Chỉnh sửa'}
+              {job.status === 'REJECTED' ? t('fixAndResubmit') : t('edit')}
             </Link>
             {deletable && <DeleteDraftButton jobId={job.id} title={title} onDeleted={onDeleted} />}
           </>
@@ -488,9 +482,9 @@ function JobRow({
           <Link
             href={`/recruiter/jobs/${job.id}`}
             className={buttonClasses('ghost')}
-            aria-label={`Xem chi tiết ${title}`}
+            aria-label={t('viewDetailLabel', { title })}
           >
-            Xem chi tiết
+            {t('viewDetail')}
           </Link>
         )}
       </div>
@@ -512,24 +506,23 @@ function Pagination({
   pagination: RecruiterJobListResponse['pagination'];
   onPage: (page: number) => void;
 }) {
+  const t = useTranslations('recruiter.list.pagination');
   if (total === 0) return null;
   const from = (page - 1) * limit + 1;
   const to = Math.min(page * limit, total);
   return (
     <nav
-      aria-label="Phân trang"
+      aria-label={t('label')}
       className="flex flex-col items-center justify-between gap-3 border-t border-border px-5 py-3 sm:flex-row"
     >
-      <p className="text-sm text-muted-foreground">
-        Hiển thị {from}–{to} trong {total} tin
-      </p>
+      <p className="text-sm text-muted-foreground">{t('summary', { from, to, total })}</p>
       {totalPages > 1 && (
         <div className="flex items-center gap-1">
           <button
             type="button"
             onClick={() => onPage(page - 1)}
             disabled={page <= 1}
-            aria-label="Trang trước"
+            aria-label={t('previous')}
             className={buttonClasses('ghost', 'px-2')}
           >
             <ChevronLeft className="size-4" aria-hidden />
@@ -544,7 +537,7 @@ function Pagination({
                 key={p}
                 type="button"
                 onClick={() => onPage(p)}
-                aria-label={`Trang ${p}`}
+                aria-label={t('page', { page: p })}
                 aria-current={p === page ? 'page' : undefined}
                 className={cn(
                   'min-w-9 rounded-control px-2 py-1.5 font-mono text-sm font-semibold transition-colors',
@@ -562,7 +555,7 @@ function Pagination({
             type="button"
             onClick={() => onPage(page + 1)}
             disabled={page >= totalPages}
-            aria-label="Trang sau"
+            aria-label={t('next')}
             className={buttonClasses('ghost', 'px-2')}
           >
             <ChevronRight className="size-4" aria-hidden />

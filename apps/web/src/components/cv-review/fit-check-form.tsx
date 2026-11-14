@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   MAX_JOB_DESCRIPTION_LENGTH,
   type CreateAssessmentInput,
@@ -24,6 +25,7 @@ function JobPicker({
   value: JobChoice | null;
   onChange: (job: JobChoice | null) => void;
 }) {
+  const t = useTranslations('candidate.cvReview.form');
   const [keyword, setKeyword] = useState('');
   const [results, setResults] = useState<JobChoice[]>([]);
 
@@ -51,7 +53,7 @@ function JobPicker({
           <span className="text-muted-foreground"> · {value.company}</span>
         </span>
         <Button variant="ghost" onClick={() => onChange(null)}>
-          Change job
+          {t('changeJob')}
         </Button>
       </div>
     );
@@ -61,15 +63,15 @@ function JobPicker({
   return (
     <div className="space-y-2">
       <input
-        aria-label="Search jobs"
-        placeholder="Search a Launchly job by title…"
+        aria-label={t('searchJobs')}
+        placeholder={t('searchPlaceholder')}
         className={fieldClasses}
         value={keyword}
         onChange={(event) => setKeyword(event.target.value)}
       />
       {visible.length > 0 && (
         <ul
-          aria-label="Job results"
+          aria-label={t('jobResults')}
           className="divide-y divide-border rounded-control border border-border"
         >
           {visible.map((job) => (
@@ -98,6 +100,7 @@ type FitCheckFormProps = {
 };
 
 export function FitCheckForm({ resumes, initialJobId, pending, onSubmit }: FitCheckFormProps) {
+  const t = useTranslations('candidate.cvReview.form');
   const [resumeId, setResumeId] = useState(resumes[0]?.id ?? '');
   const [source, setSource] = useState<Source>('job');
   const [job, setJob] = useState<JobChoice | null>(null);
@@ -132,7 +135,7 @@ export function FitCheckForm({ resumes, initialJobId, pending, onSubmit }: FitCh
       <form className="space-y-5" onSubmit={submit}>
         <div className="space-y-1.5">
           <label htmlFor="fit-cv" className="text-sm font-semibold text-foreground">
-            Your CV
+            {t('cv')}
           </label>
           <select
             id="fit-cv"
@@ -149,7 +152,7 @@ export function FitCheckForm({ resumes, initialJobId, pending, onSubmit }: FitCh
         </div>
 
         <fieldset className="space-y-3">
-          <legend className="text-sm font-semibold text-foreground">Compare against</legend>
+          <legend className="text-sm font-semibold text-foreground">{t('compareAgainst')}</legend>
           <div className="flex flex-wrap gap-4 text-sm">
             <label className="flex items-center gap-2">
               <input
@@ -158,7 +161,7 @@ export function FitCheckForm({ resumes, initialJobId, pending, onSubmit }: FitCh
                 checked={source === 'job'}
                 onChange={() => setSource('job')}
               />
-              A Launchly job
+              {t('sourceJob')}
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -167,7 +170,7 @@ export function FitCheckForm({ resumes, initialJobId, pending, onSubmit }: FitCh
                 checked={source === 'text'}
                 onChange={() => setSource('text')}
               />
-              A pasted job description
+              {t('sourceText')}
             </label>
           </div>
           {source === 'job' ? (
@@ -175,13 +178,13 @@ export function FitCheckForm({ resumes, initialJobId, pending, onSubmit }: FitCh
           ) : (
             <div className="space-y-1">
               <label htmlFor="fit-jd" className="sr-only">
-                Job description
+                {t('jobDescription')}
               </label>
               <textarea
                 id="fit-jd"
                 rows={8}
                 maxLength={MAX_JOB_DESCRIPTION_LENGTH}
-                placeholder="Paste the job description here…"
+                placeholder={t('jobDescriptionPlaceholder')}
                 className={fieldClasses}
                 value={text}
                 onChange={(event) => setText(event.target.value)}
@@ -194,7 +197,7 @@ export function FitCheckForm({ resumes, initialJobId, pending, onSubmit }: FitCh
         </fieldset>
 
         <Button type="submit" disabled={!ready || pending}>
-          {pending ? 'Analysing…' : 'Analyse'}
+          {pending ? t('analysing') : t('analyse')}
         </Button>
       </form>
     </Card>

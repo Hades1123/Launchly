@@ -3,33 +3,39 @@
 import Link from 'next/link';
 import { useEffect, useState, type ReactNode } from 'react';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { useFormatter, useTranslations } from 'next-intl';
 import type { AdminCompany, CompanyModerationStatus } from '@launchly/shared';
-import { moderationDate } from '@/components/admin/pending-company-list';
+import { MODERATION_DATE_FORMAT } from '@/components/admin/pending-company-list';
 import { RejectDialog } from '@/components/admin/reject-dialog';
 import { Badge, type BadgeTone } from '@/components/ui/badge';
 import { Button, buttonClasses } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { approveCompany, getAdminCompany, rejectCompany } from '@/lib/api/admin-companies';
 import { ApiError } from '@/lib/api/http';
-import { authErrorMessage } from '@/lib/auth-helpers';
+import { authErrorMessage, type ErrorTranslator } from '@/lib/auth-helpers';
 
-const statusView: Record<CompanyModerationStatus, { label: string; tone: BadgeTone }> = {
-  PENDING: { label: 'Chờ duyệt', tone: 'warning' },
-  APPROVED: { label: 'Đã duyệt', tone: 'success' },
-  REJECTED: { label: 'Bị từ chối', tone: 'danger' },
+type AdminTranslator = ReturnType<typeof useTranslations<'admin'>>;
+
+const statusTone: Record<CompanyModerationStatus, BadgeTone> = {
+  PENDING: 'warning',
+  APPROVED: 'success',
+  REJECTED: 'danger',
 };
 
-const DECIDED = 'Mục này đã được xử lý';
-
-/** Readable Vietnamese text for a failed admin call; an invalid id only matters when loading. */
-function moderationErrorText(error: unknown, loading = false): string {
+/** Readable text for a failed admin call; an invalid id only matters when loading. */
+function moderationErrorText(
+  error: unknown,
+  t: AdminTranslator,
+  tErrors: ErrorTranslator,
+  loading = false,
+): string {
   if (error instanceof ApiError) {
     if (error.code === 'NOT_FOUND' || (loading && error.code === 'VALIDATION_ERROR')) {
-      return 'Không tìm thấy công ty.';
+      return t('companyReview.notFound');
     }
-    if (error.code === 'FORBIDDEN') return 'Bạn không có quyền duyệt nội dung.';
+    if (error.code === 'FORBIDDEN') return t('moderation.forbidden');
   }
-  return authErrorMessage(error);
+  return authErrorMessage(error, tErrors);
 }
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
@@ -43,6 +49,9 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 
 /** Everything a recruiter submitted for a company, with approve and reject while it is pending. */
 export function CompanyReview({ id }: { id: string }) {
+  const t = useTranslations('admin');
+  const tErrors = useTranslations('errors');
+  const format = useFormatter();
   const [company, setCompany] = useState<AdminCompany | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -61,7 +70,7 @@ export function CompanyReview({ id }: { id: string }) {
         const loaded = await getAdminCompany(id);
         if (active) setCompany(loaded);
       } catch (cause) {
-        if (active) setError(moderationErrorText(cause, true));
+        if (active) setError(moderationErrorText(cause, t, tErrors, true));
       }
     }
     void load();
@@ -72,12 +81,12 @@ export function CompanyReview({ id }: { id: string }) {
 
   /** Another admin decided first (E1): show what they decided. */
   async function showDecided() {
-    setNotice(DECIDED);
+    setNotice(t('moderation.decided'));
     setDecided(true);
     try {
       setCompany(await getAdminCompany(id));
     } catch (cause) {
-      setError(moderationErrorText(cause));
+      setError(moderationErrorText(cause, t, tErrors));
     }
   }
 
@@ -88,7 +97,7 @@ export function CompanyReview({ id }: { id: string }) {
       setCompany(await approveCompany(id));
     } catch (cause) {
       if (cause instanceof ApiError && cause.code === 'CONFLICT') await showDecided();
-      else setError(moderationErrorText(cause));
+      else setError(moderationErrorText(cause, t, tErrors));
     } finally {
       setBusy(false);
     }
@@ -102,7 +111,7 @@ export function CompanyReview({ id }: { id: string }) {
       setCompany(await rejectCompany(id, reason));
     } catch (cause) {
       if (cause instanceof ApiError && cause.code === 'CONFLICT') await showDecided();
-      else throw new Error(moderationErrorText(cause), { cause });
+      else throw new Error(moderationErrorText(cause, t, tErrors), { cause });
     } finally {
       setBusy(false);
     }
@@ -111,7 +120,7 @@ export function CompanyReview({ id }: { id: string }) {
   const back = (
     <Link href="/admin/moderation" className={buttonClasses('ghost', 'w-fit')}>
       <ArrowLeft className="size-4" aria-hidden />
-      Hàng chờ duyệt
+      {t('moderation.back')}
     </Link>
   );
 
@@ -130,8 +139,6 @@ export function CompanyReview({ id }: { id: string }) {
     );
   }
 
-  const view = statusView[company.moderationStatus];
-
   return (
     <>
       {back}
@@ -140,13 +147,13 @@ export function CompanyReview({ id }: { id: string }) {
           // A plain <img>: the logo is a recruiter-supplied URL or data URI, as on the register page.
           <img
             src={company.logoUrl}
-            alt={`Logo ${company.name}`}
+            alt={t('companyReview.logoAlt', { name: company.name })}
             className="size-12 rounded-control object-cover shadow-card"
           />
         )}
         <h1 className="font-display text-2xl font-bold text-foreground">{company.name}</h1>
-        <Badge tone={view.tone} shape="pill">
-          {view.label}
+        <Badge tone={statusTone[company.moderationStatus]} shape="pill">
+          {t(`moderation.status.${company.moderationStatus}`)}
         </Badge>
       </div>
       {notice && (
@@ -156,19 +163,21 @@ export function CompanyReview({ id }: { id: string }) {
       )}
       {company.moderationStatus === 'REJECTED' && company.moderationReason && (
         <p className="rounded-control bg-danger-subtle p-3 text-sm text-danger">
-          Lý do: {company.moderationReason}
+          {t('moderation.reason', { reason: company.moderationReason })}
         </p>
       )}
       <Card>
         <dl className="grid gap-4 sm:grid-cols-2">
-          <Field label="Địa chỉ">{company.address}</Field>
-          <Field label="Lĩnh vực">{company.industry}</Field>
-          <Field label="Quy mô">{company.companySize}</Field>
-          <Field label="Website">{company.website}</Field>
-          <Field label="Email nhà tuyển dụng">{company.ownerEmail}</Field>
-          <Field label="Gửi lúc">{moderationDate.format(new Date(company.createdAt))}</Field>
+          <Field label={t('moderation.fields.address')}>{company.address}</Field>
+          <Field label={t('moderation.fields.industry')}>{company.industry}</Field>
+          <Field label={t('moderation.fields.companySize')}>{company.companySize}</Field>
+          <Field label={t('moderation.fields.website')}>{company.website}</Field>
+          <Field label={t('moderation.fields.recruiterEmail')}>{company.ownerEmail}</Field>
+          <Field label={t('moderation.fields.submittedAt')}>
+            {format.dateTime(new Date(company.createdAt), MODERATION_DATE_FORMAT)}
+          </Field>
           <div className="sm:col-span-2">
-            <Field label="Mô tả">{company.description}</Field>
+            <Field label={t('moderation.fields.description')}>{company.description}</Field>
           </div>
         </dl>
       </Card>
@@ -179,10 +188,14 @@ export function CompanyReview({ id }: { id: string }) {
       )}
       {company.moderationStatus === 'PENDING' && !decided && (
         <div className="flex justify-end gap-2">
-          <RejectDialog heading="Từ chối công ty" disabled={busy} onSubmit={reject} />
+          <RejectDialog
+            heading={t('companyReview.rejectHeading')}
+            disabled={busy}
+            onSubmit={reject}
+          />
           <Button disabled={busy} onClick={() => void approve()}>
             <CheckCircle2 className="size-4" aria-hidden />
-            Duyệt
+            {t('moderation.approve')}
           </Button>
         </div>
       )}

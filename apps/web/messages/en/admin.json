@@ -1,0 +1,127 @@
+{
+  "metadata": {
+    "admin": "Admin · Launchly",
+    "moderation": "Content moderation · Launchly",
+    "jobModeration": "Job moderation · Launchly",
+    "companyReview": "Company review · Launchly",
+    "jobReview": "Job review · Launchly"
+  },
+  "shell": {
+    "loading": "Loading…",
+    "unavailable": "Could not reach the server. Please try again later.",
+    "signInPrompt": "Please sign in with an admin account.",
+    "signIn": "Sign in",
+    "forbiddenTitle": "Admins only",
+    "forbiddenBody": "Your account does not have access to this page.",
+    "backToJobs": "Back to jobs",
+    "badge": "Admin"
+  },
+  "tabs": {
+    "label": "Content type",
+    "companies": "Companies",
+    "jobs": "Jobs"
+  },
+  "moderation": {
+    "heading": "Content moderation",
+    "back": "Moderation queue",
+    "empty": "Nothing to review",
+    "submittedAt": "Submitted {date}",
+    "decided": "This item has already been handled",
+    "forbidden": "You do not have permission to moderate content.",
+    "approve": "Approve",
+    "reason": "Reason: {reason}",
+    "status": {
+      "PENDING": "Pending",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected"
+    },
+    "fields": {
+      "address": "Address",
+      "industry": "Industry",
+      "companySize": "Company size",
+      "website": "Website",
+      "recruiterEmail": "Recruiter email",
+      "submittedAt": "Submitted",
+      "reviewedAt": "Reviewed",
+      "description": "Description",
+      "salary": "Salary",
+      "requirements": "Requirements",
+      "benefits": "Benefits"
+    }
+  },
+  "pendingCompanies": {
+    "heading": "Companies awaiting review"
+  },
+  "pendingJobs": {
+    "heading": "Jobs awaiting review"
+  },
+  "companyReview": {
+    "notFound": "Company not found.",
+    "logoAlt": "{name} logo",
+    "rejectHeading": "Reject company"
+  },
+  "jobReview": {
+    "notFound": "Job not found.",
+    "rejectedBefore": "Previously rejected",
+    "rejectHeading": "Reject job"
+  },
+  "rejectDialog": {
+    "open": "Reject",
+    "reasonLabel": "Reason for rejection",
+    "reasonHint": "The reason will be emailed to the recruiter.",
+    "failed": "Could not reject. Please try again.",
+    "cancel": "Cancel",
+    "confirm": "Confirm rejection"
+  },
+  "companyRegister": {
+    "heading": "Register your company",
+    "intro": "Create a company profile on Launchly to start hiring candidates.",
+    "success": "Company registered! Your profile is pending review.",
+    "failed": "Company registration failed.",
+    "logo": {
+      "label": "Company logo (max 2MB, PNG/JPG)",
+      "previewAlt": "Logo preview",
+      "empty": "No logo yet",
+      "invalidType": "The logo must be a PNG or JPG image.",
+      "tooLarge": "The logo must be smaller than 2MB."
+    },
+    "name": {
+      "label": "Company name",
+      "placeholder": "e.g. Launchly Corp",
+      "required": "Company name is required."
+    },
+    "address": {
+      "label": "Office address",
+      "placeholder": "e.g. 123 Nguyen Hue, District 1, Ho Chi Minh City",
+      "required": "Company address is required."
+    },
+    "industry": {
+      "label": "Industry",
+      "options": {
+        "software": "IT / Software",
+        "fintech": "Fintech",
+        "ecommerce": "E-commerce",
+        "marketing": "Media / Marketing",
+        "other": "Other"
+      }
+    },
+    "companySize": {
+      "label": "Company size",
+      "options": {
+        "small": "1 - 50 employees",
+        "medium": "51 - 200 employees",
+        "large": "201 - 500 employees",
+        "enterprise": "500+ employees"
+      }
+    },
+    "website": {
+      "label": "Company website"
+    },
+    "description": {
+      "label": "Company description",
+      "placeholder": "Describe your mission, work environment..."
+    },
+    "submit": "Complete company registration",
+    "submitting": "Submitting..."
+  }
+}

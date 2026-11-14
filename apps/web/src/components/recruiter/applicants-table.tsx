@@ -2,6 +2,7 @@
 
 import { Fragment, useEffect, useState, type FormEvent } from 'react';
 import { FileText, LoaderCircle, Users } from 'lucide-react';
+import { useFormatter, useTranslations } from 'next-intl';
 import {
   APPLICATION_STATUSES,
   MAX_STATUS_NOTE_LENGTH,
@@ -11,9 +12,9 @@ import {
   type RecruiterApplicationStatus,
   type RoundDto,
 } from '@launchly/shared';
-import { statusConfig, StatusBadge } from '@/components/applications/status-badge';
+import { StatusBadge } from '@/components/applications/status-badge';
 import { Field, fieldClass } from '@/components/recruiter/round-rows-editor';
-import { jobTitleText } from '@/components/recruiter/job-status-badge';
+import { useJobText } from '@/components/recruiter/job-status-badge';
 import { RecruiterPageHeader } from '@/components/recruiter/recruiter-shell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -27,23 +28,19 @@ import {
 } from '@/lib/api/recruiter-applications';
 import { getMyJob } from '@/lib/api/recruiter-jobs';
 
+type LoadError = 'forbidden' | 'notFound' | 'generic';
+
 type View =
   | { kind: 'loading' }
-  | { kind: 'error'; text: string }
+  | { kind: 'error'; error: LoadError }
   | { kind: 'ready'; jobTitle: string; applicants: RecruiterApplication[]; rounds: RoundDto[] };
 
 type Flash = { tone: 'success' | 'danger'; text: string };
 
-const dateFormat = new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium' });
-
-const BACK = { href: '/recruiter/jobs', label: 'Tin tuyển dụng' };
-
-function loadErrorText(error: unknown): string {
-  if (error instanceof ApiError && error.status === 403) {
-    return 'Bạn không có quyền xem ứng viên của tin tuyển dụng này.';
-  }
-  if (error instanceof ApiError && error.status === 404) return 'Không tìm thấy tin tuyển dụng.';
-  return 'Không thể tải danh sách ứng viên. Vui lòng thử lại.';
+function loadError(error: unknown): LoadError {
+  if (error instanceof ApiError && error.status === 403) return 'forbidden';
+  if (error instanceof ApiError && error.status === 404) return 'notFound';
+  return 'generic';
 }
 
 /** Opens the CV in a new tab; the tab is opened first so the popup blocker allows it. */
@@ -64,6 +61,11 @@ async function openResume(applicationId: string): Promise<void> {
 
 /** The recruiter's review table for one job: filter, open CVs and change statuses. */
 export function ApplicantsTable({ jobId }: { jobId: string }) {
+  const t = useTranslations('recruiter.applicants');
+  const tPages = useTranslations('recruiter.pages');
+  const jobText = useJobText();
+  const format = useFormatter();
+  const back = { href: '/recruiter/jobs', label: tPages('jobsBack') };
   const [view, setView] = useState<View>({ kind: 'loading' });
   const [filter, setFilter] = useState<ApplicationStatus | 'ALL'>('ALL');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -81,13 +83,13 @@ export function ApplicantsTable({ jobId }: { jobId: string }) {
         if (active) {
           setView({
             kind: 'ready',
-            jobTitle: jobTitleText(job.title),
+            jobTitle: job.title,
             applicants: list.data,
             rounds,
           });
         }
       } catch (error) {
-        if (active) setView({ kind: 'error', text: loadErrorText(error) });
+        if (active) setView({ kind: 'error', error: loadError(error) });
       }
     }
     void load();
@@ -99,10 +101,10 @@ export function ApplicantsTable({ jobId }: { jobId: string }) {
   if (view.kind !== 'ready') {
     return (
       <>
-        <RecruiterPageHeader title="Ứng viên" back={BACK} />
+        <RecruiterPageHeader title={t('title')} back={back} />
         {view.kind === 'error' ? (
           <p role="alert" className="rounded-card bg-danger-subtle p-4 text-sm text-danger">
-            {view.text}
+            {t(`loadErrors.${view.error}`)}
           </p>
         ) : (
           <div className="h-64 animate-pulse rounded-card bg-surface shadow-card" aria-busy />
@@ -119,7 +121,7 @@ export function ApplicantsTable({ jobId }: { jobId: string }) {
     try {
       await openResume(applicant.id);
     } catch {
-      setFlash({ tone: 'danger', text: `Không thể mở CV của ${applicant.candidate.name}.` });
+      setFlash({ tone: 'danger', text: t('resumeError', { name: applicant.candidate.name }) });
     }
   }
 
@@ -135,27 +137,30 @@ export function ApplicantsTable({ jobId }: { jobId: string }) {
     setEditingId(null);
     setFlash({
       tone: 'success',
-      text: `Đã chuyển ${updated.candidate.name} sang ${statusConfig[updated.status].label}.`,
+      text: t('moved', {
+        name: updated.candidate.name,
+        status: t(`statuses.${updated.status}`),
+      }),
     });
   }
 
   return (
     <>
       <RecruiterPageHeader
-        back={BACK}
-        title={`Ứng viên · ${jobTitle}`}
-        description={`${applicants.length} hồ sơ ứng tuyển`}
+        back={back}
+        title={t('titleWithJob', { job: jobText.title(jobTitle) })}
+        description={t('count', { count: applicants.length })}
         actions={
-          <Field label="Lọc theo trạng thái" className="min-w-48">
+          <Field label={t('filter')} className="min-w-48">
             <select
               className={fieldClass()}
               value={filter}
               onChange={(e) => setFilter(e.target.value as ApplicationStatus | 'ALL')}
             >
-              <option value="ALL">Tất cả</option>
+              <option value="ALL">{t('all')}</option>
               {APPLICATION_STATUSES.map((status) => (
                 <option key={status} value={status}>
-                  {statusConfig[status].label}
+                  {t(`statuses.${status}`)}
                 </option>
               ))}
             </select>
@@ -180,9 +185,7 @@ export function ApplicantsTable({ jobId }: { jobId: string }) {
         <Card className="flex flex-col items-center gap-2 py-12 text-center">
           <Users className="size-6 text-subtle-foreground" aria-hidden />
           <p className="text-sm text-muted-foreground">
-            {applicants.length === 0
-              ? 'Chưa có ứng viên nào ứng tuyển.'
-              : 'Không có ứng viên nào ở trạng thái này.'}
+            {applicants.length === 0 ? t('empty.none') : t('empty.noMatch')}
           </p>
         </Card>
       ) : (
@@ -191,22 +194,22 @@ export function ApplicantsTable({ jobId }: { jobId: string }) {
             <thead className="bg-surface-muted text-xs font-semibold tracking-wide text-subtle-foreground uppercase">
               <tr>
                 <th scope="col" className="px-5 py-3">
-                  Ứng viên
+                  {t('columns.candidate')}
                 </th>
                 <th scope="col" className="px-5 py-3">
-                  Kỹ năng
+                  {t('columns.skills')}
                 </th>
                 <th scope="col" className="px-5 py-3">
-                  Ngày nộp
+                  {t('columns.submitted')}
                 </th>
                 <th scope="col" className="px-5 py-3">
-                  Vòng hiện tại
+                  {t('columns.round')}
                 </th>
                 <th scope="col" className="px-5 py-3">
-                  Trạng thái
+                  {t('columns.status')}
                 </th>
                 <th scope="col" className="px-5 py-3 text-right">
-                  Thao tác
+                  {t('columns.actions')}
                 </th>
               </tr>
             </thead>
@@ -234,7 +237,7 @@ export function ApplicantsTable({ jobId }: { jobId: string }) {
                       </div>
                     </td>
                     <td className="px-5 py-4 text-muted-foreground">
-                      {dateFormat.format(new Date(applicant.submittedAt))}
+                      {format.dateTime(new Date(applicant.submittedAt), { dateStyle: 'medium' })}
                     </td>
                     <td className="px-5 py-4 text-muted-foreground">
                       {applicant.currentStage?.name ?? '—'}
@@ -247,9 +250,9 @@ export function ApplicantsTable({ jobId }: { jobId: string }) {
                         <Button
                           variant="ghost"
                           onClick={() => void onViewResume(applicant)}
-                          aria-label={`Xem CV của ${applicant.candidate.name}`}
+                          aria-label={t('viewCvLabel', { name: applicant.candidate.name })}
                         >
-                          <FileText className="size-4" aria-hidden /> Xem CV
+                          <FileText className="size-4" aria-hidden /> {t('viewCv')}
                         </Button>
                         <Button
                           variant="soft"
@@ -257,9 +260,9 @@ export function ApplicantsTable({ jobId }: { jobId: string }) {
                           onClick={() =>
                             setEditingId(editingId === applicant.id ? null : applicant.id)
                           }
-                          aria-label={`Cập nhật trạng thái của ${applicant.candidate.name}`}
+                          aria-label={t('updateLabel', { name: applicant.candidate.name })}
                         >
-                          Cập nhật
+                          {t('update')}
                         </Button>
                       </div>
                     </td>
@@ -297,6 +300,7 @@ function StatusForm({
   onCancel: () => void;
   onUpdated: (updated: RecruiterApplication) => void;
 }) {
+  const t = useTranslations('recruiter.applicants');
   const [status, setStatus] = useState<RecruiterApplicationStatus | ''>('');
   const [stageId, setStageId] = useState('');
   const [note, setNote] = useState('');
@@ -306,11 +310,11 @@ function StatusForm({
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     if (!status) {
-      setError('Hãy chọn trạng thái mới.');
+      setError(t('form.chooseStatus'));
       return;
     }
     if (status === applicant.status) {
-      setError('Ứng viên đã ở trạng thái này.');
+      setError(t('form.sameStatus'));
       return;
     }
     setSaving(true);
@@ -325,10 +329,10 @@ function StatusForm({
     } catch (cause) {
       setError(
         cause instanceof ApiError && cause.status === 403
-          ? 'Bạn không có quyền cập nhật ứng viên này.'
+          ? t('form.forbidden')
           : cause instanceof ApiError && cause.code === 'VALIDATION_ERROR'
             ? cause.message
-            : 'Không thể cập nhật trạng thái. Vui lòng thử lại.',
+            : t('form.generic'),
       );
       setSaving(false);
     }
@@ -336,27 +340,27 @@ function StatusForm({
 
   return (
     <form onSubmit={onSubmit} className="grid gap-4 md:grid-cols-4 md:items-end" noValidate>
-      <Field label="Trạng thái mới">
+      <Field label={t('form.newStatus')}>
         <select
           className={fieldClass(error ?? undefined)}
           value={status}
           onChange={(e) => setStatus(e.target.value as RecruiterApplicationStatus | '')}
         >
-          <option value="">Chọn…</option>
+          <option value="">{t('form.choose')}</option>
           {RECRUITER_APPLICATION_STATUSES.map((value) => (
             <option key={value} value={value}>
-              {statusConfig[value].label}
+              {t(`statuses.${value}`)}
             </option>
           ))}
         </select>
       </Field>
-      <Field label="Vòng (tùy chọn)">
+      <Field label={t('form.round')}>
         <select
           className={fieldClass()}
           value={stageId}
           onChange={(e) => setStageId(e.target.value)}
         >
-          <option value="">Giữ nguyên</option>
+          <option value="">{t('form.keepRound')}</option>
           {rounds.map((round) => (
             <option key={round.id} value={round.id}>
               {round.position}. {round.name}
@@ -364,7 +368,7 @@ function StatusForm({
           ))}
         </select>
       </Field>
-      <Field label="Ghi chú (tùy chọn)">
+      <Field label={t('form.note')}>
         <input
           className={fieldClass()}
           value={note}
@@ -375,10 +379,10 @@ function StatusForm({
       <div className="flex gap-2">
         <Button type="submit" disabled={saving}>
           {saving && <LoaderCircle className="size-4 animate-spin" aria-hidden />}
-          Lưu thay đổi
+          {t('form.save')}
         </Button>
         <Button variant="ghost" onClick={onCancel} disabled={saving}>
-          Hủy
+          {t('form.cancel')}
         </Button>
       </div>
       {error && (

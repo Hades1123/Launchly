@@ -1,5 +1,6 @@
 import { useState, type InputHTMLAttributes, type ReactNode } from 'react';
 import { AlertCircle, CheckCircle2, Eye, EyeOff, LoaderCircle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/cn';
 
 export function AuthHeading({
@@ -71,10 +72,12 @@ export function PasswordField({
   trailingLabel?: ReactNode;
   error?: string;
 }) {
+  const t = useTranslations('auth.ui');
   const [visible, setVisible] = useState(false);
   const inputId = id ?? props.name;
   const errorId = `${inputId}-error`;
   const VisibilityIcon = visible ? EyeOff : Eye;
+  const visibilityLabel = visible ? t('hidePassword') : t('showPassword');
 
   return (
     <div className="space-y-1.5">
@@ -102,9 +105,9 @@ export function PasswordField({
         <button
           type="button"
           onClick={() => setVisible((current) => !current)}
-          aria-label={visible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+          aria-label={visibilityLabel}
           aria-pressed={visible}
-          title={visible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+          title={visibilityLabel}
           className="absolute inset-y-0 right-0 inline-flex w-12 items-center justify-center rounded-r-control text-muted-foreground transition hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <VisibilityIcon className="size-4" aria-hidden />
@@ -166,10 +169,11 @@ export function SubmitButton({
 }
 
 export function AuthDivider() {
+  const t = useTranslations('auth.ui');
   return (
     <div className="my-6 flex items-center gap-3" aria-hidden>
       <span className="h-px flex-1 bg-border" />
-      <span className="text-xs text-subtle-foreground">hoặc</span>
+      <span className="text-xs text-subtle-foreground">{t('or')}</span>
       <span className="h-px flex-1 bg-border" />
     </div>
   );

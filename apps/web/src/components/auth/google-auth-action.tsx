@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { registrationRoleSchema } from '@launchly/shared';
+import { useLocale, useTranslations } from 'next-intl';
 import { AuthFeedback } from '@/components/auth/auth-ui';
+import type { Locale } from '@/i18n/locale';
 import { useAuth } from '@/lib/auth-context';
 import { authErrorMessage } from '@/lib/auth-helpers';
 import { signInWithGoogle } from '@/lib/api/auth';
@@ -18,7 +20,7 @@ type GoogleButtonOptions = {
   text: 'continue_with';
   shape: 'rectangular';
   width: number;
-  locale: 'vi';
+  locale: Locale;
 };
 
 declare global {
@@ -44,6 +46,8 @@ function GoogleIdentityButton({
   onCredential: (credential: string) => void;
   disabled: boolean;
 }) {
+  const t = useTranslations('auth.google');
+  const locale = useLocale();
   const containerRef = useRef<HTMLDivElement>(null);
   const [scriptReady, setScriptReady] = useState(false);
   const [scriptError, setScriptError] = useState(false);
@@ -70,16 +74,12 @@ function GoogleIdentityButton({
       text: 'continue_with',
       shape: 'rectangular',
       width: Math.max(220, Math.min(container.clientWidth, 400)),
-      locale: 'vi',
+      locale,
     });
-  }, [clientId, handleCredential, scriptReady]);
+  }, [clientId, handleCredential, locale, scriptReady]);
 
   if (!clientId) {
-    return (
-      <AuthFeedback tone="info">
-        Đăng nhập Google chưa được cấu hình cho môi trường này.
-      </AuthFeedback>
-    );
+    return <AuthFeedback tone="info">{t('notConfigured')}</AuthFeedback>;
   }
 
   return (
@@ -91,13 +91,11 @@ function GoogleIdentityButton({
         onError={() => setScriptError(true)}
       />
       {scriptError ? (
-        <AuthFeedback tone="error">
-          Không tải được dịch vụ Google. Vui lòng thử lại sau.
-        </AuthFeedback>
+        <AuthFeedback tone="error">{t('scriptError')}</AuthFeedback>
       ) : (
         <div
           ref={containerRef}
-          aria-label="Đăng nhập với Google"
+          aria-label={t('buttonLabel')}
           aria-busy={!scriptReady || disabled}
           className={`flex min-h-11 w-full justify-center overflow-hidden ${disabled ? 'pointer-events-none opacity-60' : ''}`}
         />
@@ -107,6 +105,8 @@ function GoogleIdentityButton({
 }
 
 export function GoogleAuthAction({ returnTo }: { returnTo?: string }) {
+  const t = useTranslations('auth');
+  const tErrors = useTranslations('errors');
   const router = useRouter();
   const { acceptSession } = useAuth();
   const [phase, setPhase] = useState<'button' | 'role' | 'pending'>('button');
@@ -134,12 +134,12 @@ export function GoogleAuthAction({ returnTo }: { returnTo?: string }) {
           setPhase('pending');
         }
       } catch (cause) {
-        setError(authErrorMessage(cause));
+        setError(authErrorMessage(cause, tErrors));
       } finally {
         setPending(false);
       }
     },
-    [acceptSession, returnTo, router],
+    [acceptSession, returnTo, router, tErrors],
   );
 
   const handleCredential = useCallback(
@@ -152,15 +152,12 @@ export function GoogleAuthAction({ returnTo }: { returnTo?: string }) {
   if (phase === 'pending') {
     return (
       <div className="space-y-4">
-        <AuthFeedback tone="info">
-          Cần xác nhận liên kết tài khoản. Hãy kiểm tra hộp thư của email Google rồi mở liên kết
-          Launchly để tiếp tục.
-        </AuthFeedback>
+        <AuthFeedback tone="info">{t('google.linkPending')}</AuthFeedback>
         <Link
           href="/login"
           className="block text-center text-sm font-semibold text-primary hover:text-primary-hover"
         >
-          Quay lại đăng nhập
+          {t('common.backToLogin')}
         </Link>
       </div>
     );
@@ -169,10 +166,9 @@ export function GoogleAuthAction({ returnTo }: { returnTo?: string }) {
   if (phase === 'role') {
     return (
       <div className="space-y-4">
-        <p className="text-sm font-semibold text-foreground">Chọn loại tài khoản để tiếp tục</p>
+        <p className="text-sm font-semibold text-foreground">{t('google.chooseRole')}</p>
         <div className="grid gap-3 sm:grid-cols-2">
           {roles.map((role) => {
-            const candidate = role === 'CANDIDATE';
             return (
               <button
                 key={role}
@@ -184,12 +180,10 @@ export function GoogleAuthAction({ returnTo }: { returnTo?: string }) {
                 className="rounded-card bg-surface-muted p-4 text-left transition hover:bg-primary-subtle focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-60"
               >
                 <span className="block text-sm font-semibold text-foreground">
-                  {candidate ? 'Ứng viên' : 'Nhà tuyển dụng'}
+                  {t(`google.roles.${role}.title`)}
                 </span>
                 <span className="mt-1 block text-xs leading-5 text-muted-foreground">
-                  {candidate
-                    ? 'Tìm kiếm và theo dõi cơ hội việc làm.'
-                    : 'Khám phá ứng viên phù hợp.'}
+                  {t(`google.roles.${role}.description`)}
                 </span>
               </button>
             );
@@ -197,7 +191,7 @@ export function GoogleAuthAction({ returnTo }: { returnTo?: string }) {
         </div>
         {pending && (
           <p role="status" className="text-center text-sm text-muted-foreground">
-            Đang tạo tài khoản…
+            {t('google.creatingAccount')}
           </p>
         )}
         {error && <AuthFeedback tone="error">{error}</AuthFeedback>}
@@ -210,7 +204,7 @@ export function GoogleAuthAction({ returnTo }: { returnTo?: string }) {
           }}
           className="w-full rounded-control py-2 text-sm font-medium text-muted-foreground hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
-          Chọn tài khoản Google khác
+          {t('google.otherAccount')}
         </button>
       </div>
     );
@@ -221,7 +215,7 @@ export function GoogleAuthAction({ returnTo }: { returnTo?: string }) {
       <GoogleIdentityButton onCredential={handleCredential} disabled={pending} />
       {pending && (
         <p role="status" className="text-center text-sm text-muted-foreground">
-          Đang xác minh tài khoản Google…
+          {t('google.verifying')}
         </p>
       )}
       {error && <AuthFeedback tone="error">{error}</AuthFeedback>}

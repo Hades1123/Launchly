@@ -7,8 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { getJob, searchJobs, type JobSearchFilters } from '@/lib/api/jobs';
 import { cn } from '@/lib/cn';
 import { JOB_LEVELS, type PublicJobListResponse, type JobLevel } from '@launchly/shared';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata = { title: 'Discover Jobs | Launchly' };
+export async function generateMetadata() {
+  const t = await getTranslations('jobs.metadata');
+  return { title: t('listTitle') };
+}
 
 type SearchParams = Promise<{
   keyword?: string;
@@ -62,6 +66,7 @@ async function loadPanelJob(jobId: string): Promise<PanelJob> {
 }
 
 export default async function JobsPage({ searchParams }: JobsPageProps) {
+  const t = await getTranslations('jobs');
   const resolvedParams = await searchParams;
   const { keyword, industry, level, location, page, job } = resolvedParams;
 
@@ -97,18 +102,18 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
       {/* Breadcrumb and Status */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <nav
-          aria-label="Breadcrumb"
+          aria-label={t('breadcrumb')}
           className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground"
         >
           <Link href="/" className="transition-colors hover:text-primary">
-            Home
+            {t('list.home')}
           </Link>
           <ChevronRight className="size-4 text-subtle-foreground" strokeWidth={1.5} aria-hidden />
           <span aria-current="page" className="font-display font-semibold text-foreground">
-            Explore Opportunities
+            {t('list.current')}
           </span>
           <Badge tone="success" shape="pill" className="ml-1">
-            {pagination.total} positions available
+            {t('list.positionsAvailable', { count: pagination.total })}
           </Badge>
         </nav>
       </div>
@@ -123,8 +128,12 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
           <JobFilters currentFilters={filterParams} />
 
           <div className="flex items-center justify-between px-1">
-            <h2 className="font-display text-sm font-semibold text-foreground">Matching Jobs</h2>
-            <span className="text-xs text-subtle-foreground">{pagination.total} results</span>
+            <h2 className="font-display text-sm font-semibold text-foreground">
+              {t('list.matchingJobs')}
+            </h2>
+            <span className="text-xs text-subtle-foreground">
+              {t('list.results', { count: pagination.total })}
+            </span>
           </div>
 
           {jobList.length === 0 ? (
@@ -133,18 +142,18 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
                 <SearchX className="size-6" strokeWidth={1.5} aria-hidden />
               </div>
               <h3 className="font-display text-sm font-semibold text-foreground">
-                No matching jobs found
+                {t('list.empty.title')}
               </h3>
               <p className="mt-1 text-xs text-muted-foreground">
-                We could not find any jobs matching your current search criteria.
-                {hasActiveFilters && ' Try broadening your keywords or removing some filters.'}
+                {t('list.empty.body')}
+                {hasActiveFilters && ` ${t('list.empty.hint')}`}
               </p>
               {hasActiveFilters && (
                 <Link
                   href="/jobs"
                   className="mt-4 inline-flex items-center gap-1 rounded-control bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 >
-                  Clear all filters
+                  {t('list.empty.clear')}
                 </Link>
               )}
             </div>
@@ -162,7 +171,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
               {/* Pagination */}
               {pagination.totalPages > 1 && (
                 <nav
-                  aria-label="Job list pagination"
+                  aria-label={t('list.pagination.label')}
                   className="mt-4 flex items-center justify-between border-t border-border pt-4"
                 >
                   <Link
@@ -177,11 +186,14 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
                     )}
                   >
                     <ChevronLeft className="size-3.5" aria-hidden />
-                    Previous
+                    {t('list.pagination.previous')}
                   </Link>
 
                   <span className="text-xs text-muted-foreground">
-                    Page {pagination.page} of {pagination.totalPages}
+                    {t('list.pagination.status', {
+                      page: pagination.page,
+                      totalPages: pagination.totalPages,
+                    })}
                   </span>
 
                   <Link
@@ -195,7 +207,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
                         : 'bg-surface-muted text-foreground hover:bg-surface-strong focus-visible:ring-2 focus-visible:ring-ring',
                     )}
                   >
-                    Next
+                    {t('list.pagination.next')}
                     <ChevronRight className="size-3.5" aria-hidden />
                   </Link>
                 </nav>

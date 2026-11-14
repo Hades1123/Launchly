@@ -1,0 +1,123 @@
+{
+  "metadata": {
+    "listTitle": "Khám phá việc làm | Launchly",
+    "detailTitle": "{title} · {company} | Launchly",
+    "detailFallback": "Việc làm | Launchly"
+  },
+  "breadcrumb": "Đường dẫn",
+  "list": {
+    "home": "Trang chủ",
+    "current": "Khám phá cơ hội",
+    "positionsAvailable": "{count} vị trí đang tuyển",
+    "matchingJobs": "Việc làm phù hợp",
+    "results": "{count} kết quả",
+    "empty": {
+      "title": "Không tìm thấy việc làm phù hợp",
+      "body": "Chúng tôi không tìm thấy việc làm nào khớp với tiêu chí tìm kiếm hiện tại.",
+      "hint": "Hãy thử mở rộng từ khóa hoặc bỏ bớt bộ lọc.",
+      "clear": "Xóa tất cả bộ lọc"
+    },
+    "pagination": {
+      "label": "Phân trang danh sách việc làm",
+      "previous": "Trước",
+      "next": "Sau",
+      "status": "Trang {page} / {totalPages}"
+    }
+  },
+  "detailPage": {
+    "allJobs": "Tất cả việc làm"
+  },
+  "filters": {
+    "label": "Tìm kiếm và lọc việc làm",
+    "title": "Tìm kiếm & Bộ lọc",
+    "reset": "Đặt lại",
+    "keyword": "Từ khóa",
+    "keywordPlaceholder": "Vị trí hoặc tên công ty...",
+    "level": "Cấp bậc",
+    "allLevels": "Tất cả cấp bậc",
+    "industry": "Ngành nghề",
+    "allIndustries": "Tất cả ngành nghề",
+    "location": "Địa điểm",
+    "allLocations": "Tất cả địa điểm",
+    "submit": "Áp dụng bộ lọc"
+  },
+  "levels": {
+    "INTERN": "Thực tập",
+    "FRESHER": "Fresher",
+    "JUNIOR": "Junior"
+  },
+  "salary": {
+    "negotiable": "Thỏa thuận",
+    "from": "Từ ${min}",
+    "upTo": "Lên đến ${max}"
+  },
+  "detail": {
+    "openJobPage": "Mở trang việc làm",
+    "posted": "Đăng ngày {date}",
+    "checkCvFit": "Kiểm tra độ phù hợp CV",
+    "aboutRole": "Mô tả công việc",
+    "requirements": "Yêu cầu",
+    "benefits": "Quyền lợi"
+  },
+  "process": {
+    "title": "Quy trình tuyển dụng",
+    "empty": "Công ty chưa cung cấp quy trình tuyển dụng",
+    "formats": {
+      "ONLINE": "Trực tuyến",
+      "ONSITE": "Tại văn phòng",
+      "PHONE": "Điện thoại",
+      "ASSIGNMENT": "Bài tập về nhà"
+    },
+    "minutes": "{count} phút"
+  },
+  "notes": {
+    "title": "Ghi chú từ công ty"
+  },
+  "panel": {
+    "label": "Chi tiết việc làm",
+    "errorTitle": "Không thể tải việc làm này",
+    "errorBody": "Danh sách việc làm vẫn hoạt động. Hãy thử lại hoặc mở việc làm ở trang riêng.",
+    "retry": "Thử lại",
+    "openJobPage": "Mở trang việc làm"
+  },
+  "actions": {
+    "apply": "Ứng tuyển",
+    "applied": "Đã ứng tuyển",
+    "checkFailed": "Không thể kiểm tra các đơn ứng tuyển của bạn. Hãy tải lại trang để thử lại.",
+    "sent": "Đã gửi hồ sơ ứng tuyển.",
+    "viewApplications": "Xem việc đã ứng tuyển",
+    "needCv": "Bạn cần có CV để ứng tuyển.",
+    "uploadCv": "Tải CV lên trong hồ sơ của bạn"
+  },
+  "applyDialog": {
+    "title": "Ứng tuyển vị trí {title}",
+    "cv": "CV của bạn",
+    "coverLetter": "Thư giới thiệu (không bắt buộc)",
+    "cancel": "Hủy",
+    "sending": "Đang gửi…",
+    "submit": "Nộp hồ sơ",
+    "errors": {
+      "alreadyApplied": "Bạn đã ứng tuyển việc làm này rồi.",
+      "closed": "Việc làm này không còn nhận hồ sơ.",
+      "generic": "Không thể gửi hồ sơ ứng tuyển. Vui lòng thử lại."
+    }
+  },
+  "matchScore": {
+    "strong": "Khớp CV {score}%",
+    "normal": "Khớp {score}%"
+  },
+  "company": {
+    "loadError": "Không thể tải thông tin doanh nghiệp.",
+    "loading": "Đang tải thông tin doanh nghiệp...",
+    "notFoundTitle": "Không tìm thấy công ty",
+    "notFoundBody": "Hồ sơ công ty này không tồn tại hoặc hiện đang trong trạng thái chờ ban quản trị phê duyệt.",
+    "website": "Ghé thăm Website ↗",
+    "about": "Về chúng tôi",
+    "noDescription": "Chưa có thông tin mô tả chi tiết."
+  },
+  "notFound": {
+    "title": "Không tìm thấy việc làm",
+    "description": "Việc làm này không tồn tại hoặc đã ngừng nhận hồ sơ.",
+    "back": "Quay lại danh sách việc làm"
+  }
+}

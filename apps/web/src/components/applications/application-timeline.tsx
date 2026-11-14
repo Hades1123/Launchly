@@ -1,28 +1,24 @@
 import { Check } from 'lucide-react';
+import { useFormatter, useTranslations } from 'next-intl';
 import type { CandidateApplicationDetail } from '@launchly/shared';
 import { Badge } from '@/components/ui/badge';
 import { isFinalStatus, StatusBadge } from '@/components/applications/status-badge';
 import { cn } from '@/lib/cn';
 
-const dateFormat = new Intl.DateTimeFormat('en-GB', {
-  day: 'numeric',
-  month: 'short',
-  year: 'numeric',
-});
-
-export function formatDate(iso: string): string {
-  return dateFormat.format(new Date(iso));
-}
+/** Short date used across the applications list, formatted in the active locale. */
+export const DATE_FORMAT = { day: 'numeric', month: 'short', year: 'numeric' } as const;
 
 /** Status history (oldest first) and the job's hiring rounds with the current one marked. */
 export function ApplicationTimeline({ detail }: { detail: CandidateApplicationDetail }) {
+  const t = useTranslations('candidate.applications.timeline');
+  const format = useFormatter();
   const stages = [...detail.stages].sort((a, b) => a.position - b.position);
 
   return (
     <div className="grid gap-6 border-t border-border pt-4 md:grid-cols-2">
       <div className="space-y-3">
-        <h3 className="font-display text-sm font-semibold text-foreground">Status history</h3>
-        <ol aria-label="Status history" className="space-y-5">
+        <h3 className="font-display text-sm font-semibold text-foreground">{t('statusHistory')}</h3>
+        <ol aria-label={t('statusHistory')} className="space-y-5">
           {detail.history.map((item, index) => {
             const isLast = index === detail.history.length - 1;
             return (
@@ -53,7 +49,7 @@ export function ApplicationTimeline({ detail }: { detail: CandidateApplicationDe
                 <div className="flex flex-wrap items-center gap-2">
                   <StatusBadge status={item.toStatus} />
                   <span className="font-mono text-xs text-subtle-foreground">
-                    {formatDate(item.changedAt)}
+                    {format.dateTime(new Date(item.changedAt), DATE_FORMAT)}
                   </span>
                 </div>
                 {item.note && <p className="text-xs text-muted-foreground">{item.note}</p>}
@@ -64,11 +60,11 @@ export function ApplicationTimeline({ detail }: { detail: CandidateApplicationDe
       </div>
 
       <div className="space-y-3">
-        <h3 className="font-display text-sm font-semibold text-foreground">Hiring rounds</h3>
+        <h3 className="font-display text-sm font-semibold text-foreground">{t('hiringRounds')}</h3>
         {stages.length === 0 ? (
-          <p className="text-xs text-muted-foreground">This job has no rounds yet.</p>
+          <p className="text-xs text-muted-foreground">{t('noRounds')}</p>
         ) : (
-          <ol aria-label="Hiring rounds" className="space-y-2 text-sm">
+          <ol aria-label={t('hiringRounds')} className="space-y-2 text-sm">
             {stages.map((stage) => {
               const current = stage.name === detail.currentStageName;
               return (
@@ -78,7 +74,7 @@ export function ApplicationTimeline({ detail }: { detail: CandidateApplicationDe
                   </span>
                   {current && (
                     <Badge tone="primary" shape="pill">
-                      Current round
+                      {t('currentRound')}
                     </Badge>
                   )}
                 </li>

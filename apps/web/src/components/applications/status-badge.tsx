@@ -1,14 +1,16 @@
 import type { ApplicationStatus } from '@launchly/shared';
+import { useTranslations } from 'next-intl';
 import { Badge, type BadgeTone } from '@/components/ui/badge';
 
-export const statusConfig: Record<ApplicationStatus, { label: string; tone: BadgeTone }> = {
-  SUBMITTED: { label: 'Submitted', tone: 'neutral' },
-  SCREENING: { label: 'Screening', tone: 'primary' },
-  INTERVIEW: { label: 'Interview', tone: 'primary' },
-  OFFER: { label: 'Offer', tone: 'success' },
-  ACCEPTED: { label: 'Accepted', tone: 'success' },
-  REJECTED: { label: 'Rejected', tone: 'danger' },
-  WITHDRAWN: { label: 'Withdrawn', tone: 'neutral' },
+/** Badge tone per status; the text comes from `candidate.applications.status.<STATUS>`. */
+const STATUS_TONE: Record<ApplicationStatus, BadgeTone> = {
+  SUBMITTED: 'neutral',
+  SCREENING: 'primary',
+  INTERVIEW: 'primary',
+  OFFER: 'success',
+  ACCEPTED: 'success',
+  REJECTED: 'danger',
+  WITHDRAWN: 'neutral',
 };
 
 /** Statuses that end the application; nothing happens after them. */
@@ -19,14 +21,14 @@ export function isFinalStatus(status: ApplicationStatus): boolean {
 }
 
 export function StatusBadge({ status }: { status: ApplicationStatus }) {
-  const { label, tone } = statusConfig[status];
+  const t = useTranslations('candidate.applications.status');
   return (
     <span className="inline-flex items-center gap-1.5">
-      <Badge tone={tone} shape="pill">
-        {label}
+      <Badge tone={STATUS_TONE[status]} shape="pill">
+        {t(status)}
       </Badge>
       {isFinalStatus(status) && (
-        <span className="text-xs font-semibold text-subtle-foreground">Final</span>
+        <span className="text-xs font-semibold text-subtle-foreground">{t('final')}</span>
       )}
     </span>
   );

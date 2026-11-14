@@ -1,7 +1,11 @@
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import { GoogleLinkFlow } from '@/components/auth/google-link-flow';
 
-export const metadata: Metadata = { title: 'Xác nhận Google | Launchly' };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('auth.metadata');
+  return { title: t('googleLink') };
+}
 
 type GoogleLinkPageProps = {
   searchParams: Promise<{ token?: string }>;

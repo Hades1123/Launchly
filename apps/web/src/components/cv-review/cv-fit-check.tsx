@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { AssessmentDto, CandidateProfile, CreateAssessmentInput } from '@launchly/shared';
 import { ConsentBox } from '@/components/cv-review/consent-box';
 import { FitCheckForm } from '@/components/cv-review/fit-check-form';
@@ -18,6 +19,7 @@ function Notice({ children }: { children: React.ReactNode }) {
 }
 
 export function CvFitCheck({ jobId }: { jobId?: string }) {
+  const t = useTranslations('candidate.cvReview.check');
   const { status, user } = useAuth();
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -36,13 +38,12 @@ export function CvFitCheck({ jobId }: { jobId?: string }) {
       .then((loaded) => active && setProfile(loaded))
       .catch(
         (cause) =>
-          active &&
-          setLoadError(cause instanceof ApiError ? cause.message : 'Could not load your profile.'),
+          active && setLoadError(cause instanceof ApiError ? cause.message : t('loadError')),
       );
     return () => {
       active = false;
     };
-  }, [isCandidate]);
+  }, [isCandidate, t]);
 
   // Leaving the page cancels an analysis that is still running.
   useEffect(() => () => controllerRef.current?.abort(), []);
@@ -59,13 +60,13 @@ export function CvFitCheck({ jobId }: { jobId?: string }) {
       if (!controller.signal.aborted) setResult(assessment);
     } catch (cause) {
       if (controller.signal.aborted) return;
-      setError(cause instanceof ApiError ? cause.message : 'The analysis failed. Try again.');
+      setError(cause instanceof ApiError ? cause.message : t('analysisError'));
     } finally {
       if (!controller.signal.aborted) setPending(false);
     }
   }
 
-  if (status === 'loading') return <Notice>Loading…</Notice>;
+  if (status === 'loading') return <Notice>{t('loading')}</Notice>;
   if (status !== 'authenticated') {
     return (
       <Notice>
@@ -73,14 +74,14 @@ export function CvFitCheck({ jobId }: { jobId?: string }) {
           href={`/login?next=${encodeURIComponent(jobId ? `/cv-review?jobId=${jobId}` : '/cv-review')}`}
           className={buttonClasses('primary')}
         >
-          Log in to check your CV
+          {t('logIn')}
         </Link>
       </Notice>
     );
   }
-  if (!isCandidate) return <Notice>The CV fit check is available to candidates only.</Notice>;
+  if (!isCandidate) return <Notice>{t('candidatesOnly')}</Notice>;
   if (loadError) return <Notice>{loadError}</Notice>;
-  if (!profile) return <Notice>Loading…</Notice>;
+  if (!profile) return <Notice>{t('loading')}</Notice>;
 
   if (!profile.aiConsentAcceptedAt) {
     return <ConsentBox onAccepted={setProfile} />;
@@ -88,10 +89,13 @@ export function CvFitCheck({ jobId }: { jobId?: string }) {
   if (profile.resumes.length === 0) {
     return (
       <Notice>
-        Upload a CV first.{' '}
-        <Link href="/profile" className="font-semibold text-primary hover:underline">
-          Go to your profile
-        </Link>
+        {t.rich('noCv', {
+          link: (chunks) => (
+            <Link href="/profile" className="font-semibold text-primary hover:underline">
+              {chunks}
+            </Link>
+          ),
+        })}
       </Notice>
     );
   }
@@ -106,7 +110,7 @@ export function CvFitCheck({ jobId }: { jobId?: string }) {
       />
       {pending && (
         <p role="status" className="text-sm text-muted-foreground">
-          Analysing your CV. This can take up to 30 seconds…
+          {t('analysing')}
         </p>
       )}
       {error && (

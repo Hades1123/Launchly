@@ -1,6 +1,7 @@
 'use client';
 
 import type { UserDto } from '@launchly/shared';
+import { useTranslations } from 'next-intl';
 import {
   createContext,
   useCallback,
@@ -30,21 +31,23 @@ const AuthContext = createContext<AuthContextValue | null>(null);
  * which attaches it to every request and refreshes it on 401.
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const t = useTranslations('layout.auth');
   const [status, setStatus] = useState<AuthStatus>('loading');
   const [user, setUser] = useState<UserDto | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  // The server's message when it sent one; null falls back to a translated message below.
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const acceptSession = useCallback((token: string, currentUser: UserDto) => {
     setAccessToken(token);
     setUser(currentUser);
-    setError(null);
+    setServerError(null);
     setStatus('authenticated');
   }, []);
 
   const endSession = useCallback(() => {
     setAccessToken(null);
     setUser(null);
-    setError(null);
+    setServerError(null);
     setStatus('anonymous');
   }, []);
 
@@ -66,9 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (cause instanceof ApiError && cause.status === 401) {
           endSession();
         } else {
-          setError(
-            cause instanceof ApiError ? cause.message : 'Không thể khôi phục phiên đăng nhập.',
-          );
+          setServerError(cause instanceof ApiError ? cause.message : null);
           setStatus('unavailable');
         }
       }
@@ -85,6 +86,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       endSession();
     }
   }, [endSession]);
+
+  // Translated at render time so the fallback follows the current locale.
+  const error = status === 'unavailable' ? (serverError ?? t('restoreFailed')) : null;
 
   const value = useMemo(
     () => ({ status, user, error, acceptSession, logout }),

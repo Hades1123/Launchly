@@ -1,0 +1,18 @@
+{
+  "generic": "Đã xảy ra lỗi. Vui lòng thử lại.",
+  "INVALID_CREDENTIALS": "Email hoặc mật khẩu chưa chính xác.",
+  "EMAIL_NOT_VERIFIED": "Tài khoản chưa được xác minh. Hãy kiểm tra email hoặc gửi lại liên kết xác minh.",
+  "ACCOUNT_LOCKED": "Tài khoản đang bị khóa. Vui lòng liên hệ bộ phận hỗ trợ.",
+  "EMAIL_ALREADY_REGISTERED": "Email này đã được đăng ký. Hãy đăng nhập hoặc dùng email khác.",
+  "INVALID_OR_EXPIRED_TOKEN": "Liên kết không hợp lệ hoặc đã hết hạn. Hãy yêu cầu một liên kết mới.",
+  "INVALID_GOOGLE_IDENTITY": "Không thể xác minh tài khoản Google. Hãy thử lại.",
+  "GOOGLE_SIGN_IN_UNAVAILABLE": "Đăng nhập Google hiện chưa được cấu hình.",
+  "RATE_LIMITED": "Bạn đã thử quá nhiều lần. Vui lòng chờ rồi thử lại.",
+  "EMAIL_DELIVERY_FAILED": "Chưa thể gửi email lúc này. Vui lòng thử lại sau.",
+  "SESSION_EXPIRED": "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+  "VALIDATION_ERROR": "Vui lòng kiểm tra lại thông tin đã nhập.",
+  "fields": {
+    "email": "Vui lòng nhập địa chỉ email hợp lệ.",
+    "password": "Mật khẩu cần có từ 8 đến 128 ký tự."
+  }
+}

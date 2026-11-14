@@ -67,7 +67,7 @@ test('AC1: the table shows name, headline, skills, submitted date, round and sta
   for (const skill of applicant.candidate.skills) {
     await expect(row.getByText(skill, { exact: true })).toBeVisible();
   }
-  await expect(row.getByText('Submitted', { exact: true })).toBeVisible();
+  await expect(row.getByText('Đã nộp', { exact: true })).toBeVisible();
   for (const column of ['Ứng viên', 'Kỹ năng', 'Ngày nộp', 'Vòng hiện tại', 'Trạng thái']) {
     await expect(page.getByRole('columnheader', { name: column })).toBeVisible();
   }
@@ -83,19 +83,19 @@ test('AC4: a recruiter moves an applicant to Interview and the candidate sees it
   await page.goto(`/recruiter/jobs/${jobId}/applicants`);
 
   await page.getByRole('button', { name: `Cập nhật trạng thái của ${name}` }).click();
-  await page.getByLabel('Trạng thái mới').selectOption({ label: 'Interview' });
+  await page.getByLabel('Trạng thái mới').selectOption({ label: 'Phỏng vấn' });
   await page.getByLabel('Ghi chú (tùy chọn)').fill('Hẹn phỏng vấn kỹ thuật thứ Hai');
   await page.getByRole('button', { name: 'Lưu thay đổi' }).click();
 
-  await expect(page.getByRole('status')).toContainText(`Đã chuyển ${name} sang Interview.`);
-  await expect(applicantRow(page, name).getByText('Interview', { exact: true })).toBeVisible();
+  await expect(page.getByRole('status')).toContainText(`Đã chuyển ${name} sang Phỏng vấn.`);
+  await expect(applicantRow(page, name).getByText('Phỏng vấn', { exact: true })).toBeVisible();
 
   // AC1: the change persists and shows in the candidate's My applications.
   await page.context().clearCookies();
   await signIn(page, CANDIDATE);
   await page.goto('/applications');
   await expect(
-    page.getByRole('article').filter({ hasText: FLOW_JOB }).getByText('Interview', { exact: true }),
+    page.getByRole('article').filter({ hasText: FLOW_JOB }).getByText('Phỏng vấn', { exact: true }),
   ).toBeVisible();
 });
 
@@ -106,11 +106,11 @@ test('AC1: the status filter narrows the table client-side', async ({ page, requ
   const row = applicantRow(page, applicant.candidate.name);
   await expect(row).toBeVisible();
 
-  await page.getByLabel('Lọc theo trạng thái').selectOption({ label: 'Interview' });
+  await page.getByLabel('Lọc theo trạng thái').selectOption({ label: 'Phỏng vấn' });
   await expect(row).toHaveCount(0);
   await expect(page.getByText('Không có ứng viên nào ở trạng thái này.')).toBeVisible();
 
-  await page.getByLabel('Lọc theo trạng thái').selectOption({ label: 'Submitted' });
+  await page.getByLabel('Lọc theo trạng thái').selectOption({ label: 'Đã nộp' });
   await expect(row).toBeVisible();
 });
 

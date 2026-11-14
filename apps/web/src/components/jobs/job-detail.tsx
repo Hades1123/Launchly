@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { MapPin } from 'lucide-react';
+import { useFormatter, useTranslations } from 'next-intl';
 import { buildProcessView, type PublicJobDetail } from '@launchly/shared';
 import { CompanyAvatar } from '@/components/jobs/company-avatar';
 import { CompanyNotes } from '@/components/jobs/company-notes';
@@ -33,9 +34,11 @@ type JobDetailProps = {
 
 /** Everything a candidate needs about one job: facts, Apply, CV fit, hiring process and notes. */
 export function JobDetail({ job, variant = 'page' }: JobDetailProps) {
+  const t = useTranslations('jobs');
+  const format = useFormatter();
   const level = levelConfig[job.level];
   const process = buildProcessView(job.stages, job.notes);
-  const postedOn = new Date(job.createdAt).toLocaleDateString('en-GB', {
+  const postedOn = format.dateTime(new Date(job.createdAt), {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
@@ -68,43 +71,45 @@ export function JobDetail({ job, variant = 'page' }: JobDetailProps) {
               href={`/jobs/${job.id}`}
               className="shrink-0 text-xs font-medium text-subtle-foreground hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             >
-              Open job page
+              {t('detail.openJobPage')}
             </Link>
           )}
         </div>
 
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted-foreground">
           <Badge tone={level.tone} shape="pill">
-            {level.label}
+            {t(`levels.${job.level}`)}
           </Badge>
           <span className="font-display font-semibold text-primary">
-            {formatSalary(job.salary)}
+            {formatSalary(job.salary, t)}
           </span>
           <span className="flex items-center gap-1">
             <MapPin className="size-4" strokeWidth={1.75} aria-hidden />
             {job.location}
           </span>
           {job.industry && <span>{job.industry}</span>}
-          <span className="text-subtle-foreground">Posted {postedOn}</span>
+          <span className="text-subtle-foreground">{t('detail.posted', { date: postedOn })}</span>
         </div>
 
         <div className="flex flex-wrap gap-3" data-slot="job-actions">
           <JobActions jobId={job.id} jobTitle={job.title} />
           <Link href={`/cv-review?jobId=${job.id}`} className={buttonClasses('soft')}>
-            Check my CV fit
+            {t('detail.checkCvFit')}
           </Link>
         </div>
       </Card>
 
       <Card className="space-y-3">
-        <h2 className="font-display text-lg font-semibold text-foreground">About the role</h2>
+        <h2 className="font-display text-lg font-semibold text-foreground">
+          {t('detail.aboutRole')}
+        </h2>
         <p className="text-sm leading-relaxed whitespace-pre-line text-foreground">
           {job.description}
         </p>
       </Card>
 
-      <BulletCard title="Requirements" items={job.requirements} />
-      <BulletCard title="Benefits" items={job.benefits} />
+      <BulletCard title={t('detail.requirements')} items={job.requirements} />
+      <BulletCard title={t('detail.benefits')} items={job.benefits} />
 
       <HiringProcessTimeline view={process} />
       <CompanyNotes view={process} />

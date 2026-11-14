@@ -19,6 +19,7 @@ import {
   PlusCircle,
   UsersRound,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { CompanyDto, CompanyModerationStatus } from '@launchly/shared';
 import { BrandLogo } from '@/components/layout/brand-logo';
 import { Badge, type BadgeTone } from '@/components/ui/badge';
@@ -42,11 +43,13 @@ export function useRecruiterCompany(): RecruiterCompany {
   return useContext(CompanyContext);
 }
 
-const companyStatusView: Record<CompanyModerationStatus, { label: string; tone: BadgeTone }> = {
-  APPROVED: { label: 'Đã duyệt', tone: 'success' },
-  PENDING: { label: 'Chờ duyệt', tone: 'warning' },
-  REJECTED: { label: 'Bị từ chối', tone: 'danger' },
+const companyStatusTone: Record<CompanyModerationStatus, BadgeTone> = {
+  APPROVED: 'success',
+  PENDING: 'warning',
+  REJECTED: 'danger',
 };
+
+type ShellT = ReturnType<typeof useTranslations<'recruiter.shell'>>;
 
 type NavItem = {
   label: string;
@@ -56,24 +59,24 @@ type NavItem = {
   isActive?: (pathname: string) => boolean;
 };
 
-function navItems(company: RecruiterCompany): NavItem[] {
+function navItems(company: RecruiterCompany, t: ShellT): NavItem[] {
   const approved = company.kind === 'ready' && company.company.moderationStatus === 'APPROVED';
   return [
     {
-      label: 'Tin tuyển dụng',
+      label: t('nav.jobs'),
       icon: BriefcaseBusiness,
       href: '/recruiter/jobs',
       isActive: (p) => p.startsWith('/recruiter/jobs') && p !== '/recruiter/jobs/new',
     },
     {
-      label: 'Đăng tin mới',
+      label: t('nav.newJob'),
       icon: PlusCircle,
       href: '/recruiter/jobs/new',
       isActive: (p) => p === '/recruiter/jobs/new',
     },
-    { label: 'Ứng viên', icon: UsersRound },
+    { label: t('nav.applicants'), icon: UsersRound },
     {
-      label: 'Trang công ty',
+      label: t('nav.companyPage'),
       icon: Building2,
       href:
         company.kind === 'none'
@@ -89,15 +92,16 @@ const navBase =
   'flex items-center gap-3 rounded-control px-3 py-2 text-sm font-semibold whitespace-nowrap transition-colors';
 
 function NavLinks({ company, pathname }: { company: RecruiterCompany; pathname: string }) {
+  const t = useTranslations('recruiter.shell');
   return (
     <>
-      {navItems(company).map(({ label, icon: Icon, href, isActive }) => {
+      {navItems(company, t).map(({ label, icon: Icon, href, isActive }) => {
         if (!href) {
           return (
             <span
               key={label}
               aria-disabled="true"
-              title="Sắp ra mắt"
+              title={t('nav.comingSoon')}
               className={cn(navBase, 'cursor-not-allowed text-subtle-foreground')}
             >
               <Icon className="size-5" />
@@ -129,23 +133,24 @@ function NavLinks({ company, pathname }: { company: RecruiterCompany; pathname: 
 }
 
 function CompanyCard({ company }: { company: RecruiterCompany }) {
+  const t = useTranslations('recruiter.shell');
   if (company.kind === 'loading') {
     return <div className="h-16 animate-pulse rounded-card bg-surface-muted" />;
   }
   if (company.kind !== 'ready') {
     return (
       <div className="rounded-card bg-surface-muted p-3 text-sm">
-        <p className="font-semibold text-foreground">Chưa có công ty</p>
+        <p className="font-semibold text-foreground">{t('company.none')}</p>
         <Link
           href="/company/register"
           className="text-xs font-semibold text-primary hover:underline"
         >
-          Đăng ký công ty
+          {t('company.register')}
         </Link>
       </div>
     );
   }
-  const view = companyStatusView[company.company.moderationStatus];
+  const status = company.company.moderationStatus;
   return (
     <div className="flex items-center gap-3 rounded-card bg-surface-muted p-3">
       <span className="flex size-10 shrink-0 items-center justify-center rounded-control bg-surface text-primary shadow-card">
@@ -153,8 +158,8 @@ function CompanyCard({ company }: { company: RecruiterCompany }) {
       </span>
       <div className="min-w-0">
         <p className="truncate text-sm font-semibold text-foreground">{company.company.name}</p>
-        <Badge tone={view.tone} shape="pill" className="mt-1">
-          {view.label}
+        <Badge tone={companyStatusTone[status]} shape="pill" className="mt-1">
+          {t(`companyStatus.${status}`)}
         </Badge>
         <RejectedCompanyNotice company={company} />
       </div>
@@ -164,17 +169,20 @@ function CompanyCard({ company }: { company: RecruiterCompany }) {
 
 /** Rejection reason and the way forward, shown in the sidebar and in the mobile header. */
 function RejectedCompanyNotice({ company }: { company: RecruiterCompany }) {
+  const t = useTranslations('recruiter.shell.company');
   if (company.kind !== 'ready' || company.company.moderationStatus !== 'REJECTED') return null;
   return (
     <div className="mt-2 space-y-1">
       {company.company.moderationReason && (
-        <p className="text-xs break-words text-danger">Lý do: {company.company.moderationReason}</p>
+        <p className="text-xs break-words text-danger">
+          {t('reason', { reason: company.company.moderationReason })}
+        </p>
       )}
       <Link
         href="/company/register"
         className="block rounded-control text-xs font-semibold text-primary hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       >
-        Đăng ký công ty khác
+        {t('registerOther')}
       </Link>
     </div>
   );
@@ -193,6 +201,7 @@ function GuardCard({ children }: { children: ReactNode }) {
 
 /** Recruiter workspace: sidebar on desktop, top bar on mobile. Only recruiters get past it. */
 export function RecruiterShell({ children }: { children: ReactNode }) {
+  const t = useTranslations('recruiter.shell');
   const { status, user, logout } = useAuth();
   const pathname = usePathname();
   const [company, setCompany] = useState<RecruiterCompany>({ kind: 'loading' });
@@ -208,33 +217,31 @@ export function RecruiterShell({ children }: { children: ReactNode }) {
       } catch (error) {
         if (!active) return;
         if (error instanceof ApiError && error.status === 404) setCompany({ kind: 'none' });
-        else setCompany({ kind: 'error', text: 'Không thể tải thông tin công ty.' });
+        else setCompany({ kind: 'error', text: t('company.loadError') });
       }
     }
     void load();
     return () => {
       active = false;
     };
-  }, [isRecruiter]);
+  }, [isRecruiter, t]);
 
   if (status === 'loading') {
     return (
       <GuardCard>
-        <p className="text-sm text-muted-foreground">Đang tải…</p>
+        <p className="text-sm text-muted-foreground">{t('guard.loading')}</p>
       </GuardCard>
     );
   }
   if (status !== 'authenticated' || !user) {
     return (
       <GuardCard>
-        <p className="text-sm text-muted-foreground">
-          Vui lòng đăng nhập bằng tài khoản nhà tuyển dụng.
-        </p>
+        <p className="text-sm text-muted-foreground">{t('guard.signInPrompt')}</p>
         <Link
           href={`/login?next=${encodeURIComponent(pathname)}`}
           className={buttonClasses('primary', 'mt-4')}
         >
-          Đăng nhập
+          {t('guard.signIn')}
         </Link>
       </GuardCard>
     );
@@ -242,12 +249,10 @@ export function RecruiterShell({ children }: { children: ReactNode }) {
   if (!isRecruiter) {
     return (
       <GuardCard>
-        <p className="font-semibold text-foreground">Khu vực dành cho nhà tuyển dụng</p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Tài khoản của bạn không có quyền truy cập trang quản lý tuyển dụng.
-        </p>
+        <p className="font-semibold text-foreground">{t('guard.recruitersOnly')}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{t('guard.noAccess')}</p>
         <Link href="/jobs" className={buttonClasses('soft', 'mt-4')}>
-          Về trang việc làm
+          {t('guard.backToJobs')}
         </Link>
       </GuardCard>
     );
@@ -262,11 +267,11 @@ export function RecruiterShell({ children }: { children: ReactNode }) {
           <div className="space-y-1 px-2 pt-2">
             <BrandLogo />
             <p className="text-xs font-semibold tracking-wide text-subtle-foreground uppercase">
-              Nhà tuyển dụng
+              {t('eyebrow')}
             </p>
           </div>
           <CompanyCard company={company} />
-          <nav aria-label="Quản lý tuyển dụng" className="flex flex-col gap-1">
+          <nav aria-label={t('nav.label')} className="flex flex-col gap-1">
             <NavLinks company={company} pathname={pathname} />
           </nav>
           <div className="mt-auto space-y-3">
@@ -275,7 +280,7 @@ export function RecruiterShell({ children }: { children: ReactNode }) {
               className={cn(navBase, 'text-muted-foreground hover:bg-surface-muted')}
             >
               <ArrowLeft className="size-5" />
-              Về trang việc làm
+              {t('backToJobs')}
             </Link>
             <div className="flex items-center gap-3 rounded-card bg-surface-muted p-3">
               <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-subtle text-xs font-semibold text-primary-subtle-foreground">
@@ -288,8 +293,8 @@ export function RecruiterShell({ children }: { children: ReactNode }) {
               <button
                 type="button"
                 onClick={() => void logout()}
-                aria-label="Đăng xuất"
-                title="Đăng xuất"
+                aria-label={t('logout')}
+                title={t('logout')}
                 className="rounded-control p-2 text-muted-foreground hover:bg-secondary hover:text-danger focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               >
                 <LogOut className="size-4" aria-hidden />
@@ -302,18 +307,18 @@ export function RecruiterShell({ children }: { children: ReactNode }) {
           <div className="flex h-16 items-center justify-between gap-3 px-4">
             <BrandLogo />
             <Link href="/jobs" className={buttonClasses('ghost', 'px-2')}>
-              <ChevronLeft className="size-4" aria-hidden /> Trang việc làm
+              <ChevronLeft className="size-4" aria-hidden /> {t('jobsPage')}
             </Link>
           </div>
           {company.kind === 'ready' && company.company.moderationStatus === 'REJECTED' && (
             <div className="mx-4 mb-3 rounded-card bg-danger-subtle p-3">
               <p className="text-xs font-semibold text-danger">
-                {company.company.name}: bị từ chối
+                {t('company.rejected', { name: company.company.name })}
               </p>
               <RejectedCompanyNotice company={company} />
             </div>
           )}
-          <nav aria-label="Quản lý tuyển dụng" className="flex gap-1 overflow-x-auto px-4 pb-3">
+          <nav aria-label={t('nav.label')} className="flex gap-1 overflow-x-auto px-4 pb-3">
             <NavLinks company={company} pathname={pathname} />
           </nav>
         </header>

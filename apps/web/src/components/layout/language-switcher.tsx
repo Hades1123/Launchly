@@ -28,7 +28,7 @@ export function LanguageSwitcher() {
       className="gap-1.5 px-2.5"
       onClick={toggle}
       disabled={pending}
-      aria-label={t('header.switchLanguage', { language: t(`common.languages.${next}`) })}
+      aria-label={t('layout.header.switchLanguage', { language: t(`common.languages.${next}`) })}
     >
       <Languages className="size-5" strokeWidth={1.5} aria-hidden />
       <span className="font-mono text-xs uppercase">{locale}</span>

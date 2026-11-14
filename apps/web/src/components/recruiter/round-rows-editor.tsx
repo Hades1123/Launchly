@@ -21,22 +21,20 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ArrowDown, ArrowUp, GripVertical, ListOrdered, Plus, Trash2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import {
   MAX_ROUND_DURATION_MINUTES,
   MAX_ROUNDS,
   MIN_ROUND_DURATION_MINUTES,
+  ROUND_FORMATS,
   type RoundDto,
   type RoundFormat,
 } from '@launchly/shared';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/cn';
 
-export const ROUND_FORMAT_OPTIONS: Record<RoundFormat, string> = {
-  ONLINE: 'Trực tuyến',
-  ONSITE: 'Tại văn phòng',
-  PHONE: 'Điện thoại',
-  ASSIGNMENT: 'Bài tập',
-};
+/** Translator for the `recruiter.rounds` namespace: `useTranslations('recruiter.rounds')`. */
+export type RoundsTranslator = ReturnType<typeof useTranslations<'recruiter.rounds'>>;
 
 export type RoundRow = {
   key: string;
@@ -47,11 +45,16 @@ export type RoundRow = {
 };
 export type RoundRowErrors = { name?: string; format?: string; duration?: string };
 
-export const ROUND_ERROR_TEXT = {
-  name: 'Tên vòng là bắt buộc.',
-  format: 'Hãy chọn hình thức.',
-  duration: `Nhập số phút từ ${MIN_ROUND_DURATION_MINUTES} đến ${MAX_ROUND_DURATION_MINUTES}.`,
-} as const;
+/** The message shown under a round field that fails validation. */
+export function roundErrorText(field: keyof RoundRowErrors, t: RoundsTranslator): string {
+  if (field === 'duration') {
+    return t('errors.duration', {
+      min: MIN_ROUND_DURATION_MINUTES,
+      max: MAX_ROUND_DURATION_MINUTES,
+    });
+  }
+  return t(`errors.${field}`);
+}
 
 export const emptyRoundRow = (): RoundRow => ({
   key: crypto.randomUUID(),
@@ -113,6 +116,7 @@ type RoundItemProps = {
 };
 
 function SortableRound({ row, index, count, error, onUpdate, onMove, onRemove }: RoundItemProps) {
+  const t = useTranslations('recruiter.rounds');
   const {
     attributes,
     listeners,
@@ -122,7 +126,8 @@ function SortableRound({ row, index, count, error, onUpdate, onMove, onRemove }:
     transition,
     isDragging,
   } = useSortable({ id: row.key });
-  const label = `Vòng ${index + 1}`;
+  const n = index + 1;
+  const label = t('round', { n });
   const last = index === count - 1;
   return (
     <li
@@ -155,7 +160,7 @@ function SortableRound({ row, index, count, error, onUpdate, onMove, onRemove }:
               ref={setActivatorNodeRef}
               {...attributes}
               {...listeners}
-              aria-label={`Kéo để sắp xếp ${label.toLowerCase()}`}
+              aria-label={t('dragHandle', { n })}
               className={cn(
                 '-ml-2 cursor-grab touch-none rounded-control p-1.5 text-subtle-foreground hover:bg-surface-muted hover:text-foreground',
                 'focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:cursor-grabbing',
@@ -171,7 +176,7 @@ function SortableRound({ row, index, count, error, onUpdate, onMove, onRemove }:
             <Button
               variant="ghost"
               className="p-2"
-              aria-label={`Chuyển vòng ${index + 1} lên`}
+              aria-label={t('moveUp', { n })}
               disabled={index === 0}
               onClick={() => onMove(-1)}
             >
@@ -180,7 +185,7 @@ function SortableRound({ row, index, count, error, onUpdate, onMove, onRemove }:
             <Button
               variant="ghost"
               className="p-2"
-              aria-label={`Chuyển vòng ${index + 1} xuống`}
+              aria-label={t('moveDown', { n })}
               disabled={last}
               onClick={() => onMove(1)}
             >
@@ -189,7 +194,7 @@ function SortableRound({ row, index, count, error, onUpdate, onMove, onRemove }:
             <Button
               variant="danger-ghost"
               className="p-2"
-              aria-label={`Xóa vòng ${index + 1}`}
+              aria-label={t('remove', { n })}
               onClick={onRemove}
             >
               <Trash2 className="size-4" aria-hidden />
@@ -197,32 +202,32 @@ function SortableRound({ row, index, count, error, onUpdate, onMove, onRemove }:
           </div>
         </div>
         <div className="grid gap-3 sm:grid-cols-4">
-          <Field label="Tên vòng" error={error.name} className="sm:col-span-2">
+          <Field label={t('fields.name')} error={error.name} className="sm:col-span-2">
             <input
               className={fieldClass(error.name)}
               value={row.name}
               maxLength={100}
-              placeholder="Ví dụ: Phỏng vấn kỹ thuật"
+              placeholder={t('fields.namePlaceholder')}
               onChange={(e) => onUpdate({ name: e.target.value })}
               aria-invalid={Boolean(error.name)}
             />
           </Field>
-          <Field label="Hình thức" error={error.format}>
+          <Field label={t('fields.format')} error={error.format}>
             <select
               className={fieldClass(error.format)}
               value={row.format}
               onChange={(e) => onUpdate({ format: e.target.value as RoundFormat | '' })}
               aria-invalid={Boolean(error.format)}
             >
-              <option value="">Chọn…</option>
-              {(Object.keys(ROUND_FORMAT_OPTIONS) as RoundFormat[]).map((f) => (
+              <option value="">{t('fields.choose')}</option>
+              {ROUND_FORMATS.map((f) => (
                 <option key={f} value={f}>
-                  {ROUND_FORMAT_OPTIONS[f]}
+                  {t(`formats.${f}`)}
                 </option>
               ))}
             </select>
           </Field>
-          <Field label="Thời lượng (phút)" error={error.duration}>
+          <Field label={t('fields.duration')} error={error.duration}>
             <input
               className={fieldClass(error.duration)}
               inputMode="numeric"
@@ -238,36 +243,49 @@ function SortableRound({ row, index, count, error, onUpdate, onMove, onRemove }:
   );
 }
 
-/** Common rounds a recruiter can add in one click, then adjust. */
-const ROUND_SUGGESTIONS: { name: string; format: RoundFormat; duration: string }[] = [
-  { name: 'Sàng lọc hồ sơ', format: 'ONLINE', duration: '15' },
-  { name: 'Bài tập về nhà', format: 'ASSIGNMENT', duration: '120' },
-  { name: 'Phỏng vấn kỹ thuật', format: 'ONLINE', duration: '60' },
-  { name: 'Phỏng vấn với quản lý', format: 'ONSITE', duration: '45' },
+/** Common rounds a recruiter can add in one click, then adjust; names are message keys. */
+const ROUND_SUGGESTIONS: {
+  name: 'screening' | 'takeHome' | 'technical' | 'manager';
+  format: RoundFormat;
+  duration: string;
+}[] = [
+  { name: 'screening', format: 'ONLINE', duration: '15' },
+  { name: 'takeHome', format: 'ASSIGNMENT', duration: '120' },
+  { name: 'technical', format: 'ONLINE', duration: '60' },
+  { name: 'manager', format: 'ONSITE', duration: '45' },
 ];
 
-/** "3 vòng · khoảng 2 giờ 15 phút" for the rounds that have a duration. */
-export function roundsSummary(rows: RoundRow[]): string {
-  if (rows.length === 0) return 'Chưa có vòng nào';
+/** "3 rounds · about 2 hours 15 minutes" for the rounds that have a duration. */
+export function roundsSummary(rows: RoundRow[], t: RoundsTranslator): string {
+  if (rows.length === 0) return t('summary.none');
   const minutes = rows.reduce((sum, r) => sum + (Number.parseInt(r.duration, 10) || 0), 0);
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
-  const time = [hours && `${hours} giờ`, rest && `${rest} phút`].filter(Boolean).join(' ');
-  return time ? `${rows.length} vòng · khoảng ${time}` : `${rows.length} vòng`;
+  const time = [
+    hours && t('summary.hours', { count: hours }),
+    rest && t('summary.minutes', { count: rest }),
+  ]
+    .filter(Boolean)
+    .join(' ');
+  return time
+    ? t('summary.withTime', { count: rows.length, time })
+    : t('summary.count', { count: rows.length });
 }
 
-/** Screen-reader messages for dragging rounds, in Vietnamese. */
-function announcements(rows: RoundRow[]): Announcements {
+/** Screen-reader messages for dragging rounds, in the active language. */
+function announcements(rows: RoundRow[], t: RoundsTranslator): Announcements {
   const position = (id: UniqueIdentifier | undefined) => rows.findIndex((r) => r.key === id) + 1;
   return {
-    onDragStart: ({ active }) => `Đã nhấc vòng ${position(active.id)}.`,
+    onDragStart: ({ active }) => t('announcements.dragStart', { n: position(active.id) }),
     onDragOver: ({ active, over }) =>
-      over ? `Vòng ${position(active.id)} đang ở vị trí ${position(over.id)}.` : undefined,
+      over
+        ? t('announcements.dragOver', { n: position(active.id), position: position(over.id) })
+        : undefined,
     onDragEnd: ({ active, over }) =>
       over
-        ? `Đã thả vòng ${position(active.id)} vào vị trí ${position(over.id)}.`
-        : `Đã thả vòng ${position(active.id)}.`,
-    onDragCancel: ({ active }) => `Đã hủy kéo vòng ${position(active.id)}.`,
+        ? t('announcements.dragEnd', { n: position(active.id), position: position(over.id) })
+        : t('announcements.dragEndNoTarget', { n: position(active.id) }),
+    onDragCancel: ({ active }) => t('announcements.dragCancel', { n: position(active.id) }),
   };
 }
 
@@ -284,6 +302,7 @@ export function RoundRowsEditor({
   errors: RoundRowErrors[];
   onChange: (rows: RoundRow[]) => void;
 }) {
+  const t = useTranslations('recruiter.rounds');
   // A stable id keeps dnd-kit's aria attributes identical on the server and the client.
   const dndId = useId();
   const sensors = useSensors(
@@ -309,7 +328,10 @@ export function RoundRowsEditor({
   }
 
   const used = new Set(rows.map((r) => r.name.trim().toLowerCase()));
-  const suggestions = ROUND_SUGGESTIONS.filter((r) => !used.has(r.name.toLowerCase()));
+  const suggestions = ROUND_SUGGESTIONS.map((r) => ({
+    ...r,
+    name: t(`suggestions.${r.name}`),
+  })).filter((r) => !used.has(r.name.toLowerCase()));
   const full = rows.length >= MAX_ROUNDS;
 
   return (
@@ -319,16 +341,13 @@ export function RoundRowsEditor({
           <span className="flex size-11 items-center justify-center rounded-full bg-primary-subtle text-primary">
             <ListOrdered className="size-5" aria-hidden />
           </span>
-          <p className="font-semibold text-foreground">Chưa có vòng tuyển dụng nào</p>
-          <p className="max-w-sm text-sm text-muted-foreground">
-            Thêm từng vòng theo thứ tự ứng viên sẽ trải qua, hoặc chọn nhanh một gợi ý bên dưới.
-          </p>
+          <p className="font-semibold text-foreground">{t('empty.title')}</p>
+          <p className="max-w-sm text-sm text-muted-foreground">{t('empty.body')}</p>
         </div>
       ) : (
         rows.length > 1 && (
           <p className="flex items-center gap-1 text-xs text-subtle-foreground">
-            <GripVertical className="size-4" aria-hidden /> Kéo biểu tượng này để đổi thứ tự các
-            vòng.
+            <GripVertical className="size-4" aria-hidden /> {t('dragHint')}
           </p>
         )
       )}
@@ -338,11 +357,8 @@ export function RoundRowsEditor({
         collisionDetection={closestCenter}
         onDragEnd={onDragEnd}
         accessibility={{
-          announcements: announcements(rows),
-          screenReaderInstructions: {
-            draggable:
-              'Nhấn Space để nhấc vòng, dùng phím mũi tên lên hoặc xuống để di chuyển, nhấn Space để thả hoặc Esc để hủy.',
-          },
+          announcements: announcements(rows, t),
+          screenReaderInstructions: { draggable: t('announcements.instructions') },
         }}
       >
         <SortableContext items={rows.map((r) => r.key)} strategy={verticalListSortingStrategy}>
@@ -364,11 +380,13 @@ export function RoundRowsEditor({
       </DndContext>
       <div className="flex flex-wrap items-center gap-2">
         <Button variant="soft" disabled={full} onClick={() => onChange([...rows, emptyRoundRow()])}>
-          <Plus className="size-4" aria-hidden /> Thêm vòng
+          <Plus className="size-4" aria-hidden /> {t('add')}
         </Button>
         {!full && suggestions.length > 0 && (
           <>
-            <span className="ml-1 text-xs font-semibold text-subtle-foreground">Gợi ý:</span>
+            <span className="ml-1 text-xs font-semibold text-subtle-foreground">
+              {t('suggestions.label')}
+            </span>
             {suggestions.map((suggestion) => (
               <button
                 key={suggestion.name}
@@ -384,7 +402,9 @@ export function RoundRowsEditor({
             ))}
           </>
         )}
-        {full && <span className="text-xs text-subtle-foreground">Tối đa {MAX_ROUNDS} vòng.</span>}
+        {full && (
+          <span className="text-xs text-subtle-foreground">{t('max', { max: MAX_ROUNDS })}</span>
+        )}
       </div>
     </div>
   );

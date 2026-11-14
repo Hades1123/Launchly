@@ -4,7 +4,7 @@ import { signIn } from './helpers/auth';
 test('AC2: jobs list shows seeded jobs', async ({ page }) => {
   await page.goto('/jobs');
 
-  await expect(page.getByText(/positions available/)).toBeVisible();
+  await expect(page.getByText(/vị trí đang tuyển/)).toBeVisible();
   await expect(page.getByRole('heading', { level: 3 }).first()).toBeVisible();
 });
 

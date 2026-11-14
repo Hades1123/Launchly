@@ -1,51 +1,48 @@
+import { useTranslations } from 'next-intl';
 import type { JobLevel, JobPublicationStatus, RecruiterJob } from '@launchly/shared';
 import { Badge, type BadgeTone } from '@/components/ui/badge';
 
-export const JOB_LEVEL_LABELS: Record<JobLevel, string> = {
-  INTERN: 'Intern',
-  FRESHER: 'Fresher',
-  JUNIOR: 'Junior',
+const statusTone: Record<JobPublicationStatus, BadgeTone> = {
+  DRAFT: 'neutral',
+  PENDING: 'warning',
+  PUBLISHED: 'success',
+  REJECTED: 'danger',
+  CLOSED: 'neutral',
 };
 
-/** What a draft saved without a title is called in lists, headings and labels. */
-export function jobTitleText(title: string): string {
-  return title.trim() || 'Bản nháp chưa đặt tên';
-}
-
-/** "Intern · Remote", leaving out whatever a draft does not have yet. */
-export function jobMetaText(job: { level: JobLevel | null; location: string }): string {
-  const parts = [job.level ? JOB_LEVEL_LABELS[job.level] : '', job.location].filter(Boolean);
-  return parts.length > 0 ? parts.join(' · ') : 'Chưa chọn cấp bậc và địa điểm';
-}
-
-const usd = (value: number) => `$${value.toLocaleString('en-US')}`;
-
-/** The recruiter's view of a salary; candidates never see the figures of a negotiable one. */
-export function salaryText({ hidden, min, max }: RecruiterJob['salary']): string {
-  if (hidden) return 'Thỏa thuận (ẩn với ứng viên)';
-  if (min !== null && max !== null) return `${usd(min)} – ${usd(max)} / tháng`;
-  if (min !== null) return `Từ ${usd(min)} / tháng`;
-  if (max !== null) return `Đến ${usd(max)} / tháng`;
-  return 'Chưa nhập';
-}
-
-const statusView: Record<JobPublicationStatus, { label: string; tone: BadgeTone }> = {
-  DRAFT: { label: 'Bản nháp', tone: 'neutral' },
-  PENDING: { label: 'Chờ duyệt', tone: 'warning' },
-  PUBLISHED: { label: 'Đã duyệt', tone: 'success' },
-  REJECTED: { label: 'Bị từ chối', tone: 'danger' },
-  CLOSED: { label: 'Đã đóng', tone: 'neutral' },
-};
-
-export function jobStatusLabel(status: JobPublicationStatus): string {
-  return statusView[status].label;
+/**
+ * Display text for a recruiter's job in the active language: level and status labels, the title
+ * of a draft saved without one, the "Intern · Remote" meta line and the salary.
+ */
+export function useJobText() {
+  const t = useTranslations('recruiter.job');
+  const level = (value: JobLevel) => t(`levels.${value}`);
+  return {
+    level,
+    status: (value: JobPublicationStatus) => t(`statuses.${value}`),
+    /** What a draft saved without a title is called in lists, headings and labels. */
+    title: (title: string) => title.trim() || t('untitled'),
+    /** "Intern · Remote", leaving out whatever a draft does not have yet. */
+    meta: (job: { level: JobLevel | null; location: string }) => {
+      const parts = [job.level ? level(job.level) : '', job.location].filter(Boolean);
+      return parts.length > 0 ? parts.join(' · ') : t('noMeta');
+    },
+    /** The recruiter's view of a salary; candidates never see the figures of a negotiable one. */
+    salary: ({ hidden, min, max }: RecruiterJob['salary']) => {
+      if (hidden) return t('salary.hidden');
+      if (min !== null && max !== null) return t('salary.range', { min, max });
+      if (min !== null) return t('salary.from', { min });
+      if (max !== null) return t('salary.upTo', { max });
+      return t('salary.empty');
+    },
+  };
 }
 
 export function JobStatusBadge({ status }: { status: JobPublicationStatus }) {
-  const view = statusView[status];
+  const t = useTranslations('recruiter.job.statuses');
   return (
-    <Badge tone={view.tone} shape="pill">
-      {view.label}
+    <Badge tone={statusTone[status]} shape="pill">
+      {t(status)}
     </Badge>
   );
 }

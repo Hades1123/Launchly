@@ -5,7 +5,7 @@ const CANDIDATE = 'candidate1@launchly.test';
 /** Seeded application of the candidate (`apps/api/prisma/seed/data.ts`). */
 const APPLIED_JOB = 'Senior Frontend Engineer';
 
-const panel = (page: Page) => page.getByRole('complementary', { name: 'Job details' });
+const panel = (page: Page) => page.getByRole('complementary', { name: 'Chi tiết việc làm' });
 const cards = (page: Page) => page.getByRole('main').locator('a[href^="/jobs/"]:has(h3)');
 
 test.use({ viewport: { width: 1440, height: 900 } });
@@ -56,7 +56,7 @@ test('E2: a link to a job that is not in the list shows the first job', async ({
 test('E1: no matching job shows the empty message and no panel', async ({ page }) => {
   await page.goto('/jobs?keyword=zzzz-no-such-job');
 
-  await expect(page.getByText('No matching jobs found')).toBeVisible();
+  await expect(page.getByText('Không tìm thấy việc làm phù hợp')).toBeVisible();
   await expect(panel(page)).toHaveCount(0);
 });
 
@@ -64,8 +64,8 @@ test('AC4: Apply and Check my CV fit are in the panel', async ({ page }) => {
   await signIn(page, CANDIDATE);
   await page.goto(`/jobs?keyword=${encodeURIComponent(APPLIED_JOB)}`);
 
-  await expect(panel(page).getByRole('button', { name: 'Applied' })).toBeVisible();
-  await expect(panel(page).getByRole('link', { name: 'Check my CV fit' })).toHaveAttribute(
+  await expect(panel(page).getByRole('button', { name: 'Đã ứng tuyển' })).toBeVisible();
+  await expect(panel(page).getByRole('link', { name: 'Kiểm tra độ phù hợp CV' })).toHaveAttribute(
     'href',
     /\/cv-review\?jobId=/,
   );

@@ -4,16 +4,20 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { Menu, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/cn';
 
-type NavItem = { label: string; href: string };
+type NavItem = {
+  key: 'jobs' | 'cvReview' | 'interviewPractice' | 'applications' | 'profile';
+  href: string;
+};
 
 const items: NavItem[] = [
-  { label: 'Việc làm', href: '/jobs' },
-  { label: 'Đánh giá CV', href: '/cv-review' },
-  { label: 'Luyện phỏng vấn AI', href: '/interview-practice' },
-  { label: 'Việc đã ứng tuyển', href: '/applications' },
-  { label: 'Hồ sơ của tôi', href: '/profile' },
+  { key: 'jobs', href: '/jobs' },
+  { key: 'cvReview', href: '/cv-review' },
+  { key: 'interviewPractice', href: '/interview-practice' },
+  { key: 'applications', href: '/applications' },
+  { key: 'profile', href: '/profile' },
 ];
 
 const focusRing = 'focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none';
@@ -26,13 +30,11 @@ function itemClass(active: boolean) {
 
 /** Candidate menu on one line, from `xl` up; smaller screens use `MobileMenu`. */
 export function MainNav({ className }: { className?: string }) {
+  const t = useTranslations('layout.nav');
   const pathname = usePathname();
 
   return (
-    <nav
-      aria-label="Điều hướng chính"
-      className={cn('hidden items-center gap-1 xl:flex', className)}
-    >
+    <nav aria-label={t('label')} className={cn('hidden items-center gap-1 xl:flex', className)}>
       {items.map((item) => {
         const active = pathname.startsWith(item.href);
         return (
@@ -46,7 +48,7 @@ export function MainNav({ className }: { className?: string }) {
               itemClass(active),
             )}
           >
-            {item.label}
+            {t(`items.${item.key}`)}
           </Link>
         );
       })}
@@ -56,6 +58,7 @@ export function MainNav({ className }: { className?: string }) {
 
 /** Menu button below `xl`: opens the same items as a list under the header. */
 export function MobileMenu() {
+  const t = useTranslations('layout.nav');
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const container = useRef<HTMLDivElement>(null);
@@ -82,7 +85,7 @@ export function MobileMenu() {
         type="button"
         aria-expanded={open}
         aria-controls="mobile-menu"
-        aria-label={open ? 'Đóng menu' : 'Mở menu'}
+        aria-label={open ? t('closeMenu') : t('openMenu')}
         onClick={() => setOpen((value) => !value)}
         className={cn(
           'flex size-11 items-center justify-center rounded-control text-foreground transition-colors hover:bg-secondary',
@@ -99,7 +102,7 @@ export function MobileMenu() {
       {open && (
         <nav
           id="mobile-menu"
-          aria-label="Điều hướng chính"
+          aria-label={t('label')}
           className="absolute inset-x-0 top-full bg-surface px-4 py-3 shadow-card-hover md:px-8"
         >
           <ul className="mx-auto max-w-page space-y-1">
@@ -117,7 +120,7 @@ export function MobileMenu() {
                       itemClass(active),
                     )}
                   >
-                    {item.label}
+                    {t(`items.${item.key}`)}
                   </Link>
                 </li>
               );

@@ -10,25 +10,30 @@ import {
   ShieldCheck,
   UserRound,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { UserDto } from '@launchly/shared';
 import { AuthFeedback } from '@/components/auth/auth-ui';
 import { useAuth } from '@/lib/auth-context';
-import { ROLE_LABELS, authErrorMessage, userDisplayName, userInitials } from '@/lib/auth-helpers';
+import { authErrorMessage, userDisplayName, userInitials } from '@/lib/auth-helpers';
 import { cn } from '@/lib/cn';
 
-type MenuLink = { label: string; href: string; icon: ComponentType<{ className?: string }> };
+type MenuLink = {
+  key: 'recruiterJobs' | 'adminModeration' | 'profile' | 'applications';
+  href: string;
+  icon: ComponentType<{ className?: string }>;
+};
 
 function linksFor(role: UserDto['role']): MenuLink[] {
   if (role === 'RECRUITER') {
-    return [{ label: 'Quản lý tuyển dụng', href: '/recruiter/jobs', icon: BriefcaseBusiness }];
+    return [{ key: 'recruiterJobs', href: '/recruiter/jobs', icon: BriefcaseBusiness }];
   }
   if (role === 'ADMIN') {
-    return [{ label: 'Duyệt nội dung', href: '/admin/moderation', icon: ShieldCheck }];
+    return [{ key: 'adminModeration', href: '/admin/moderation', icon: ShieldCheck }];
   }
   if (role === 'CANDIDATE') {
     return [
-      { label: 'Hồ sơ của tôi', href: '/profile', icon: UserRound },
-      { label: 'Việc đã ứng tuyển', href: '/applications', icon: FileText },
+      { key: 'profile', href: '/profile', icon: UserRound },
+      { key: 'applications', href: '/applications', icon: FileText },
     ];
   }
   return [];
@@ -39,6 +44,9 @@ const itemClass =
 
 /** Avatar button that opens the account menu: role-specific shortcuts and sign out. */
 export function UserMenu({ user }: { user: UserDto }) {
+  const t = useTranslations('layout.userMenu');
+  const tCommon = useTranslations('common');
+  const tErrors = useTranslations('errors');
   const { logout } = useAuth();
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
@@ -67,7 +75,7 @@ export function UserMenu({ user }: { user: UserDto }) {
     try {
       await logout();
     } catch (cause) {
-      setError(authErrorMessage(cause));
+      setError(authErrorMessage(cause, tErrors));
     } finally {
       setPending(false);
     }
@@ -81,7 +89,7 @@ export function UserMenu({ user }: { user: UserDto }) {
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label={`Tài khoản ${name}`}
+        aria-label={t('trigger', { name })}
         onClick={() => setOpen((value) => !value)}
         className="flex items-center gap-2 rounded-full p-1 pr-2 transition-colors hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       >
@@ -100,7 +108,7 @@ export function UserMenu({ user }: { user: UserDto }) {
       {open && (
         <div
           role="menu"
-          aria-label="Tài khoản"
+          aria-label={t('menu')}
           className="absolute top-full right-0 z-50 mt-2 w-72 rounded-card bg-surface p-2 shadow-card-hover"
         >
           <div className="flex items-center gap-3 rounded-control bg-surface-muted p-3">
@@ -110,11 +118,13 @@ export function UserMenu({ user }: { user: UserDto }) {
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-foreground">{name}</p>
               <p className="truncate text-xs text-subtle-foreground">{user.email}</p>
-              <p className="mt-0.5 text-xs font-medium text-primary">{ROLE_LABELS[user.role]}</p>
+              <p className="mt-0.5 text-xs font-medium text-primary">
+                {tCommon(`roles.${user.role}`)}
+              </p>
             </div>
           </div>
           <div className="mt-2 space-y-0.5">
-            {linksFor(user.role).map(({ label, href, icon: Icon }) => (
+            {linksFor(user.role).map(({ key, href, icon: Icon }) => (
               <Link
                 key={href}
                 href={href}
@@ -123,7 +133,7 @@ export function UserMenu({ user }: { user: UserDto }) {
                 onClick={() => setOpen(false)}
               >
                 <Icon className="size-4 text-subtle-foreground" />
-                {label}
+                {t(`links.${key}`)}
               </Link>
             ))}
             <button
@@ -134,7 +144,7 @@ export function UserMenu({ user }: { user: UserDto }) {
               className={cn(itemClass, 'text-danger disabled:opacity-60')}
             >
               <LogOut className="size-4" aria-hidden />
-              Đăng xuất
+              {t('signOut')}
             </button>
           </div>
         </div>

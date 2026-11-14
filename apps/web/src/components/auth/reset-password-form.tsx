@@ -3,12 +3,15 @@
 import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
 import { resetPasswordSchema } from '@launchly/shared';
+import { useTranslations } from 'next-intl';
 import { AuthFeedback, AuthHeading, PasswordField, SubmitButton } from '@/components/auth/auth-ui';
 import { authErrorMessage } from '@/lib/auth-helpers';
 import { resetPassword } from '@/lib/api/auth';
 import { ApiError } from '@/lib/api/http';
 
 export function ResetPasswordForm({ token }: { token?: string }) {
+  const t = useTranslations('auth');
+  const tErrors = useTranslations('errors');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [pending, setPending] = useState(false);
@@ -23,15 +26,15 @@ export function ResetPasswordForm({ token }: { token?: string }) {
     const parsed = resetPasswordSchema.safeParse({ token, password });
     if (!parsed.success) {
       setFieldErrors({
-        ...(!token ? { password: 'Liên kết đặt lại không hợp lệ hoặc đã hết hạn.' } : {}),
+        ...(!token ? { password: t('resetPassword.invalidLink') } : {}),
         ...(password.length < 8 || password.length > 128
-          ? { password: 'Mật khẩu cần có từ 8 đến 128 ký tự.' }
+          ? { password: t('fields.passwordLength') }
           : {}),
       });
       return;
     }
     if (password !== confirmPassword) {
-      setFieldErrors({ confirmPassword: 'Mật khẩu nhập lại chưa khớp.' });
+      setFieldErrors({ confirmPassword: t('fields.confirmMismatch') });
       return;
     }
     setFieldErrors({});
@@ -41,7 +44,7 @@ export function ResetPasswordForm({ token }: { token?: string }) {
       window.history.replaceState(null, '', '/reset-password');
       setSuccess(true);
     } catch (cause) {
-      setError(authErrorMessage(cause));
+      setError(authErrorMessage(cause, tErrors));
       if (cause instanceof ApiError && cause.code === 'INVALID_OR_EXPIRED_TOKEN') {
         window.history.replaceState(null, '', '/reset-password');
         setInvalidToken(true);
@@ -55,16 +58,16 @@ export function ResetPasswordForm({ token }: { token?: string }) {
     return (
       <section className="rounded-card bg-surface p-6 shadow-card sm:p-8">
         <AuthHeading
-          eyebrow="Mật khẩu"
-          title="Mật khẩu đã được cập nhật"
-          description="Đăng nhập bằng mật khẩu mới để tiếp tục."
+          eyebrow={t('resetPassword.eyebrow')}
+          title={t('resetPassword.success.title')}
+          description={t('resetPassword.success.description')}
         />
-        <AuthFeedback tone="success">Các phiên đăng nhập trước đã được kết thúc.</AuthFeedback>
+        <AuthFeedback tone="success">{t('resetPassword.success.notice')}</AuthFeedback>
         <Link
           href="/login"
           className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-control bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
-          Đăng nhập
+          {t('common.login')}
         </Link>
       </section>
     );
@@ -73,12 +76,10 @@ export function ResetPasswordForm({ token }: { token?: string }) {
   return (
     <section className="rounded-card bg-surface p-6 shadow-card sm:p-8">
       <AuthHeading
-        eyebrow="Mật khẩu"
-        title={invalidToken ? 'Liên kết không hợp lệ' : 'Tạo mật khẩu mới'}
+        eyebrow={t('resetPassword.eyebrow')}
+        title={invalidToken ? t('resetPassword.invalidTitle') : t('resetPassword.title')}
         description={
-          !invalidToken
-            ? 'Chọn mật khẩu mới có từ 8 đến 128 ký tự.'
-            : 'Yêu cầu một liên kết đặt lại mật khẩu mới để tiếp tục.'
+          !invalidToken ? t('resetPassword.description') : t('resetPassword.invalidDescription')
         }
       />
       {error && (
@@ -89,7 +90,7 @@ export function ResetPasswordForm({ token }: { token?: string }) {
       {!invalidToken && token ? (
         <form className="space-y-4" onSubmit={handleSubmit} noValidate>
           <PasswordField
-            label="Mật khẩu mới"
+            label={t('resetPassword.newPassword')}
             name="password"
             autoComplete="new-password"
             value={password}
@@ -98,7 +99,7 @@ export function ResetPasswordForm({ token }: { token?: string }) {
             required
           />
           <PasswordField
-            label="Nhập lại mật khẩu"
+            label={t('fields.confirmPassword')}
             name="confirmPassword"
             autoComplete="new-password"
             value={confirmPassword}
@@ -106,21 +107,21 @@ export function ResetPasswordForm({ token }: { token?: string }) {
             error={fieldErrors.confirmPassword}
             required
           />
-          <SubmitButton pending={pending}>Lưu mật khẩu mới</SubmitButton>
+          <SubmitButton pending={pending}>{t('resetPassword.submit')}</SubmitButton>
         </form>
       ) : (
         <Link
           href="/forgot-password"
           className="inline-flex min-h-12 w-full items-center justify-center rounded-control bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
-          Yêu cầu liên kết mới
+          {t('resetPassword.requestNewLink')}
         </Link>
       )}
       <Link
         href="/login"
         className="mt-5 block text-center text-sm font-semibold text-muted-foreground hover:text-primary"
       >
-        Quay lại đăng nhập
+        {t('common.backToLogin')}
       </Link>
     </section>
   );

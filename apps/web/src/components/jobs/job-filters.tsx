@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import { Search, SlidersHorizontal, RotateCcw } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { JOB_LEVELS, JOB_INDUSTRIES, JOB_LOCATIONS } from '@launchly/shared';
 import { Button } from '@/components/ui/button';
-import { levelConfig } from '@/lib/job-format';
 
 type JobFiltersProps = {
   currentFilters: {
@@ -20,26 +20,29 @@ const chip =
   'has-focus-visible:ring-2 has-focus-visible:ring-ring';
 
 export function JobFilters({ currentFilters }: JobFiltersProps) {
+  const t = useTranslations('jobs');
   const { keyword = '', level, industry = '', location = '' } = currentFilters;
 
   return (
     <form
       method="GET"
       action="/jobs"
-      aria-label="Job search and filters"
+      aria-label={t('filters.label')}
       className="space-y-4 rounded-card bg-surface p-4 shadow-card"
     >
       <div className="flex items-center justify-between border-b border-border pb-3">
         <div className="flex items-center gap-1.5 text-primary">
           <SlidersHorizontal className="size-4" strokeWidth={2} aria-hidden />
-          <h2 className="font-display text-sm font-semibold text-foreground">Search & Filters</h2>
+          <h2 className="font-display text-sm font-semibold text-foreground">
+            {t('filters.title')}
+          </h2>
         </div>
         <Link
           href="/jobs"
           className="inline-flex items-center gap-1 text-xs font-medium text-subtle-foreground transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <RotateCcw className="size-3" aria-hidden />
-          Reset
+          {t('filters.reset')}
         </Link>
       </div>
 
@@ -49,7 +52,7 @@ export function JobFilters({ currentFilters }: JobFiltersProps) {
           htmlFor="filter-keyword"
           className="text-xs font-semibold tracking-wider text-subtle-foreground uppercase"
         >
-          Keyword
+          {t('filters.keyword')}
         </label>
         <div className="relative">
           <Search
@@ -61,7 +64,7 @@ export function JobFilters({ currentFilters }: JobFiltersProps) {
             type="text"
             name="keyword"
             defaultValue={keyword}
-            placeholder="Job title or company..."
+            placeholder={t('filters.keywordPlaceholder')}
             className="w-full rounded-control border border-input bg-surface-muted py-1.5 pr-3 pl-8 text-xs text-foreground placeholder:text-subtle-foreground focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           />
         </div>
@@ -70,12 +73,12 @@ export function JobFilters({ currentFilters }: JobFiltersProps) {
       {/* Career Level */}
       <fieldset className="space-y-1 pt-1">
         <legend className="mb-1 text-xs font-semibold tracking-wider text-subtle-foreground uppercase">
-          Career Level
+          {t('filters.level')}
         </legend>
         <div className="grid grid-cols-2 gap-1.5">
           <label className={chip}>
             <input type="radio" name="level" value="" defaultChecked={!level} className="sr-only" />
-            All Levels
+            {t('filters.allLevels')}
           </label>
           {JOB_LEVELS.map((lvl) => (
             <label key={lvl} className={chip}>
@@ -86,7 +89,7 @@ export function JobFilters({ currentFilters }: JobFiltersProps) {
                 defaultChecked={level === lvl}
                 className="sr-only"
               />
-              {levelConfig[lvl].label}
+              {t(`levels.${lvl}`)}
             </label>
           ))}
         </div>
@@ -98,7 +101,7 @@ export function JobFilters({ currentFilters }: JobFiltersProps) {
           htmlFor="filter-industry"
           className="text-xs font-semibold tracking-wider text-subtle-foreground uppercase"
         >
-          Industry
+          {t('filters.industry')}
         </label>
         <select
           id="filter-industry"
@@ -106,7 +109,7 @@ export function JobFilters({ currentFilters }: JobFiltersProps) {
           defaultValue={industry}
           className="w-full rounded-control border border-input bg-surface-muted px-2.5 py-1.5 text-xs text-foreground focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
-          <option value="">All Industries</option>
+          <option value="">{t('filters.allIndustries')}</option>
           {JOB_INDUSTRIES.map((ind) => (
             <option key={ind} value={ind}>
               {ind}
@@ -121,7 +124,7 @@ export function JobFilters({ currentFilters }: JobFiltersProps) {
           htmlFor="filter-location"
           className="text-xs font-semibold tracking-wider text-subtle-foreground uppercase"
         >
-          Location
+          {t('filters.location')}
         </label>
         <select
           id="filter-location"
@@ -129,7 +132,7 @@ export function JobFilters({ currentFilters }: JobFiltersProps) {
           defaultValue={location}
           className="w-full rounded-control border border-input bg-surface-muted px-2.5 py-1.5 text-xs text-foreground focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
-          <option value="">All Locations</option>
+          <option value="">{t('filters.allLocations')}</option>
           {JOB_LOCATIONS.map((loc) => (
             <option key={loc} value={loc}>
               {loc}
@@ -139,7 +142,7 @@ export function JobFilters({ currentFilters }: JobFiltersProps) {
       </div>
 
       <Button type="submit" variant="primary" className="w-full py-1.5 text-xs font-medium">
-        Apply Filters
+        {t('filters.submit')}
       </Button>
     </form>
   );

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { ArrowLeft } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { BrandLogo } from '@/components/layout/brand-logo';
 import { buttonClasses } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth-context';
@@ -23,32 +24,31 @@ function GuardCard({ children }: { children: ReactNode }) {
 export function AdminShell({ children }: { children: ReactNode }) {
   const { status, user } = useAuth();
   const pathname = usePathname();
+  const t = useTranslations('admin.shell');
 
   if (status === 'loading') {
     return (
       <GuardCard>
-        <p className="text-sm text-muted-foreground">Đang tải…</p>
+        <p className="text-sm text-muted-foreground">{t('loading')}</p>
       </GuardCard>
     );
   }
   if (status === 'unavailable') {
     return (
       <GuardCard>
-        <p className="text-sm text-muted-foreground">
-          Không kết nối được máy chủ. Vui lòng thử lại sau.
-        </p>
+        <p className="text-sm text-muted-foreground">{t('unavailable')}</p>
       </GuardCard>
     );
   }
   if (status !== 'authenticated' || !user) {
     return (
       <GuardCard>
-        <p className="text-sm text-muted-foreground">Vui lòng đăng nhập bằng tài khoản quản trị.</p>
+        <p className="text-sm text-muted-foreground">{t('signInPrompt')}</p>
         <Link
           href={`/login?next=${encodeURIComponent(pathname)}`}
           className={buttonClasses('primary', 'mt-4')}
         >
-          Đăng nhập
+          {t('signIn')}
         </Link>
       </GuardCard>
     );
@@ -56,12 +56,10 @@ export function AdminShell({ children }: { children: ReactNode }) {
   if (user.role !== 'ADMIN') {
     return (
       <GuardCard>
-        <p className="font-semibold text-foreground">Khu vực dành cho quản trị viên</p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Tài khoản của bạn không có quyền truy cập trang này.
-        </p>
+        <p className="font-semibold text-foreground">{t('forbiddenTitle')}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{t('forbiddenBody')}</p>
         <Link href="/jobs" className={buttonClasses('soft', 'mt-4')}>
-          Về trang việc làm
+          {t('backToJobs')}
         </Link>
       </GuardCard>
     );
@@ -74,12 +72,12 @@ export function AdminShell({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-3">
             <BrandLogo />
             <span className="text-xs font-semibold tracking-wide text-subtle-foreground uppercase">
-              Quản trị
+              {t('badge')}
             </span>
           </div>
           <Link href="/jobs" className={buttonClasses('ghost')}>
             <ArrowLeft className="size-4" aria-hidden />
-            Về trang việc làm
+            {t('backToJobs')}
           </Link>
         </div>
       </header>

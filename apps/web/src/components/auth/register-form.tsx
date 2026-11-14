@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
 import { registerSchema, registrationRoleSchema } from '@launchly/shared';
+import { useTranslations } from 'next-intl';
 import {
   AuthDivider,
   AuthFeedback,
@@ -18,6 +19,8 @@ import { register, resendVerification } from '@/lib/api/auth';
 type RegistrationRole = 'CANDIDATE' | 'RECRUITER';
 
 export function RegisterForm() {
+  const t = useTranslations('auth');
+  const tErrors = useTranslations('errors');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -41,17 +44,17 @@ export function RegisterForm() {
     if (!parsed.success || !parsedRole.success) {
       const nextErrors: Record<string, string> = {};
       if (!normalizedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
-        nextErrors.email = 'Vui lòng nhập địa chỉ email hợp lệ.';
+        nextErrors.email = t('fields.emailInvalid');
       }
       if (password.length < 8 || password.length > 128) {
-        nextErrors.password = 'Mật khẩu cần có từ 8 đến 128 ký tự.';
+        nextErrors.password = t('fields.passwordLength');
       }
-      if (!parsedRole.success) nextErrors.role = 'Vui lòng chọn loại tài khoản.';
+      if (!parsedRole.success) nextErrors.role = t('register.roleRequired');
       setFieldErrors(nextErrors);
       return;
     }
     if (password !== confirmPassword) {
-      setFieldErrors({ confirmPassword: 'Mật khẩu nhập lại chưa khớp.' });
+      setFieldErrors({ confirmPassword: t('fields.confirmMismatch') });
       return;
     }
     setFieldErrors({});
@@ -60,7 +63,7 @@ export function RegisterForm() {
       await register(parsed.data);
       setSubmitted(true);
     } catch (cause) {
-      setError(authErrorMessage(cause));
+      setError(authErrorMessage(cause, tErrors));
     } finally {
       setPending(false);
     }
@@ -74,7 +77,7 @@ export function RegisterForm() {
       const result = await resendVerification({ email: email.trim().toLowerCase() });
       setNotice(result.message);
     } catch (cause) {
-      setError(authErrorMessage(cause));
+      setError(authErrorMessage(cause, tErrors));
     } finally {
       setPending(false);
     }
@@ -84,14 +87,16 @@ export function RegisterForm() {
     return (
       <section className="rounded-card bg-surface p-6 shadow-card sm:p-8">
         <AuthHeading
-          eyebrow="Kiểm tra email"
-          title="Xác minh tài khoản"
-          description="Chúng tôi đã gửi liên kết xác minh nếu yêu cầu đăng ký được tiếp nhận."
+          eyebrow={t('register.submitted.eyebrow')}
+          title={t('register.submitted.title')}
+          description={t('register.submitted.description')}
         />
         <div className="space-y-4">
           <AuthFeedback tone="success">
-            Kiểm tra hộp thư của <strong>{email.trim().toLowerCase()}</strong> để kích hoạt tài
-            khoản.
+            {t.rich('register.submitted.checkInbox', {
+              email: email.trim().toLowerCase(),
+              strong: (chunks) => <strong>{chunks}</strong>,
+            })}
           </AuthFeedback>
           {notice && <AuthFeedback tone="info">{notice}</AuthFeedback>}
           {error && <AuthFeedback tone="error">{error}</AuthFeedback>}
@@ -101,13 +106,13 @@ export function RegisterForm() {
             onClick={() => void handleResendVerification()}
             className="w-full rounded-control bg-primary-subtle px-4 py-3 text-sm font-semibold text-primary-subtle-foreground hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-60"
           >
-            {pending ? 'Đang gửi…' : 'Gửi lại email xác minh'}
+            {pending ? t('register.submitted.sending') : t('common.resendVerification')}
           </button>
           <Link
             href="/login"
             className="block text-center text-sm font-semibold text-primary hover:text-primary-hover"
           >
-            Quay lại đăng nhập
+            {t('common.backToLogin')}
           </Link>
         </div>
       </section>
@@ -117,14 +122,20 @@ export function RegisterForm() {
   return (
     <section className="rounded-card bg-surface p-6 shadow-card sm:p-8">
       <AuthHeading
-        eyebrow="Bắt đầu"
-        title="Tạo tài khoản"
-        description="Chọn cách bạn muốn sử dụng Launchly."
+        eyebrow={t('register.eyebrow')}
+        title={t('register.title')}
+        description={t('register.description')}
       />
 
       <fieldset className="mb-5 space-y-2">
-        <legend className="mb-2 text-sm font-semibold text-foreground">Loại tài khoản</legend>
-        <div role="radiogroup" aria-label="Loại tài khoản" className="grid grid-cols-2 gap-3">
+        <legend className="mb-2 text-sm font-semibold text-foreground">
+          {t('register.roleLegend')}
+        </legend>
+        <div
+          role="radiogroup"
+          aria-label={t('register.roleLegend')}
+          className="grid grid-cols-2 gap-3"
+        >
           {(['CANDIDATE', 'RECRUITER'] as const).map((item) => {
             const selected = role === item;
             return (
@@ -141,10 +152,10 @@ export function RegisterForm() {
                   className="sr-only"
                 />
                 <span className="block rounded-control text-sm font-semibold focus-within:ring-2 focus-within:ring-ring">
-                  {item === 'CANDIDATE' ? 'Ứng viên' : 'Nhà tuyển dụng'}
+                  {t(`register.roles.${item}.title`)}
                 </span>
                 <span className="mt-1 block text-xs leading-4 text-muted-foreground">
-                  {item === 'CANDIDATE' ? 'Tìm cơ hội phù hợp' : 'Tìm nhân sự phù hợp'}
+                  {t(`register.roles.${item}.description`)}
                 </span>
               </label>
             );
@@ -154,48 +165,48 @@ export function RegisterForm() {
 
       <form className="space-y-4" onSubmit={handleSubmit} noValidate>
         <AuthField
-          label="Email"
+          label={t('fields.email')}
           name="email"
           type="email"
           autoComplete="email"
           inputMode="email"
-          placeholder="ban@email.com"
+          placeholder={t('fields.emailPlaceholder')}
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           error={fieldErrors.email}
           required
         />
         <PasswordField
-          label="Mật khẩu"
+          label={t('fields.password')}
           name="password"
           autoComplete="new-password"
-          placeholder="Tối thiểu 8 ký tự"
+          placeholder={t('register.passwordPlaceholder')}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           error={fieldErrors.password}
           required
         />
         <PasswordField
-          label="Nhập lại mật khẩu"
+          label={t('fields.confirmPassword')}
           name="confirmPassword"
           autoComplete="new-password"
-          placeholder="Nhập lại mật khẩu"
+          placeholder={t('register.confirmPasswordPlaceholder')}
           value={confirmPassword}
           onChange={(event) => setConfirmPassword(event.target.value)}
           error={fieldErrors.confirmPassword}
           required
         />
         {error && <AuthFeedback tone="error">{error}</AuthFeedback>}
-        <SubmitButton pending={pending}>Tạo tài khoản</SubmitButton>
+        <SubmitButton pending={pending}>{t('register.submit')}</SubmitButton>
       </form>
 
       <AuthDivider />
       <GoogleAuthAction />
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        Đã có tài khoản?{' '}
+        {t('register.hasAccount')}{' '}
         <Link href="/login" className="font-semibold text-primary hover:text-primary-hover">
-          Đăng nhập
+          {t('register.login')}
         </Link>
       </p>
     </section>

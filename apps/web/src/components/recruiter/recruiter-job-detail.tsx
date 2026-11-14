@@ -4,44 +4,34 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import { ExternalLink, ListOrdered, Pencil } from 'lucide-react';
+import { useFormatter, useTranslations } from 'next-intl';
 import type { RecruiterJob } from '@launchly/shared';
 import { DeleteDraftButton } from '@/components/recruiter/delete-draft-button';
-import {
-  JOB_LEVEL_LABELS,
-  JobStatusBadge,
-  jobMetaText,
-  jobTitleText,
-  salaryText,
-} from '@/components/recruiter/job-status-badge';
+import { JobStatusBadge, useJobText } from '@/components/recruiter/job-status-badge';
 import { RecruiterPageHeader } from '@/components/recruiter/recruiter-shell';
-import { ROUND_FORMAT_OPTIONS } from '@/components/recruiter/round-rows-editor';
 import { buttonClasses } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ApiError } from '@/lib/api/http';
 import { getMyJob } from '@/lib/api/recruiter-jobs';
 import { cn } from '@/lib/cn';
 
-const dateFormat = new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' });
+type LoadError = 'forbidden' | 'notFound' | 'generic';
+
+const statusPanelTone: Record<RecruiterJob['status'], string> = {
+  DRAFT: 'bg-surface-muted text-muted-foreground',
+  PENDING: 'bg-warning-subtle text-warning',
+  PUBLISHED: 'bg-success-subtle text-success',
+  REJECTED: 'bg-danger-subtle text-danger',
+  CLOSED: 'bg-surface-muted text-muted-foreground',
+};
 
 function StatusPanel({ job }: { job: RecruiterJob }) {
-  const view = {
-    DRAFT: { tone: 'bg-surface-muted text-muted-foreground', text: 'Bản nháp chỉ bạn nhìn thấy.' },
-    PENDING: {
-      tone: 'bg-warning-subtle text-warning',
-      text: 'Tin đang chờ quản trị viên duyệt và sẽ hiển thị cho ứng viên sau khi được duyệt.',
-    },
-    PUBLISHED: { tone: 'bg-success-subtle text-success', text: 'Tin đang hiển thị cho ứng viên.' },
-    REJECTED: {
-      tone: 'bg-danger-subtle text-danger',
-      text: 'Tin đã bị quản trị viên từ chối. Hãy sửa theo góp ý rồi gửi duyệt lại.',
-    },
-    CLOSED: { tone: 'bg-surface-muted text-muted-foreground', text: 'Tin đã đóng.' },
-  }[job.status];
+  const t = useTranslations('recruiter.detail');
   return (
-    <div role="status" className={cn('rounded-card p-4 text-sm', view.tone)}>
-      <p className="font-medium">{view.text}</p>
+    <div role="status" className={cn('rounded-card p-4 text-sm', statusPanelTone[job.status])}>
+      <p className="font-medium">{t(`status.${job.status}`)}</p>
       {job.status === 'REJECTED' && job.moderationReason && (
-        <p className="mt-1">Lý do: {job.moderationReason}</p>
+        <p className="mt-1">{t('reason', { reason: job.moderationReason })}</p>
       )}
     </div>
   );
@@ -69,9 +59,14 @@ function BulletList({ items, empty }: { items: string[]; empty: string }) {
 
 /** Read-only view of one of the recruiter's jobs, whatever its status. */
 export function RecruiterJobDetail({ jobId }: { jobId: string }) {
+  const t = useTranslations('recruiter.detail');
+  const tPages = useTranslations('recruiter.pages');
+  const tRounds = useTranslations('recruiter.rounds');
+  const jobText = useJobText();
+  const format = useFormatter();
   const router = useRouter();
   const [job, setJob] = useState<RecruiterJob | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<LoadError | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -83,10 +78,10 @@ export function RecruiterJobDetail({ jobId }: { jobId: string }) {
         if (!active) return;
         setError(
           cause instanceof ApiError && cause.code === 'FORBIDDEN'
-            ? 'Bạn không có quyền xem tin tuyển dụng này.'
+            ? 'forbidden'
             : cause instanceof ApiError && cause.code === 'NOT_FOUND'
-              ? 'Không tìm thấy tin tuyển dụng.'
-              : 'Không thể tải tin tuyển dụng. Vui lòng thử lại.',
+              ? 'notFound'
+              : 'generic',
         );
       }
     }
@@ -96,14 +91,16 @@ export function RecruiterJobDetail({ jobId }: { jobId: string }) {
     };
   }, [jobId]);
 
-  const back = { href: '/recruiter/jobs', label: 'Tin tuyển dụng' };
+  const back = { href: '/recruiter/jobs', label: tPages('jobsBack') };
+  const dateTime = (value: string) =>
+    format.dateTime(new Date(value), { dateStyle: 'medium', timeStyle: 'short' });
 
   if (error) {
     return (
       <>
-        <RecruiterPageHeader title="Chi tiết tin tuyển dụng" back={back} />
+        <RecruiterPageHeader title={t('title')} back={back} />
         <p role="status" className="rounded-card bg-danger-subtle p-4 text-sm text-danger">
-          {error}
+          {t(`errors.${error}`)}
         </p>
       </>
     );
@@ -111,7 +108,7 @@ export function RecruiterJobDetail({ jobId }: { jobId: string }) {
   if (!job) {
     return (
       <>
-        <RecruiterPageHeader title="Chi tiết tin tuyển dụng" back={back} />
+        <RecruiterPageHeader title={t('title')} back={back} />
         <div className="h-64 animate-pulse rounded-card bg-surface shadow-card" />
       </>
     );
@@ -121,11 +118,11 @@ export function RecruiterJobDetail({ jobId }: { jobId: string }) {
     <>
       <RecruiterPageHeader
         back={back}
-        title={jobTitleText(job.title)}
+        title={jobText.title(job.title)}
         description={
           <span className="flex flex-wrap items-center gap-2">
             <JobStatusBadge status={job.status} />
-            {jobMetaText(job)}
+            {jobText.meta(job)}
           </span>
         }
         actions={
@@ -134,27 +131,27 @@ export function RecruiterJobDetail({ jobId }: { jobId: string }) {
               <>
                 <DeleteDraftButton
                   jobId={job.id}
-                  title={jobTitleText(job.title)}
-                  label="Xóa bản nháp"
+                  title={jobText.title(job.title)}
+                  label={t('actions.deleteDraft')}
                   onDeleted={() => router.push('/recruiter/jobs?deleted=1')}
                 />
                 <Link href={`/recruiter/jobs/${job.id}/edit`} className={buttonClasses('primary')}>
-                  <Pencil className="size-4" aria-hidden /> Chỉnh sửa
+                  <Pencil className="size-4" aria-hidden /> {t('actions.edit')}
                 </Link>
               </>
             )}
             {job.status === 'REJECTED' && (
               <Link href={`/recruiter/jobs/${job.id}/edit`} className={buttonClasses('primary')}>
-                <Pencil className="size-4" aria-hidden /> Sửa và gửi lại
+                <Pencil className="size-4" aria-hidden /> {t('actions.fixAndResubmit')}
               </Link>
             )}
             {job.status === 'PUBLISHED' && (
               <>
                 <Link href={`/recruiter/jobs/${job.id}/rounds`} className={buttonClasses('soft')}>
-                  <ListOrdered className="size-4" aria-hidden /> Sửa quy trình
+                  <ListOrdered className="size-4" aria-hidden /> {t('actions.editRounds')}
                 </Link>
                 <Link href={`/jobs?job=${job.id}`} className={buttonClasses('primary')}>
-                  <ExternalLink className="size-4" aria-hidden /> Xem tin công khai
+                  <ExternalLink className="size-4" aria-hidden /> {t('actions.viewPublic')}
                 </Link>
               </>
             )}
@@ -164,24 +161,24 @@ export function RecruiterJobDetail({ jobId }: { jobId: string }) {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          <Section title="Mô tả công việc">
+          <Section title={t('sections.description')}>
             {job.description ? (
               <p className="text-sm whitespace-pre-line text-foreground">{job.description}</p>
             ) : (
-              <p className="text-sm text-muted-foreground">Chưa có mô tả.</p>
+              <p className="text-sm text-muted-foreground">{t('sections.noDescription')}</p>
             )}
           </Section>
           <div className="grid gap-6 md:grid-cols-2">
-            <Section title="Yêu cầu">
-              <BulletList items={job.requirements} empty="Chưa có yêu cầu." />
+            <Section title={t('sections.requirements')}>
+              <BulletList items={job.requirements} empty={t('sections.noRequirements')} />
             </Section>
-            <Section title="Quyền lợi">
-              <BulletList items={job.benefits} empty="Chưa có quyền lợi." />
+            <Section title={t('sections.benefits')}>
+              <BulletList items={job.benefits} empty={t('sections.noBenefits')} />
             </Section>
           </div>
-          <Section title="Quy trình tuyển dụng">
+          <Section title={t('sections.rounds')}>
             {job.rounds.length === 0 ? (
-              <p className="text-sm text-subtle-foreground">Chưa có vòng tuyển dụng.</p>
+              <p className="text-sm text-subtle-foreground">{t('sections.noRounds')}</p>
             ) : (
               <ol className="space-y-3">
                 {job.rounds.map((round) => (
@@ -191,13 +188,15 @@ export function RecruiterJobDetail({ jobId }: { jobId: string }) {
                     </span>
                     <div>
                       <p className="text-sm font-semibold text-foreground">
-                        {round.name || 'Chưa đặt tên'}
+                        {round.name || t('sections.untitledRound')}
                       </p>
                       <p className="text-xs text-subtle-foreground">
                         {[
-                          round.format ? ROUND_FORMAT_OPTIONS[round.format] : 'Chưa chọn hình thức',
+                          round.format
+                            ? tRounds(`formats.${round.format}`)
+                            : t('sections.noFormat'),
                           round.estimatedDurationMinutes !== null
-                            ? `${round.estimatedDurationMinutes} phút`
+                            ? t('sections.minutes', { count: round.estimatedDurationMinutes })
                             : null,
                         ]
                           .filter(Boolean)
@@ -209,23 +208,25 @@ export function RecruiterJobDetail({ jobId }: { jobId: string }) {
               </ol>
             )}
           </Section>
-          <Section title="Ghi chú cho ứng viên">
-            <BulletList items={job.notes.map((n) => n.content)} empty="Chưa có ghi chú." />
+          <Section title={t('sections.notes')}>
+            <BulletList items={job.notes.map((n) => n.content)} empty={t('sections.noNotes')} />
           </Section>
         </div>
 
         <aside className="space-y-4 lg:sticky lg:top-8 lg:self-start">
           <StatusPanel job={job} />
           <Card className="space-y-3 text-sm">
-            <h2 className="font-display text-lg font-semibold text-foreground">Thông tin</h2>
+            <h2 className="font-display text-lg font-semibold text-foreground">
+              {t('info.title')}
+            </h2>
             <dl className="space-y-2">
               {[
-                ['Cấp bậc', job.level ? JOB_LEVEL_LABELS[job.level] : 'Chưa chọn'],
-                ['Địa điểm', job.location || 'Chưa chọn'],
-                ['Ngành nghề', job.industry ?? 'Chưa chọn'],
-                ['Mức lương', salaryText(job.salary)],
-                ['Ngày tạo', dateFormat.format(new Date(job.createdAt))],
-                ['Cập nhật', dateFormat.format(new Date(job.updatedAt))],
+                [t('info.level'), job.level ? jobText.level(job.level) : t('info.notSet')],
+                [t('info.location'), job.location || t('info.notSet')],
+                [t('info.industry'), job.industry ?? t('info.notSet')],
+                [t('info.salary'), jobText.salary(job.salary)],
+                [t('info.createdAt'), dateTime(job.createdAt)],
+                [t('info.updatedAt'), dateTime(job.updatedAt)],
               ].map(([label, value]) => (
                 <div key={label} className="flex justify-between gap-4">
                   <dt className="text-subtle-foreground">{label}</dt>

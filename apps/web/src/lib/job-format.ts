@@ -1,10 +1,15 @@
+import type { useTranslations } from 'next-intl';
 import type { BadgeTone } from '@/components/ui/badge';
 import type { JobLevel, PublicSalary } from '@launchly/shared';
 
-export const levelConfig: Record<JobLevel, { label: string; tone: BadgeTone }> = {
-  INTERN: { label: 'Intern', tone: 'neutral' },
-  FRESHER: { label: 'Fresher', tone: 'success' },
-  JUNIOR: { label: 'Junior', tone: 'primary' },
+/** Translator for the `jobs` namespace: `useTranslations('jobs')` or `await getTranslations('jobs')`. */
+export type JobsTranslator = ReturnType<typeof useTranslations<'jobs'>>;
+
+/** Badge tone per level; the label is `t('levels.<LEVEL>')` in the `jobs` namespace. */
+export const levelConfig: Record<JobLevel, { tone: BadgeTone }> = {
+  INTERN: { tone: 'neutral' },
+  FRESHER: { tone: 'success' },
+  JUNIOR: { tone: 'primary' },
 };
 
 export function getInitials(name: string): string {
@@ -15,10 +20,11 @@ export function getInitials(name: string): string {
   return (first + last).toUpperCase();
 }
 
-export function formatSalary({ negotiable, min, max }: PublicSalary): string {
-  if (negotiable) return 'Negotiable';
+/** Salary text in the active language; amounts are passed as strings so they keep plain digits. */
+export function formatSalary({ negotiable, min, max }: PublicSalary, t: JobsTranslator): string {
+  if (negotiable) return t('salary.negotiable');
   if (min !== null && max !== null) return `$${min} - $${max}`;
-  if (min !== null) return `From $${min}`;
-  if (max !== null) return `Up to $${max}`;
-  return 'Negotiable';
+  if (min !== null) return t('salary.from', { min: String(min) });
+  if (max !== null) return t('salary.upTo', { max: String(max) });
+  return t('salary.negotiable');
 }
