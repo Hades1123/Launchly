@@ -86,8 +86,15 @@ describe('MockAiProvider', () => {
 });
 
 describe('GeminiAiProvider', () => {
+  const sleep = vi.fn<(ms: number) => Promise<void>>(async () => {});
   const make = (fetchImpl: any) =>
-    new GeminiAiProvider({ apiKey: 'secret-key', model: 'gemini-test', fetch: fetchImpl });
+    new GeminiAiProvider({ apiKey: 'secret-key', model: 'gemini-test', fetch: fetchImpl, sleep });
+  const failing = (status: number, headers: Record<string, string> = {}) => ({
+    ok: false,
+    status,
+    headers: { get: (name: string) => headers[name.toLowerCase()] ?? null },
+    json: async () => ({}),
+  });
 
   it('uses only the injected fetch and sends the prompt, model and JSON schema', async () => {
     const fetchImpl = vi.fn(async () => geminiReply(valid));
@@ -115,6 +122,71 @@ describe('GeminiAiProvider', () => {
 
     const network = make(vi.fn(async () => Promise.reject(new Error('socket hang up'))));
     expect((await network.generateJson(input).catch((e) => e)).code).toBe('AI_UNAVAILABLE');
+  });
+
+  it('retries a 429 and succeeds once Gemini recovers', async () => {
+    sleep.mockClear();
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(failing(429))
+      .mockResolvedValueOnce(failing(503))
+      .mockResolvedValueOnce(geminiReply(valid));
+
+    expect(await make(fetchImpl).generateJson(input)).toEqual(valid);
+    expect(fetchImpl).toHaveBeenCalledTimes(3);
+    expect(sleep).toHaveBeenCalledTimes(2);
+  });
+
+  it('gives up after 5 failed 429 requests with a "too many requests" message', async () => {
+    const fetchImpl = vi.fn(async () => failing(429));
+
+    const error = await make(fetchImpl)
+      .generateJson(input)
+      .catch((e) => e);
+    expect(fetchImpl).toHaveBeenCalledTimes(5);
+    expect(error).toBeInstanceOf(AppError);
+    expect(error.code).toBe('AI_UNAVAILABLE');
+    expect(error.message).toBe(
+      'Too many requests to the AI. Please reduce the number of requests and try again in a moment.',
+    );
+  });
+
+  it('retries a 503 five times and then reports the status', async () => {
+    const fetchImpl = vi.fn(async () => failing(503));
+
+    const error = await make(fetchImpl)
+      .generateJson(input)
+      .catch((e) => e);
+    expect(fetchImpl).toHaveBeenCalledTimes(5);
+    expect(error.message).toBe('AI request failed with status 503');
+  });
+
+  it('does not retry a client error such as 400', async () => {
+    const fetchImpl = vi.fn(async () => failing(400));
+
+    const error = await make(fetchImpl)
+      .generateJson(input)
+      .catch((e) => e);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(error.message).toBe('AI request failed with status 400');
+  });
+
+  it('waits for Retry-After (capped) and otherwise backs off exponentially', async () => {
+    sleep.mockClear();
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(failing(429, { 'retry-after': '2' }))
+      .mockResolvedValueOnce(failing(429, { 'retry-after': '600' }))
+      .mockResolvedValueOnce(failing(429))
+      .mockResolvedValueOnce(geminiReply(valid));
+
+    await make(fetchImpl).generateJson(input);
+    const waits = sleep.mock.calls.map(([ms]) => ms);
+    expect(waits[0]).toBe(2000);
+    expect(waits[1]).toBe(8000);
+    // Third failure: 500 ms * 2^2 plus up to 25 % jitter.
+    expect(waits[2]).toBeGreaterThanOrEqual(2000);
+    expect(waits[2]).toBeLessThanOrEqual(2500);
   });
 
   it('applies the 30 s timeout through an AbortSignal', async () => {
