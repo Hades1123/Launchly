@@ -2,6 +2,7 @@ import { Bell } from 'lucide-react';
 import { BrandLogo } from '@/components/layout/brand-logo';
 import { MainNav, MobileMenu } from '@/components/layout/main-nav';
 import { AuthHeaderActions } from '@/components/layout/auth-header-actions';
+import { LanguageSwitcher } from '@/components/layout/language-switcher';
 import { Button } from '@/components/ui/button';
 
 /**
@@ -29,6 +30,10 @@ export function SiteHeader() {
             >
               3
             </span>
+          </div>
+
+          <div className="shrink-0">
+            <LanguageSwitcher />
           </div>
 
           <div className="shrink-0">

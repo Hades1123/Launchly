@@ -1,22 +1,23 @@
 import { Check, CircleDashed, MapPin, Sparkles } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/cn';
 
 const rounds = [
-  { name: 'Sàng lọc CV', note: '3 ngày làm việc', state: 'done' },
-  { name: 'Bài test React', note: 'Làm tại nhà, 90 phút', state: 'current' },
-  { name: 'Phỏng vấn kỹ thuật', note: 'Online, 45 phút', state: 'next' },
-  { name: 'Phỏng vấn văn hoá', note: 'Tại văn phòng', state: 'next' },
+  { key: 'screening', state: 'done' },
+  { key: 'test', state: 'current' },
+  { key: 'technical', state: 'next' },
+  { key: 'culture', state: 'next' },
 ] as const;
 
 const matched = ['React', 'TypeScript', 'Git'];
-const missing = ['Kiểm thử'];
 
 /**
  * A still of the real product: a job's hiring rounds and a CV fit result, drawn with the same
  * tokens as the job page. Decorative, so screen readers skip it.
  */
 export function ProductPreview() {
+  const t = useTranslations('landing.preview');
   return (
     <div aria-hidden className="relative">
       <div className="space-y-5 rounded-card bg-surface p-6 shadow-card-hover">
@@ -27,11 +28,11 @@ export function ProductPreview() {
             </span>
             <div>
               <p className="font-display text-base font-semibold text-foreground">
-                Thực tập sinh Frontend
+                {t('jobTitle')}
               </p>
               <p className="flex items-center gap-1 text-sm text-muted-foreground">
                 <MapPin className="size-3.5" strokeWidth={1.75} />
-                TP. Hồ Chí Minh
+                {t('location')}
               </p>
             </div>
           </div>
@@ -42,11 +43,11 @@ export function ProductPreview() {
 
         <div className="space-y-3 rounded-card bg-surface-muted p-4">
           <p className="text-xs font-semibold tracking-wider text-subtle-foreground uppercase">
-            Quy trình tuyển dụng
+            {t('process')}
           </p>
           <ol className="space-y-3">
             {rounds.map((round, index) => (
-              <li key={round.name} className="flex items-start gap-3">
+              <li key={round.key} className="flex items-start gap-3">
                 <span
                   className={cn(
                     'mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
@@ -69,9 +70,9 @@ export function ProductPreview() {
                       round.state === 'next' ? 'text-muted-foreground' : 'text-foreground',
                     )}
                   >
-                    {round.name}
+                    {t(`rounds.${round.key}.name`)}
                   </p>
-                  <p className="text-xs text-subtle-foreground">{round.note}</p>
+                  <p className="text-xs text-subtle-foreground">{t(`rounds.${round.key}.note`)}</p>
                 </div>
               </li>
             ))}
@@ -83,7 +84,7 @@ export function ProductPreview() {
         <div className="flex items-center justify-between gap-3">
           <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
             <Sparkles className="size-4 text-primary" strokeWidth={1.75} />
-            CV của bạn khớp
+            {t('cvMatch')}
           </p>
           <span className="font-display text-2xl font-bold text-success">80%</span>
         </div>
@@ -97,12 +98,10 @@ export function ProductPreview() {
               {skill}
             </Badge>
           ))}
-          {missing.map((skill) => (
-            <Badge key={skill} tone="warning">
-              <CircleDashed className="size-3" strokeWidth={2} />
-              {skill}
-            </Badge>
-          ))}
+          <Badge tone="warning">
+            <CircleDashed className="size-3" strokeWidth={2} />
+            {t('testing')}
+          </Badge>
         </div>
       </div>
     </div>

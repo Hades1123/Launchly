@@ -16,6 +16,7 @@
     "@launchly/shared": "workspace:*",
     "lucide-react": "^1.69.0",
     "next": "^16.4.3",
+    "next-intl": "^4.15.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },

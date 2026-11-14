@@ -5,14 +5,14 @@ import { LatestJobs } from '@/components/landing/latest-jobs';
 import { RecruiterBand } from '@/components/landing/recruiter-band';
 import { searchJobs } from '@/lib/api/jobs';
 import type { PublicJobListResponse } from '@launchly/shared';
+import { getTranslations } from 'next-intl/server';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata = {
-  title: 'Launchly · Việc làm đầu tiên cho sinh viên và người mới ra trường',
-  description:
-    'Tìm việc thực tập, Fresher và Junior, xem trước từng vòng tuyển dụng và kiểm tra CV với từng tin tuyển dụng.',
-};
+export async function generateMetadata() {
+  const t = await getTranslations('landing.metadata');
+  return { title: t('title'), description: t('description') };
+}
 
 const LATEST_JOBS = 6;
 
