@@ -13,7 +13,7 @@ export default async function CvReviewPage({ searchParams }: CvReviewPageProps) 
   const t = await getTranslations('candidate.cvReview');
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-6 px-4 py-6 md:px-8">
+    <div className="mx-auto w-full max-w-page space-y-6 px-4 py-6 md:px-8">
       <header className="space-y-1">
         <h1 className="font-display text-3xl font-semibold tracking-tight text-foreground">
           {t('title')}

@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import type { AssessmentDto, CandidateProfile, CreateAssessmentInput } from '@launchly/shared';
 import { ConsentBox } from '@/components/cv-review/consent-box';
 import { FitCheckForm } from '@/components/cv-review/fit-check-form';
-import { FitResult } from '@/components/cv-review/fit-result';
+import { FitResult, ResultPlaceholder, ResultSkeleton } from '@/components/cv-review/fit-result';
 import { Card } from '@/components/ui/card';
 import { buttonClasses } from '@/components/ui/button';
 import { createAssessment } from '@/lib/api/assessments';
@@ -15,7 +15,7 @@ import { ApiError } from '@/lib/api/http';
 import { useAuth } from '@/lib/auth-context';
 
 function Notice({ children }: { children: React.ReactNode }) {
-  return <Card className="text-sm text-muted-foreground">{children}</Card>;
+  return <Card className="max-w-3xl text-sm text-muted-foreground">{children}</Card>;
 }
 
 export function CvFitCheck({ jobId }: { jobId?: string }) {
@@ -28,6 +28,7 @@ export function CvFitCheck({ jobId }: { jobId?: string }) {
   const [result, setResult] = useState<AssessmentDto | null>(null);
 
   const controllerRef = useRef<AbortController | null>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
 
   const isCandidate = status === 'authenticated' && user?.role === 'CANDIDATE';
 
@@ -47,6 +48,12 @@ export function CvFitCheck({ jobId }: { jobId?: string }) {
 
   // Leaving the page cancels an analysis that is still running.
   useEffect(() => () => controllerRef.current?.abort(), []);
+
+  // Below `lg` the result sits under the form, so bring it into view once it arrives.
+  useEffect(() => {
+    if (!result || window.matchMedia('(min-width: 1024px)').matches) return;
+    resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [result]);
 
   async function analyse(input: CreateAssessmentInput) {
     controllerRef.current?.abort();
@@ -84,7 +91,11 @@ export function CvFitCheck({ jobId }: { jobId?: string }) {
   if (!profile) return <Notice>{t('loading')}</Notice>;
 
   if (!profile.aiConsentAcceptedAt) {
-    return <ConsentBox onAccepted={setProfile} />;
+    return (
+      <div className="max-w-3xl">
+        <ConsentBox onAccepted={setProfile} />
+      </div>
+    );
   }
   if (profile.resumes.length === 0) {
     return (
@@ -101,24 +112,32 @@ export function CvFitCheck({ jobId }: { jobId?: string }) {
   }
 
   return (
-    <div className="space-y-6">
-      <FitCheckForm
-        resumes={profile.resumes}
-        initialJobId={jobId}
-        pending={pending}
-        onSubmit={analyse}
-      />
-      {pending && (
-        <p role="status" className="text-sm text-muted-foreground">
-          {t('analysing')}
-        </p>
-      )}
-      {error && (
-        <p role="alert" className="rounded-control bg-danger-subtle px-3 py-2 text-sm text-danger">
-          {error}
-        </p>
-      )}
-      {result && <FitResult assessment={result} />}
+    <div className="grid gap-6 lg:grid-cols-12 lg:items-start">
+      <div className="lg:sticky lg:top-24 lg:col-span-5 xl:top-28">
+        <FitCheckForm
+          resumes={profile.resumes}
+          initialJobId={jobId}
+          pending={pending}
+          onSubmit={analyse}
+        />
+      </div>
+      <div ref={resultRef} className="scroll-mt-20 space-y-4 lg:col-span-7">
+        {error && (
+          <p
+            role="alert"
+            className="rounded-control bg-danger-subtle px-3 py-2 text-sm text-danger"
+          >
+            {error}
+          </p>
+        )}
+        {pending ? (
+          <ResultSkeleton label={t('analysing')} />
+        ) : result ? (
+          <FitResult assessment={result} />
+        ) : (
+          !error && <ResultPlaceholder />
+        )}
+      </div>
     </div>
   );
 }

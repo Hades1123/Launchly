@@ -64,16 +64,39 @@
     "form": {
       "cv": "CV của bạn",
       "compareAgainst": "So sánh với",
-      "sourceJob": "Một công việc trên Launchly",
-      "sourceText": "Một mô tả công việc tự dán",
+      "sourceJob": "Công việc trên Launchly",
+      "sourceText": "Dán mô tả công việc",
       "jobDescription": "Mô tả công việc",
       "jobDescriptionPlaceholder": "Dán mô tả công việc vào đây…",
       "analyse": "Phân tích",
       "analysing": "Đang phân tích…",
       "changeJob": "Đổi công việc",
       "searchJobs": "Tìm việc làm",
-      "searchPlaceholder": "Tìm một công việc trên Launchly theo tên…",
-      "jobResults": "Kết quả tìm việc"
+      "searchPlaceholder": "Tìm theo vị trí hoặc tên công ty…",
+      "jobResults": "Kết quả tìm việc",
+      "uploadedOn": "Tải lên ngày {date}",
+      "uploadCv": "Tải CV mới",
+      "viewJd": "Xem mô tả công việc",
+      "hideJd": "Ẩn mô tả công việc",
+      "requirements": "Yêu cầu",
+      "openJob": "Mở trang công việc",
+      "jdLoadError": "Không thể tải mô tả công việc.",
+      "picker": {
+        "recent": "Đã chọn gần đây",
+        "applied": "Công việc bạn đã ứng tuyển",
+        "latest": "Mới đăng",
+        "companies": "Công ty",
+        "jobs": "Công việc",
+        "other": "Khác",
+        "companyHint": "Xem các vị trí đang tuyển",
+        "pasteInstead": "Không tìm thấy? Dán mô tả công việc thay thế",
+        "noResults": "Không có công việc nào khớp với “{keyword}”.",
+        "searchError": "Không thể tìm công việc. Vui lòng thử lại.",
+        "searching": "Đang tìm…",
+        "typeHint": "Nhập tên vị trí hoặc tên công ty để tìm.",
+        "clearCompany": "Bỏ lọc công ty",
+        "filterCompanyPlaceholder": "Lọc công việc của công ty này theo tên…"
+      }
     },
     "result": {
       "label": "Kết quả phân tích",
@@ -84,7 +107,17 @@
       "required": "Bắt buộc",
       "niceToHave": "Nên có",
       "improve": "Cách cải thiện",
-      "evidence": "Dẫn chứng từ CV của bạn"
+      "evidence": "Dẫn chứng từ CV của bạn",
+      "applyJob": "Ứng tuyển công việc này",
+      "matchesEmpty": "Chưa có điểm phù hợp rõ ràng.",
+      "missingEmpty": "Không thiếu điểm quan trọng nào.",
+      "placeholder": {
+        "title": "Kết quả sẽ hiện ở đây",
+        "body": "Chọn CV và công việc ở bên trái rồi bấm Phân tích.",
+        "step1": "Chọn CV bạn muốn kiểm tra.",
+        "step2": "Chọn một công việc trên Launchly hoặc dán mô tả công việc.",
+        "step3": "Nhận điểm phù hợp, những điểm còn thiếu và cách khắc phục."
+      }
     },
     "gauge": {
       "label": "Điểm phù hợp {score} trên 100",
